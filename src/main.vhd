@@ -15,7 +15,22 @@ entity main is
            pwm_f: in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
-           pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0)
+           pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
+           -- DAC ports
+           DA_DATA1 : out STD_LOGIC;
+           DA_DATA2 : out STD_LOGIC;
+           DA_CLK_OUT : out STD_LOGIC;
+           DA_nSYNC : out STD_LOGIC;
+           -- ADC ports 1
+           AD_CS_1 : out STD_LOGIC;
+           AD_D0_1 : in STD_LOGIC;
+           AD_D1_1 : in STD_LOGIC;
+           AD_SCK_1 : out STD_LOGIC;
+           -- ADC ports 2
+           AD_CS_2 : out STD_LOGIC;
+           AD_D0_2 : in STD_LOGIC;
+           AD_D1_2 : in STD_LOGIC;
+           AD_SCK_2 : out STD_LOGIC
          );
 end main;
 
@@ -39,9 +54,37 @@ component deadtime_test
                p_Pwm1_Out : out STD_LOGIC := '0';
                p_Pwm2_Out : out STD_LOGIC := '0');
 end component deadtime_test;
+-- DAC Module
+component pmodDA2_ctrl
+     Port ( 
+      CLK : in STD_LOGIC;
+      RST : in STD_LOGIC;
+      D1 : out STD_LOGIC;
+      D2 : out STD_LOGIC;
+      CLK_OUT : out STD_LOGIC;
+      nSYNC : out STD_LOGIC;
+      DATA1 : in STD_LOGIC_VECTOR(11 downto 0);
+      DATA2 : in STD_LOGIC_VECTOR(11 downto 0);
+      START : in STD_LOGIC;
+      DONE : out STD_LOGIC
+            );
+end component;
+-- ADC Module
+component pmodAD1_ctrl
+    Port    (    
 
-
-
+    CLK      : in std_logic;         
+    RST      : in std_logic;
+    SDATA1   : in std_logic;
+    SDATA2   : in std_logic;
+    SCLK     : out std_logic;
+    nCS      : out std_logic;
+    DATA1    : out std_logic_vector(11 downto 0);
+    DATA2    : out std_logic_vector(11 downto 0);
+    START    : in std_logic; 
+    DONE     : out std_logic
+            );
+end component;
 -- Signal Definition
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
@@ -54,7 +97,16 @@ signal duty : sfixed(n_left downto n_right);
 signal p_pwm1_out: std_logic;  --pwm outputs with dead band
 signal p_pwm2_out: std_logic;  --pwm inverse outputs with dead band  
 
+-- DAC signals         
+signal DA_sync: STD_LOGIC;
 
+-- ADC inputs
+--signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+
+-- ADC signals
+signal AD_sync_1, AD_sync_2: STD_LOGIC;
+signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
+signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 
 begin
 
@@ -75,16 +127,49 @@ port map(
     p_pwm1_out => p_pwm1_out, 
     p_pwm2_out => p_pwm2_out);
  
-
+-- ADC and DAC
+dac_inst: pmodDA2_ctrl port map (
+    CLK => CLK,
+    RST => '0', 
+    D1 => DA_DATA1, 
+    D2 => DA_DATA2, 
+    CLK_OUT => DA_CLK_OUT, 
+    nSYNC => DA_nSYNC, 
+    DATA1 => adc_il, 
+    DATA2 => adc_vc, 
+    START => DA_sync, 
+    DONE => DA_sync);
+adc_1_inst: pmodAD1_ctrl port map (
+    CLK => CLK,       
+    RST => '0',
+    SDATA1 => AD_D0_1,
+    SDATA2 => AD_D1_1, 
+    SCLK   => AD_SCK_1,
+    nCS    => AD_CS_1,
+    DATA1  => adc_load,    -- Load
+    DATA2  => adc_no_use,  -- Not using 
+    START  => AD_sync_1, 
+    DONE   => AD_sync_1
+);
+adc_2_inst: pmodAD1_ctrl port map (
+        CLK => CLK,       
+        RST => '0',
+        SDATA1 => AD_D0_2,
+        SDATA2 => AD_D1_2, 
+        SCLK   => AD_SCK_2,
+        nCS    => AD_CS_2,
+        DATA1  => adc_il,  --Inductor current
+        DATA2  => adc_vc,  --Capacitor voltage 
+        START  => AD_sync_2, 
+        DONE   => AD_sync_2
+        );    
 -- Main loop
 main_loop: process (clk)
  begin
      if (clk = '1' and clk'event) then
        pwm_out_t(0) <= p_pwm1_out;
        pwm_n_out_t(0)  <= p_pwm2_out;
-       --ena <= '1';
-       --duty <= 128;
-     end if;
+      end if;
  end process main_loop;
  
 -- duty cycle cal
