@@ -89,3 +89,9 @@ set_output_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -min -add_delay 
 set_output_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -max -add_delay 12.000 [get_ports AD_CS_1]
 set_output_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -min -add_delay -3.000 [get_ports AD_CS_2]
 set_output_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -max -add_delay 12.000 [get_ports AD_CS_2]
+
+
+set_input_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -min -add_delay 7.000 [get_ports AD_D0_2]
+set_input_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -max -add_delay 45.000 [get_ports AD_D0_2]
+set_input_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -min -add_delay 7.000 [get_ports AD_D1_2]
+set_input_delay -clock [get_clocks VIRTUAL_adc_1_inst/clk_div] -max -add_delay 45.000 [get_ports AD_D1_2]
