@@ -13,6 +13,9 @@ entity main is
     Port ( -- General
            clk : in STD_LOGIC;
            pwm_f: in STD_LOGIC;
+           -- Fault flags
+           --FD_flag : out Std_logic;
+           --FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -108,6 +111,23 @@ Generic(
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
 
+-- Processor core
+component processor_core
+Port ( -- General
+       Clk : in STD_LOGIC;
+       -- fault flag
+       FD_flag : out STD_LOGIC;
+       FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
+       -- Converter state estimator
+       pc_pwm : in STD_LOGIC;
+       vin_p :  in sfixed(n_left downto n_right);
+       pc_x :   in vect2;
+       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+       avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       pc_z :   out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       );   
+end component processor_core;
+
 -- Signal Definition
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
@@ -115,6 +135,7 @@ signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);         --pwm inverse ou
 signal ena : STD_LOGIC := '0';
 signal duty_ratio : sfixed(n_left downto n_right);
 signal duty : sfixed(n_left downto n_right);
+signal pc_pwm : STD_LOGIC;
 
 -- Deadtime
 signal p_pwm1_out: std_logic;  --pwm outputs with dead band
@@ -133,6 +154,15 @@ signal de_done_il, de_done_vc : STD_LOGIC;
 signal AD_sync_1, AD_sync_2: STD_LOGIC;
 signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
+
+-- Processor core
+signal z_val: vect2;
+signal vin_p: sfixed(n_left downto n_right);
+signal FD_flag: STD_LOGIC;
+signal FI_flag: STD_LOGIC_VECTOR(2 downto 0);
+signal avg_norm: vect2;
+signal ip       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right)); 
+
 
 begin
 
@@ -215,7 +245,7 @@ scaler_theta_l: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => plt_x(0),  -- For inductor current
+              dac_in => z_val(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
@@ -225,18 +255,33 @@ scaler_theta_c: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => plt_x(1),  -- For capacitor voltage
+            dac_in => z_val(1),  -- For capacitor voltage
             dac_val => dac_c); 
               
+--
 -- Main loop
 main_loop: process (clk)
  begin
      if (clk = '1' and clk'event) then
        pwm_out_t(0) <= p_pwm1_out;
        pwm_n_out_t(0)  <= p_pwm2_out;
+       pc_pwm <= p_pwm1_out;
       end if;
  end process main_loop;
  
+-- Processor core
+pc_inst: processor_core
+ port map(
+ clk => clk,
+ FD_flag => FD_flag,
+ FI_flag => FI_flag,
+ pc_pwm => pc_pwm,
+ vin_p => vin_p,
+ pc_x => plt_x,
+ ip => ip,
+ avg_norm_p => avg_norm,
+ pc_z => z_val);
+
 -- duty cycle cal
 duty_cycle_uut: process (clk)
 

@@ -12,17 +12,20 @@ entity processor_core is
 Port ( -- General
        Clk : in STD_LOGIC;
        -- fault flag
+       FD_flag : out STD_LOGIC;
+       FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
        vin_p :  in sfixed(n_left downto n_right);
        pc_x :   in vect2;
-       --ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
-       --avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+       avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z :   out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-          );   
+       );   
 end processor_core;
 
 architecture Behavioral of processor_core is
+
  -- Component definition
  -- Converter estimator
  component plant_x
@@ -35,49 +38,51 @@ architecture Behavioral of processor_core is
            );
  end component plant_x;
 -- -- Fault identification
--- component fault_identification
---  Port ( 
---           clk : in STD_LOGIC;
---           start : in STD_LOGIC;
---           FD_flag : in STD_LOGIC;
---           avg_norm : in vect2;
---           done : out STD_LOGIC := '0';
---           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
---           FI_flag : out STD_LOGIC_Vector(1 downto 0):= (others => '0')
---         );
--- end component;
+ component fault_identification
+  Port ( 
+           clk : in STD_LOGIC;
+           start : in STD_LOGIC;
+           FD_flag : in STD_LOGIC;
+           avg_norm : in vect2;
+           done : out STD_LOGIC := '0';
+           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+           FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0')
+         );
+ end component;
 -- --Moving average
--- component moving_avg is
---  Port ( clk : in STD_LOGIC;
---         start : in STD_LOGIC;
---         datain : in sfixed(n_left downto n_right);
---         done: out STD_LOGIC;
---         avg: out sfixed(n_left downto n_right)
---        );
--- end component moving_avg;
+    component moving_avg is
+    Port ( clk : in STD_LOGIC;
+         start : in STD_LOGIC;
+         datain : in sfixed(n_left downto n_right);
+         done: out STD_LOGIC;
+         avg: out sfixed(n_left downto n_right)
+        );
+    end component moving_avg;
  
 -- -- Signal definition for components
- 
--- -- fault identification
--- --signal flag: STD_LOGIC; 
- 
-   -- Fault detection
+   -- Misc
+   signal counter: integer range -1 to f_load;
+   -- GEN INPUT 
+   signal start : STD_LOGIC := '0';
+   -- fault detection
+   signal flag: STD_LOGIC; 
    signal fd_value: sfixed(d_left downto d_right);
    signal err_val, z_val, abs_err_val: vect2;
    signal norm: vect2;
    signal abs_norm: vect2;
--- -- Moving avg
--- signal avg_norm: vect2;
-  -- INPUT  
- signal start : STD_LOGIC := '0';
- signal mode  : INTEGER range 0 to 2 := 0;
- -- OUTPUT
- signal done: STD_LOGIC := '1';
--- signal done_avg_il: STD_LOGIC := '1';
--- signal done_avg_vc: STD_LOGIC := '1';
--- signal done_FI: STD_LOGIC := '1';
- -- Misc
- signal counter: integer range -1 to f_load;
+   
+   -- fault identification
+   signal done_FI: STD_LOGIC := '1';
+   -- Moving avg
+   signal avg_norm: vect2;
+   signal done_avg_il: STD_LOGIC := '1';
+   signal done_avg_vc: STD_LOGIC := '1';
+    
+  -- Plant
+   signal mode  : INTEGER range 0 to 2 := 0;
+   signal done: STD_LOGIC := '1';
+ 
+ 
  
 begin
 
@@ -90,28 +95,28 @@ Done => done,
 plt_x => z_val
 );
 
---moving_avg_gamma_il: moving_avg port map (
---clk => clk,
---start => start,
---datain => norm(0),
---done => done_avg_il,
---avg => avg_norm(0));
+moving_avg_gamma_il: moving_avg port map (
+clk => clk,
+start => start,
+datain => norm(0),
+done => done_avg_il,
+avg => avg_norm(0));
 
---moving_avg_gamma_vc: moving_avg port map (
---clk => clk,
---start => start,
---datain => norm(1),
---done => done_avg_vc,
---avg => avg_norm(1));
+moving_avg_gamma_vc: moving_avg port map (
+clk => clk,
+start => start,
+datain => norm(1),
+done => done_avg_vc,
+avg => avg_norm(1));
 
---fI_inst: fault_identification port map (
---clk => clk,
---start => start,
---FD_flag => flag,
---avg_norm => avg_norm,
---done => done_FI,
---ip => ip,
---FI_flag => FI_flag);
+fI_inst: fault_identification port map (
+clk => clk,
+start => start,
+FD_flag => flag,
+avg_norm => avg_norm,
+done => done_FI,
+ip => ip,
+FI_flag => FI_flag);
 
 CoreLOOP: process(clk, pc_pwm)
 begin
