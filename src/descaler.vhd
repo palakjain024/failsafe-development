@@ -11,16 +11,17 @@ entity descaler is
     Generic(
     adc_Factor : sfixed(15 downto -16));
     Port ( clk : in STD_LOGIC;
+           start : in STD_LOGIC;
            adc_in : in STD_LOGIC_VECTOR(11 downto 0);
+           done : out STD_LOGIC := '0';
            adc_val : out sfixed(n_left downto n_right)
          );
 end descaler;
 
-architecture Behavioral of descaler is
-   signal int_val : integer range 0 to 5000 := 0;
-   signal adc_range : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+architecture Behavioral of descaler is   
+
+   signal sfixed_adc_val : sfixed(n_left downto n_right);
    signal inlevel : sfixed(n_left downto n_right):= to_sfixed(0, n_left, n_right);
-   signal conv_val : sfixed(n_left downto n_right):= to_sfixed(0, n_left, n_right);
    
 begin
 conv: process (clk)
@@ -35,19 +36,25 @@ conv: process (clk)
               case conv_step is
                                    
                when V0 =>
-               int_val <= to_integer(unsigned(adc_in));
-               adc_range <= resize((vmax - vmin) * adc_factor, n_left, n_right);
+               done <= '0';
+               
+               if start = '1' then
                conv_step := V1;
+               else
+               conv_step := V0;
+               end if;
                                                          
                when V1 =>
-               inlevel <= resize(adc_range/adc_width, n_left, n_right);
+             
+               inlevel <= resize(((vmax - vmin) * adc_factor)/adc_width, n_left, n_right);
+               sfixed_adc_val <= to_sfixed(to_integer(unsigned(adc_in)), n_left, n_right);
                conv_step := V2;
                
                when V2 =>
-               adc_val <= resize(int_val * inlevel, n_left, n_right);
-               conv_step := V0;
-                                                                     
+               done <= '1';
+               adc_val <= resize(sfixed_adc_val * inlevel, n_left, n_right);
+               conv_step := V0;                                                                          
                end case;
          end if;
-end process;         
+end process;             
 end Behavioral;

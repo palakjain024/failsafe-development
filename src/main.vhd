@@ -85,6 +85,29 @@ component pmodAD1_ctrl
     DONE     : out std_logic
             );
 end component;
+-- Descaler for ADC
+component descaler
+     Generic(
+  adc_Factor : sfixed(15 downto -16));
+  Port ( clk : in STD_LOGIC;
+         start : in STD_LOGIC;
+         adc_in : in STD_LOGIC_VECTOR(11 downto 0);
+         done : out STD_LOGIC := '0';
+         adc_val : out sfixed(n_left downto n_right)
+       );
+end component;     
+-- Scaler for DAC
+component scaler
+Generic(
+    dac_left : integer range -100 to 100;
+    dac_right : integer range -100 to 100;
+    dac_max : sfixed(n_left downto n_right);
+    dac_min : sfixed(n_left downto n_right));
+    Port ( clk : in STD_LOGIC;
+           dac_in : in sfixed(dac_left downto dac_right);
+           dac_val : out STD_LOGIC_VECTOR(11 downto 0));
+end component;
+
 -- Signal Definition
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
@@ -99,10 +122,13 @@ signal p_pwm2_out: std_logic;  --pwm inverse outputs with dead band
 
 -- DAC signals         
 signal DA_sync: STD_LOGIC;
+-- DAC scaler output
+signal dac_c: std_logic_vector(11 downto 0);
+signal dac_l: std_logic_vector(11 downto 0);
 
--- ADC inputs
---signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
-
+-- ADC Descaler inputs
+signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+signal de_done_il, de_done_vc : STD_LOGIC;
 -- ADC signals
 signal AD_sync_1, AD_sync_2: STD_LOGIC;
 signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
@@ -135,8 +161,8 @@ dac_inst: pmodDA2_ctrl port map (
     D2 => DA_DATA2, 
     CLK_OUT => DA_CLK_OUT, 
     nSYNC => DA_nSYNC, 
-    DATA1 => adc_il, 
-    DATA2 => adc_vc, 
+    DATA1 => dac_l, 
+    DATA2 => dac_C, 
     START => DA_sync, 
     DONE => DA_sync);
 adc_1_inst: pmodAD1_ctrl port map (
@@ -162,7 +188,46 @@ adc_2_inst: pmodAD1_ctrl port map (
         DATA2  => adc_vc,  --Capacitor voltage 
         START  => AD_sync_2, 
         DONE   => AD_sync_2
-        );    
+        );  
+        
+-- ADC Retrieval   
+de_inst_il: descaler generic map (adc_factor => to_sfixed(5,15,-16) )
+            port map (
+            clk => clk,
+            start => AD_sync_2,
+            adc_in => adc_il,
+            done => de_done_il,
+            adc_val => plt_x(0));
+de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
+            port map (
+            clk => clk,
+            start => AD_sync_2,
+            adc_in => adc_vc,
+            done => de_done_vc,
+            adc_val => plt_x(1));   
+        
+-- DAC Scaler       
+scaler_theta_l: scaler generic map (
+              dac_left => n_left,
+              dac_right => n_right,
+              dac_max => to_sfixed(33,15,-16),
+              dac_min => to_Sfixed(0,15,-16)
+              )
+              port map (
+              clk => clk,
+              dac_in => plt_x(0),  -- For inductor current
+              dac_val => dac_l);                  
+scaler_theta_c: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(330,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => plt_x(1),  -- For capacitor voltage
+            dac_val => dac_c); 
+              
 -- Main loop
 main_loop: process (clk)
  begin

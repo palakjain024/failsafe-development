@@ -66,6 +66,6 @@ package input_pkg is
   type ip_array is array (0 to 1) of sfixed(15 downto -16);
   
   -- Address
-    constant address_size: integer range 0 to 1000 := 10;
+  constant address_size: integer range 0 to 1000 := 10;
     
 end package input_pkg;

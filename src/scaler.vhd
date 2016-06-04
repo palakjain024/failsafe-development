@@ -23,9 +23,7 @@ architecture Behavioral of scaler is
  signal dac_range : sfixed(dac_left downto dac_right);
  signal shift     : sfixed(dac_left downto dac_right);
  signal outlevel  : sfixed(dac_left downto dac_right);
- signal conv_val  : sfixed(dac_left downto dac_right);
- signal int_val   : integer range 0 to 5000;
- signal unsigned_val : unsigned(11 downto 0);
+ signal conv_val  : integer range 0 to 5000;
  signal in_val : sfixed(dac_left downto dac_right);
  
 begin
@@ -33,7 +31,7 @@ begin
 scaler_p: process (clk)
 
 
-type STATE_VALUE is (S0, S1, S2, S3, S4, S5);
+type STATE_VALUE is (S0, S1, S2, S3);
 variable State : STATE_VALUE := S0;       
          
 begin
@@ -61,19 +59,11 @@ begin
          State := S2;
           
     when S2 =>
-         conv_val <= resize(shift * outlevel, conv_val'left, conv_val'right);
+         conv_val <= to_integer(shift * outlevel);
          State := S3;
-    
+            
     when S3 =>
-          int_val <= to_integer(conv_val);
-          State := S4;
-          
-    when S4 =>
-          unsigned_val <= to_unsigned(int_val, 12);
-          State := S5;
-          
-    when S5 =>
-          dac_val <= std_logic_vector(unsigned_val);
+          dac_val <= std_logic_vector(to_unsigned(conv_val, 12));
           State := S0;
           
     end case;
