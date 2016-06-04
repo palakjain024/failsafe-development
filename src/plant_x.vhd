@@ -12,7 +12,7 @@ entity plant_x is
      port (   Clk : in STD_LOGIC;
               Start : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
-              load : in sfixed(n_left downto n_right);
+              vin_p: in sfixed(n_left downto n_right);
               Done : out STD_LOGIC := '0';
               plt_x : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
            );
@@ -37,59 +37,55 @@ mult: process(Clk, load)
 
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
-   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, load);
+   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, i_load);
    variable C_Matrix             : vect2;
 
    begin
            
    if (Clk'event and Clk = '1') then
    State_inp_Matrix(2) := v_in;
-   State_inp_Matrix(3) := load;
+   State_inp_Matrix(3) := i_load;
    case Mode is
            
-           when 0 =>
-           ----------------------------------------
-           -- Mode 0 - A:B matrix diode is conducting
-           ----------------------------------------
-           A_Aug_Matrix := ( 
-               (to_sfixed( 0.999918,A'high,A'low),
-                to_sfixed(-0.0001,A'high,A'low), 
-                to_sfixed( 0.0001,A'high,A'low), 
-                to_sfixed( 0,A'high,A'low)),
-               (to_sfixed( 0.005,A'high,A'low), 
-                to_sfixed( 1,A'high,A'low),
-                to_sfixed( 0,A'high,A'low),
-                to_sfixed(-0.005,A'high,A'low))
-               );
-       
-                   
+             when 0 =>
+              ----------------------------------------
+              -- Mode 0 - A:B matrix diode is conducting
+              ----------------------------------------
+              A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+              A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
+              A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+              A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,0) := resize(h/C_star, d_left, d_right);
+              A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - (h/(R_load * C_star)), d_left, d_right);
+              A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right);          
+          
+      
+                  
               when 1 =>
               ----------------------------------------
               -- Mode 1 - A:B matrix Switch is conducting current building up
               ----------------------------------------
-              A_Aug_Matrix := ( 
-                  (to_sfixed(  0.999918,A'high,A'low),
-                   to_sfixed( 0,A'high,A'low), 
-                   to_sfixed(  0.000100000000,A'high,A'low), 
-                   to_sfixed( 0,A'high,A'low)),
-                  (to_sfixed( 0,A'high,A'low), 
-                   to_sfixed( 1,A'high,A'low),
-                   to_sfixed( 0,A'high,A'low),
-                   to_sfixed( -0.005000000000000,A'high,A'low))
-                  );
-          
-                      
-               when others =>
-               A_Aug_Matrix := ( 
-                             (to_sfixed( 0.999918,A'high,A'low),
-                              to_sfixed(-0.0001,A'high,A'low), 
-                              to_sfixed( 0.0001,A'high,A'low), 
-                              to_sfixed( 0,A'high,A'low)),
-                             (to_sfixed( 0.005,A'high,A'low), 
-                              to_sfixed( 1,A'high,A'low),
-                              to_sfixed( 0,A'high,A'low),
-                              to_sfixed(-0.005,A'high,A'low))
-                             );
+              A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+              A_Aug_Matrix(0,1) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+              A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,0) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - (h/(R_load * C_star)), d_left, d_right);
+              A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right); 
+         
+                     
+              when others =>
+              A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+              A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
+              A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+              A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,0) := resize(h/C_star, d_left, d_right);
+              A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - (h/(R_load * C_star)), d_left, d_right);
+              A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+              A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right);          
+                       
              end case;
                  
               
