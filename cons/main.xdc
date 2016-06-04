@@ -2,6 +2,23 @@
 set_property PACKAGE_PIN Y9 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 
+#Mapping flag for fault detection JC3_p
+set_property PACKAGE_PIN R6 [get_ports FD_flag]
+set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
+
+#Mapping flag for sensor fault injection SW1 g22
+set_property PACKAGE_PIN G22 [get_ports sensor]
+set_property IOSTANDARD LVCMOS33 [get_ports sensor]
+
+#Mapping flag for fault identification (JC3_N(T6) JC4_P(T4) JC4_N(U4) )
+set_property PACKAGE_PIN T6 [get_ports {FI_flag[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[0]}]
+
+set_property PACKAGE_PIN T4 [get_ports {FI_flag[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[1]}]
+
+set_property PACKAGE_PIN U4 [get_ports {FI_flag[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[2]}]
 
 # Mapping PWM module to PMOD JC1_p (AB7) and JC1_n (AB6) PWM (reset on switch SW0)
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]

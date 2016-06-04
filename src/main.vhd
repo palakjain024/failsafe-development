@@ -13,9 +13,10 @@ entity main is
     Port ( -- General
            clk : in STD_LOGIC;
            pwm_f: in STD_LOGIC;
+           sensor : in STD_LOGIC;
            -- Fault flags
-           --FD_flag : out Std_logic;
-           --FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
+           FD_flag : out Std_logic;
+           FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -148,7 +149,7 @@ signal dac_c: std_logic_vector(11 downto 0);
 signal dac_l: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
-signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+signal adc_plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal de_done_il, de_done_vc : STD_LOGIC;
 -- ADC signals
 signal AD_sync_1, AD_sync_2: STD_LOGIC;
@@ -156,10 +157,9 @@ signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
+signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal z_val: vect2;
 signal vin_p: sfixed(n_left downto n_right);
-signal FD_flag: STD_LOGIC;
-signal FI_flag: STD_LOGIC_VECTOR(2 downto 0);
 signal avg_norm: vect2;
 signal ip       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right)); 
 
@@ -170,7 +170,7 @@ begin
 pwm_inst: pwm 
  port map(
     clk => clk, 
-    reset_n => pwm_f, 
+    reset_n => '1', 
     ena => ena, 
     duty => duty, 
     pwm_out => pwm_out, 
@@ -227,35 +227,35 @@ de_inst_il: descaler generic map (adc_factor => to_sfixed(5,15,-16) )
             start => AD_sync_2,
             adc_in => adc_il,
             done => de_done_il,
-            adc_val => plt_x(0));
+            adc_val => adc_plt_x(0));
 de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
             adc_in => adc_vc,
             done => de_done_vc,
-            adc_val => plt_x(1));   
+            adc_val => adc_plt_x(1));   
         
 -- DAC Scaler       
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
-              dac_min => to_Sfixed(0,15,-16)
+              dac_max => to_sfixed(1,15,-16),
+              dac_min => to_Sfixed(-1,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => z_val(0),  -- For inductor current
+              dac_in => avg_norm(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(330,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(1,15,-16),
+            dac_min => to_sfixed(-1,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => z_val(1),  -- For capacitor voltage
+            dac_in => avg_norm(1),  -- For capacitor voltage
             dac_val => dac_c); 
               
 --
@@ -263,10 +263,25 @@ scaler_theta_c: scaler generic map (
 main_loop: process (clk)
  begin
      if (clk = '1' and clk'event) then
+     
+       if pwm_f = '0' then
        pwm_out_t(0) <= p_pwm1_out;
        pwm_n_out_t(0)  <= p_pwm2_out;
+       else
+       pwm_out_t(0) <= '0';
+       pwm_n_out_t(0) <= '0';
+       end if;
        pc_pwm <= p_pwm1_out;
-      end if;
+       
+       if sensor = '1' then
+       plt_x(0) <= to_sfixed(0, n_left, n_right);
+       else
+       plt_x(0) <= adc_plt_x(0);
+       end if;
+       
+       plt_x(1) <= adc_plt_x(1);
+        
+    end if;
  end process main_loop;
  
 -- Processor core

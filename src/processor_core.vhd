@@ -173,8 +173,8 @@ fault_detection: process(clk)
                             when S2 =>
                             abs_err_val(0) <= resize(abs(err_val(0)), n_left, n_right);
                             abs_err_val(1) <= resize(abs(err_val(1)), n_left, n_right);
-                            norm(0) <= resize(err_val(0)*to_sfixed(0.2, n_left, n_right), n_left, n_right);
-                            norm(1) <= resize(err_val(1)*to_sfixed(0.005, n_left, n_right), n_left, n_right);
+                            norm(0) <= resize(err_val(0)*to_sfixed(0.160, n_left, n_right), n_left, n_right);
+                            norm(1) <= resize(err_val(1)*to_sfixed(0.0125, n_left, n_right), n_left, n_right);
                             State := S3;
                             
                             when S3 =>
