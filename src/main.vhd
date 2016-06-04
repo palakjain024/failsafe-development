@@ -123,7 +123,7 @@ Port ( -- General
        pc_pwm : in STD_LOGIC;
        vin_p :  in sfixed(n_left downto n_right);
        pc_x :   in vect2;
-       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
        avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z :   out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );   
@@ -161,7 +161,7 @@ signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_righ
 signal z_val: vect2;
 signal vin_p: sfixed(n_left downto n_right);
 signal avg_norm: vect2;
-signal ip       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right)); 
+signal ip       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right)); 
 
 
 begin
@@ -240,22 +240,22 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(1,15,-16),
-              dac_min => to_Sfixed(-1,15,-16)
+              dac_max => to_sfixed(3.3,15,-16),
+              dac_min => to_Sfixed(-3.3,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => avg_norm(0),  -- For inductor current
+              dac_in => ip(2),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(1,15,-16),
-            dac_min => to_sfixed(-1,15,-16)
+            dac_max => to_sfixed(3.3,15,-16),
+            dac_min => to_sfixed(-3.3,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => avg_norm(1),  -- For capacitor voltage
+            dac_in => ip(0),  -- For capacitor voltage
             dac_val => dac_c); 
               
 --

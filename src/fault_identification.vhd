@@ -15,7 +15,7 @@ entity fault_identification is
            FD_flag : in STD_LOGIC;
            avg_norm : in vect2;
            done : out STD_LOGIC := '0';
-           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
            FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0')
          );
 end fault_identification;
@@ -24,8 +24,8 @@ architecture Behavioral of fault_identification is
 
 --Signals   
 --  Inner product          
-    signal	A       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
-    signal  B       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+    signal	A       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+    signal  B       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
    
     
 begin
@@ -54,7 +54,7 @@ main_loop: process(clk)
                             State := S0;
                             end if;
                        else
-                           ip   <= (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+                           ip   <= (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
                            FI_flag <= "000";
                            State := S0;
                        end if; 
@@ -67,8 +67,9 @@ main_loop: process(clk)
           ---------------------------------------------------------
             When S1 =>
                   
-        A(0) <= resize(to_sfixed(-1.8, n_left, n_right) * avg_norm(0), n_left, n_right);
-        A(1) <= resize(to_sfixed(-0.8, n_left, n_right) * avg_norm(0), n_left, n_right);       
+        A(0) <= resize(to_sfixed(-1.5, n_left, n_right) * avg_norm(0), n_left, n_right);
+        A(1) <= resize(to_sfixed(-0.8, n_left, n_right) * avg_norm(0), n_left, n_right); 
+        A(2) <= resize(to_sfixed(-0.5, n_left, n_right) * avg_norm(0), n_left, n_right);      
         State := S2;
             --------------------------------------------------------
             -- state S2 (Integrate inner product)
@@ -76,33 +77,26 @@ main_loop: process(clk)
             When S2 =>
             
          B(0) <= resize(to_sfixed(0, n_left, n_right) * avg_norm(1), n_left, n_right);
-         B(1) <= resize(to_sfixed(-1.8, n_left, n_right) * avg_norm(1), n_left, n_right);       
+         B(1) <= resize(to_sfixed(-1.8, n_left, n_right) * avg_norm(1), n_left, n_right);
+         B(2) <= resize(to_sfixed(10, n_left, n_right) * avg_norm(1), n_left, n_right);       
          State := S3;
           
            When S3 =>
            
          ip(0) <= resize(A(0) + B(0), n_left, n_right);
          ip(1) <= resize(A(1) + B(1), n_left, n_right);
+         ip(2) <= resize(A(2) + B(2), n_left, n_right);
          State := S4;
          
             When S4 =>            
                           
               -- Finding max ip
-                    if ip(0)> ip(1) then
-                      
-                      max_num := ip(0);
-                      index := 0;
-                      
-                    elsif ip(1) > ip(0) then
-                      
-                      max_num := ip(1);
-                      index := 1;
-                      
-                    else
-                      
-                      null;
-                      
-                    end if;
+                  for i in 0 to 2 loop
+                     if ip(i) > max_num then
+                        max_num := ip(i);
+                        index := i;
+                     end if;
+                     end loop;
                     State := S5;
                     --------------------------------------------------------
                     -- state S5 (Compare to threshold and output the result)
@@ -116,8 +110,10 @@ main_loop: process(clk)
                              FI_flag <= "001";
                              elsif index = 1 then
                              FI_flag <= "010";
-                             else
+                             elsif index = 2 then
                              FI_flag <= "100";
+                             else
+                             FI_flag <= "000";
                              end if;
                              
                           end if;       

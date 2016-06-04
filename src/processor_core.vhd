@@ -18,7 +18,7 @@ Port ( -- General
        pc_pwm : in STD_LOGIC;
        vin_p :  in sfixed(n_left downto n_right);
        pc_x :   in vect2;
-       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
        avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z :   out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );   
@@ -45,7 +45,7 @@ architecture Behavioral of processor_core is
            FD_flag : in STD_LOGIC;
            avg_norm : in vect2;
            done : out STD_LOGIC := '0';
-           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
+           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
            FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0')
          );
  end component;
