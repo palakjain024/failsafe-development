@@ -37,13 +37,13 @@ mult: process(Clk, vin_p)
 
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
-   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, i_load);
+   variable State_inp_Matrix     : vect4:= (il0, vc0, vin_p, i_load);
    variable C_Matrix             : vect2;
 
    begin
            
    if (Clk'event and Clk = '1') then
-   State_inp_Matrix(2) := v_in;
+   State_inp_Matrix(2) := vin_p;
    State_inp_Matrix(3) := i_load;
    case Mode is
            
