@@ -316,7 +316,7 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= resize(vin_p/v_out, n_left, n_right);
+       duty_ratio <= resize(v_in/v_out, n_left, n_right);
        state := S1;
        
        when S1 =>
