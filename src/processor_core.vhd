@@ -173,8 +173,8 @@ fault_detection: process(clk)
                             when S2 =>
                             abs_err_val(0) <= resize(abs(err_val(0)), n_left, n_right);
                             abs_err_val(1) <= resize(abs(err_val(1)), n_left, n_right);
-                            norm(0) <= resize(err_val(0)*to_sfixed(0.3, n_left, n_right), n_left, n_right);
-                            norm(1) <= resize(err_val(1)*to_sfixed(0.0166, n_left, n_right), n_left, n_right);
+                            norm(0) <= resize(err_val(0)*to_sfixed(0.160, n_left, n_right), n_left, n_right);
+                            norm(1) <= resize(err_val(1)*to_sfixed(0.0125, n_left, n_right), n_left, n_right);
                             State := S3;
                             
                             when S3 =>
@@ -194,17 +194,15 @@ fault_detection: process(clk)
                             when S5 =>
                             
                            -- Single fault case
-                           if fd_value > to_sfixed(0.12, d_left, d_right) then
+                           if fd_value > to_sfixed(0.2, d_left, d_right) then
                            FD_flag <= '1'; -- output port
                            flag <= '1';
                            else
                            FD_flag <= '0';
                            flag <= '0';
                            end if;
-                            if flag = '0' then
-                            State := S0;
-                            end if;
-                              
+                            
+                            State := S0;  
                    end case;
              end if;
      end process;

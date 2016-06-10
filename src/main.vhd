@@ -221,7 +221,7 @@ adc_2_inst: pmodAD1_ctrl port map (
         );  
         
 -- ADC Retrieval   
-de_inst_il: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
+de_inst_il: descaler generic map (adc_factor => to_sfixed(5,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
@@ -247,22 +247,22 @@ de_inst_vin: descaler generic map (adc_factor => to_sfixed(30,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(16.5,15,-16),
-              dac_min => to_Sfixed(0,15,-16)
+              dac_max => to_sfixed(3.3,15,-16),
+              dac_min => to_Sfixed(-3.3,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => adc_plt_x(0),  -- For inductor current
+              dac_in => ip(2),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(66,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(3.3,15,-16),
+            dac_min => to_sfixed(-3.3,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_plt_x(1),  -- For capacitor voltage
+            dac_in => ip(0),  -- For capacitor voltage
             dac_val => dac_c); 
               
 --
