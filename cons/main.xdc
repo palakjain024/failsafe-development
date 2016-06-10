@@ -10,6 +10,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 set_property PACKAGE_PIN G22 [get_ports sensor]
 set_property IOSTANDARD LVCMOS33 [get_ports sensor]
 
+#Mapping flag for input fault injection SW2 h22
+set_property PACKAGE_PIN H22 [get_ports inp]
+set_property IOSTANDARD LVCMOS33 [get_ports inp]
+
 #Mapping flag for fault identification (JC3_N(T6) JC4_P(T4) JC4_N(U4) )
 set_property PACKAGE_PIN T6 [get_ports {FI_flag[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[0]}]

@@ -14,6 +14,7 @@ entity main is
            clk : in STD_LOGIC;
            pwm_f: in STD_LOGIC;
            sensor : in STD_LOGIC;
+           inp : in STD_LOGIC;
            -- Fault flags
            FD_flag : out Std_logic;
            FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
@@ -116,6 +117,7 @@ end component;
 component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
+       inp : in STD_LOGIC;
        -- fault flag
        FD_flag : out STD_LOGIC;
        FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
@@ -295,6 +297,7 @@ main_loop: process (clk)
 pc_inst: processor_core
  port map(
  clk => clk,
+ inp => inp,
  FD_flag => FD_flag,
  FI_flag => FI_flag,
  pc_pwm => pc_pwm,

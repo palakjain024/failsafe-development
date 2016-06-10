@@ -11,6 +11,7 @@ use work.input_pkg.all;
 entity processor_core is
 Port ( -- General
        Clk : in STD_LOGIC;
+       inp : in STD_LOGIC;
        -- fault flag
        FD_flag : out STD_LOGIC;
        FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
@@ -152,7 +153,7 @@ end process;
 ------------------------------
 fault_detection: process(clk)
             
-        type state_value is (S0, S1, S2, S3, S4, S5);
+        type state_value is (S0, S1, S2, S3, S4, S5, S6, S7, S8);
         variable State : state_value := S0;
               begin
                   if (clk = '1' and clk'event) then
@@ -201,7 +202,36 @@ fault_detection: process(clk)
                            FD_flag <= '0';
                            flag <= '0';
                            end if;
-                          State := S0;                              
+                           State := S6;
+                           
+                           when S6 =>
+                           
+                          if inp = '0' then
+                          State := S0;
+                          else
+                          
+                          if flag = '0' then
+                          State := S0;
+                          else
+                          
+                                                if( Start = '1' ) then
+                                                State := S7;
+                                                else
+                                                State := S6;
+                                                end if; 
+                          end if;
+                          
+                          end if;    
+                             
+                          when S7 =>
+                          err_val(0) <= resize(pc_x(0) - z_val(0), n_left, n_right);
+                          err_val(1) <= resize(pc_x(1) - z_val(1), n_left, n_right);
+                          State := S8;
+                          
+                          when S8 =>
+                          norm(0) <= resize(err_val(0)*to_sfixed(0.3, n_left, n_right), n_left, n_right);
+                          norm(1) <= resize(err_val(1)*to_sfixed(0.0166, n_left, n_right), n_left, n_right);
+                          State := S6;                  
                    end case;
              end if;
      end process;
