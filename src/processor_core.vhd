@@ -194,17 +194,14 @@ fault_detection: process(clk)
                             when S5 =>
                             
                            -- Single fault case
-                           if fd_value > to_sfixed(0.12, d_left, d_right) then
+                           if fd_value > to_sfixed(0.1, d_left, d_right) then
                            FD_flag <= '1'; -- output port
                            flag <= '1';
                            else
                            FD_flag <= '0';
                            flag <= '0';
                            end if;
-                            if flag = '0' then
-                            State := S0;
-                            end if;
-                              
+                          State := S0;                              
                    end case;
              end if;
      end process;
