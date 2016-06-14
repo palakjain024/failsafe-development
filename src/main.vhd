@@ -108,6 +108,19 @@ Generic(
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
 
+-- Processor core
+component processor_core
+Port ( -- General
+       Clk : in STD_LOGIC;
+       -- Converter state estimator
+       pc_pwm : in STD_LOGIC;
+       load : in sfixed(n_left downto n_right);
+       pc_x : in vect2;
+       pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+          ); 
+end component processor_core;
+
 -- Signal Definition
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
@@ -128,11 +141,14 @@ signal dac_l: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
 signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
-signal de_done_il, de_done_vc : STD_LOGIC;
+signal de_done_il, de_done_vc, de_done_load : STD_LOGIC;
+signal iload_in : sfixed(n_left downto n_right);
 -- ADC signals
 signal AD_sync_1, AD_sync_2: STD_LOGIC;
 signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
+-- Processor core
+signal z_val, err_val : vect2;
 
 begin
 
@@ -191,7 +207,7 @@ adc_2_inst: pmodAD1_ctrl port map (
         );  
         
 -- ADC Retrieval   
-de_inst_il: descaler generic map (adc_factor => to_sfixed(5,15,-16) )
+de_inst_il: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
@@ -204,30 +220,45 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
             start => AD_sync_2,
             adc_in => adc_vc,
             done => de_done_vc,
-            adc_val => plt_x(1));   
+            adc_val => plt_x(1)); 
+de_inst_load: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
+            port map (
+            clk => clk,
+            start => AD_sync_1,
+            adc_in => adc_load,
+            done => de_done_load,
+            adc_val => iload_in);   
         
 -- DAC Scaler       
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
-              dac_min => to_Sfixed(0,15,-16)
+              dac_max => to_sfixed(3.3,15,-16),
+              dac_min => to_Sfixed(-3.3,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => plt_x(0),  -- For inductor current
+              dac_in => err_val(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(330,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(16.5,15,-16),
+            dac_min => to_sfixed(-16.5,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => plt_x(1),  -- For capacitor voltage
+            dac_in => err_val(1),  -- For capacitor voltage
             dac_val => dac_c); 
-              
+-- Processor core
+pc_inst: processor_core port map (
+Clk => Clk,
+pc_pwm => p_pwm1_out,
+load => iload_in,
+pc_x => plt_x,
+pc_err => err_val,
+pc_z => z_val
+);              
 -- Main loop
 main_loop: process (clk)
  begin

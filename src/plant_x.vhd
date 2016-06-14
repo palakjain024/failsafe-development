@@ -12,9 +12,11 @@ entity plant_x is
      port (   Clk : in STD_LOGIC;
               Start : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
+              pc_x : in vect2;
               load : in sfixed(n_left downto n_right);
               Done : out STD_LOGIC := '0';
-              plt_x : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+              pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+              pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
            );
 end plant_x;
 
@@ -27,12 +29,15 @@ architecture Behavioral of plant_x is
 	signal	Sum	    : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
     signal 	j0, k0, k2, k3 : INTEGER := 0;
     
+    -- For error calculation
+    signal err_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+    signal   z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 begin
 
 mult: process(Clk, load)
   
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10);
    variable     State         : STATE_VALUE := S0;
 
    -- Matrix values depends on type of mode
@@ -221,8 +226,18 @@ mult: process(Clk, load)
         Done <= '1';
         State_inp_Matrix(0) := C_Matrix(0);
         State_inp_Matrix(1) := C_Matrix(1);
-        plt_x <=  C_Matrix;
-        State := S0;
+        z_val <= C_Matrix;
+        pc_z <=  C_Matrix;
+        State := S9;
+        
+       when S9 =>
+       err_val(0) <= resize(z_val(0) - pc_x(0), n_left, n_right);
+       err_val(1) <= resize(z_val(1) - pc_x(1), n_left, n_right);
+       State := S10;
+       
+       when S10 =>
+       pc_err <= err_val;
+       State := S0;
        end case;
    end if;
   end process;
