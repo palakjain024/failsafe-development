@@ -2,6 +2,9 @@
 set_property PACKAGE_PIN Y9 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 
+set_property PACKAGE_PIN G22 [get_ports ena]
+set_property IOSTANDARD LVCMOS33 [get_ports ena]
+
 
 # Mapping PWM module to PMOD JC1_p (AB7) and JC1_n (AB6) PWM (reset on switch SW0)
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
@@ -10,8 +13,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 set_property PACKAGE_PIN AB6 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
-set_property PACKAGE_PIN F22 [get_ports pwm_f]
-set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
+set_property PACKAGE_PIN F22 [get_ports pwm_reset]
+set_property IOSTANDARD LVCMOS33 [get_ports pwm_reset]
 
 # Digilent PMOD DA21 DAC to PMOD JA1 to JA4 (For theta and err)
 set_property PACKAGE_PIN Y11 [get_ports DA_nSYNC]
@@ -63,8 +66,8 @@ set_output_delay -clock [get_clocks clk] -max -add_delay -2.000 [get_ports {pwm_
 
 
 
-set_input_delay -clock [get_clocks clk] -min -add_delay 0.000 [get_ports pwm_f]
-set_input_delay -clock [get_clocks clk] -max -add_delay -4.000 [get_ports pwm_f]
+set_input_delay -clock [get_clocks clk] -min -add_delay 0.000 [get_ports pwm_reset]
+set_input_delay -clock [get_clocks clk] -max -add_delay -4.000 [get_ports pwm_reset]
 
 
 create_generated_clock -name dac_inst/CLK -source [get_ports clk] -divide_by 4 [get_pins {dac_inst/clk_counter_reg[1]/Q}]

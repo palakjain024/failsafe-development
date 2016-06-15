@@ -10,11 +10,13 @@ use work.input_pkg.all;
 
 entity plant_x is
      port (   Clk : in STD_LOGIC;
+              ena : in STD_LOGIC;
               Start : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
               pc_x : in vect2;
               load : in sfixed(n_left downto n_right);
               Done : out STD_LOGIC := '0';
+              pc_z_w : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
               pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
               pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
            );
@@ -29,17 +31,28 @@ architecture Behavioral of plant_x is
 	signal	Sum	    : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
     signal 	j0, k0, k2, k3 : INTEGER := 0;
     
+    signal wa : sfixed(n_left downto n_right);
+    signal wb : sfixed(n_left downto n_right);
     -- For error calculation
     signal err_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+    signal err_val_d : discrete_vect2 := (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right));
     signal   z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+    
+    -- For Gain matrix
+    signal G : gain_mat; -- Negative of G matrix
+    
+    -- For w discretized matrix
+    signal w : discrete_mat22 := ((to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)),
+                                  (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)));
+    signal z_w : vect2 :=  (il0, vc0);
+    -- H_est transpose * discretixed error * gain
 begin
 
 mult: process(Clk, load)
   
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16);
    variable     State         : STATE_VALUE := S0;
-
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
    variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, load);
@@ -50,52 +63,7 @@ mult: process(Clk, load)
    if (Clk'event and Clk = '1') then
    State_inp_Matrix(2) := v_in;
    State_inp_Matrix(3) := load;
-   case Mode is
-           
-           when 0 =>
-           ----------------------------------------
-           -- Mode 0 - A:B matrix diode is conducting
-           ----------------------------------------
-           A_Aug_Matrix := ( 
-               (to_sfixed( 0.999918,A'high,A'low),
-                to_sfixed(-0.0001,A'high,A'low), 
-                to_sfixed( 0.0001,A'high,A'low), 
-                to_sfixed( 0,A'high,A'low)),
-               (to_sfixed( 0.005,A'high,A'low), 
-                to_sfixed( 1,A'high,A'low),
-                to_sfixed( 0,A'high,A'low),
-                to_sfixed(-0.005,A'high,A'low))
-               );
-       
-                   
-              when 1 =>
-              ----------------------------------------
-              -- Mode 1 - A:B matrix Switch is conducting current building up
-              ----------------------------------------
-              A_Aug_Matrix := ( 
-                  (to_sfixed(  0.999918,A'high,A'low),
-                   to_sfixed( 0,A'high,A'low), 
-                   to_sfixed(  0.000100000000,A'high,A'low), 
-                   to_sfixed( 0,A'high,A'low)),
-                  (to_sfixed( 0,A'high,A'low), 
-                   to_sfixed( 1,A'high,A'low),
-                   to_sfixed( 0,A'high,A'low),
-                   to_sfixed( -0.005000000000000,A'high,A'low))
-                  );
-          
-                      
-               when others =>
-               A_Aug_Matrix := ( 
-                             (to_sfixed( 0.999918,A'high,A'low),
-                              to_sfixed(-0.0001,A'high,A'low), 
-                              to_sfixed( 0.0001,A'high,A'low), 
-                              to_sfixed( 0,A'high,A'low)),
-                             (to_sfixed( 0.005,A'high,A'low), 
-                              to_sfixed( 1,A'high,A'low),
-                              to_sfixed( 0,A'high,A'low),
-                              to_sfixed(-0.005,A'high,A'low))
-                             );
-             end case;
+   
                  
               
        case State is
@@ -103,6 +71,16 @@ mult: process(Clk, load)
        --    State S0 (wait for start signal)
        ------------------------------------------
        when S0 =>
+       
+       -- To enable parameter estimator algorithm
+           if ena = '1' then
+             G <= ((e11, to_sfixed(0,24,-10)),
+                   (to_sfixed(0,24,-10), e22));
+             else
+             G <= ((to_sfixed(0,24,-10), to_sfixed(0,24,-10)),
+                   (to_sfixed(0,24,-10), to_sfixed(0,24,-10)));
+             end if;
+        -- For starting the computation process
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
            Done <= '0';
            Count0 <= "000";
@@ -111,6 +89,43 @@ mult: process(Clk, load)
            else
                State := S0;
            end if;
+         -- For State Matrix calculation
+         if Mode = 0 then
+         ----------------------------------------
+         -- Mode 0 - A:B matrix diode is conducting
+         ----------------------------------------
+         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+         A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,0) := resize(h*theta_C_star, d_left, d_right);
+         A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+         A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,3) := resize(-h*theta_C_star, d_left, d_right);          
+                     
+         elsif Mode = 1 then
+         ----------------------------------------
+         -- Mode 1 - A:B matrix Switch is conducting current building up
+         ----------------------------------------
+         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+         A_Aug_Matrix(0,1) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,0) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+         A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,3) := resize(-h*theta_C_star, d_left, d_right); 
+                    
+         else
+         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+         A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,0) := resize(h*theta_C_star, d_left, d_right);
+         A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+         A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+         A_Aug_Matrix(1,3) := resize(-h*theta_C_star, d_left, d_right);          
+         end if;
 
        -------------------------------------------
        --    State S1 (filling up of pipeline)
@@ -223,7 +238,7 @@ mult: process(Clk, load)
        --    State S8 (output the data)
        ------------------------------------
        when S8 =>
-        Done <= '1';
+       
         State_inp_Matrix(0) := C_Matrix(0);
         State_inp_Matrix(1) := C_Matrix(1);
         z_val <= C_Matrix;
@@ -234,12 +249,53 @@ mult: process(Clk, load)
        err_val(0) <= resize(z_val(0) - pc_x(0), n_left, n_right);
        err_val(1) <= resize(z_val(1) - pc_x(1), n_left, n_right);
        State := S10;
-       
+       ---------------------------------------
+       -- Calculation of W matrix
+       ---------------------------------------
        when S10 =>
        pc_err <= err_val;
-       State := S0;
-       end case;
+       
+       -- mode 1 means less terms, mode 0 means more term
+        if mode = 1 then
+        State := S12;
+        else
+        State := S11;
+        end if;
+        B <= resize(r*z_w(0), B'high, B'low);
+           
+       when S11 =>
+        wa <= resize((B - z_w(1)) + v_in, wa'high, wa'low);
+        wb <= resize(z_w(0) - load, wb'high, wb'low);
+        State := S13;
+       when S12 =>
+        wa <= resize(B + v_in, wa'high, wa'low);
+        wb <= resize(to_sfixed(-1,n_left,n_right) * load, wb'high, wb'low);
+        State := S13;
+        
+        when S13 =>
+        w(0,0) <= resize(h*wa, d_left, d_right);
+        w(1,1) <= resize(h*wb, d_left, d_right);
+        State := S14;
+        
+        when S14 =>
+        z_w(0) <= resize(z_w(0) + (w(0,0)*theta_L_star), n_left, n_right);
+        z_w(1) <= resize(z_w(1) + (w(1,1)*theta_C_star), n_left, n_right);
+        State := S15;
+        
+     -----------------------------------------
+     -- Error discretization
+     -----------------------------------------
+       when S15 =>
+        Done <= '1';
+        err_val_d(0) <= resize(h*err_val(0), d_left, d_right);
+        err_val_d(1) <= resize(h*err_val(1), d_left, d_right);
+        State := S16;
+        
+       when S16 =>
+        pc_z_w <= z_w;
+        State := S0;
+       
+     end case;
    end if;
-  end process;
-
+ end process;
 end Behavioral;

@@ -12,7 +12,8 @@ use work.input_pkg.all;
 entity main is
     Port ( -- General
            clk : in STD_LOGIC;
-           pwm_f: in STD_LOGIC;
+           pwm_reset: in STD_LOGIC;
+           ena : in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -112,10 +113,12 @@ end component;
 component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
+       ena : in STD_LOGIC;
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
+       pc_z_w : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
           ); 
@@ -125,7 +128,7 @@ end component processor_core;
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
 signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);         --pwm inverse outputs
-signal ena : STD_LOGIC := '0';
+signal ena_pwm : STD_LOGIC := '0';
 signal duty_ratio : sfixed(n_left downto n_right);
 signal duty : sfixed(n_left downto n_right);
 
@@ -149,6 +152,7 @@ signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 -- Processor core
 signal z_val, err_val : vect2;
+signal pc_z_w : vect2;
 
 begin
 
@@ -156,8 +160,8 @@ begin
 pwm_inst: pwm 
  port map(
     clk => clk, 
-    reset_n => pwm_f, 
-    ena => ena, 
+    reset_n => pwm_reset, 
+    ena => ena_pwm, 
     duty => duty, 
     pwm_out => pwm_out, 
     pwm_n_out => pwm_n_out);
@@ -233,29 +237,31 @@ de_inst_load: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(3.3,15,-16),
-              dac_min => to_Sfixed(-3.3,15,-16)
+              dac_max => to_sfixed(16.5,15,-16),
+              dac_min => to_sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => err_val(0),  -- For inductor current
+              dac_in => pc_z_w(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(16.5,15,-16),
-            dac_min => to_sfixed(-16.5,15,-16)
+            dac_max => to_sfixed(330,15,-16),
+            dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => err_val(1),  -- For capacitor voltage
+            dac_in => pc_z_w(1),  -- For capacitor voltage
             dac_val => dac_c); 
 -- Processor core
 pc_inst: processor_core port map (
 Clk => Clk,
+ena => ena,
 pc_pwm => p_pwm1_out,
 load => iload_in,
 pc_x => plt_x,
+pc_z_w => pc_z_w,
 pc_err => err_val,
 pc_z => z_val
 );              
@@ -279,12 +285,12 @@ begin
       case state is
 
        when S0 =>
-       ena <= '0';
+       ena_pwm <= '0';
        duty_ratio <= resize(v_in/v_out, n_left, n_right);
        state := S1;
        
        when S1 =>
-       ena <= '1';
+       ena_pwm <= '1';
        duty <= resize(to_sfixed(1, n_left, n_right) - duty_ratio, n_left, n_right);
        state := S0;  
        end case;  
