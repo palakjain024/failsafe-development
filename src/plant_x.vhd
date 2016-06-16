@@ -16,7 +16,7 @@ entity plant_x is
               pc_x : in vect2;
               load : in sfixed(n_left downto n_right);
               Done : out STD_LOGIC := '0';
-              pc_z_w : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+              pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
               pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
               pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
            );
@@ -44,14 +44,21 @@ architecture Behavioral of plant_x is
     -- For w discretized matrix
     signal w : discrete_mat22 := ((to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)),
                                   (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)));
-    signal z_w : vect2 :=  (il0, vc0);
+    -- H matrix
+    signal H_est : mat22 := ((to_sfixed(0.00100, n_left, n_right), to_sfixed(0, n_left, n_right)),
+                             (to_sfixed(0, n_left, n_right), to_sfixed(0.00100, n_left, n_right))); 
     -- H_est transpose * discretixed error * gain
+    signal h_err : discrete_vect2;
+    signal g_h_err : vect2;
+    -- Theta
+    signal theta_est : vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
+    
 begin
 
 mult: process(Clk, load)
   
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29);
    variable     State         : STATE_VALUE := S0;
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
@@ -94,37 +101,37 @@ mult: process(Clk, load)
          ----------------------------------------
          -- Mode 0 - A:B matrix diode is conducting
          ----------------------------------------
-         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
-         A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
-         A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*theta_est(0), d_left, d_right);
+         A_Aug_Matrix(0,1) := resize(-h*theta_est(0), d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h*theta_est(0), d_left, d_right);
          A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,0) := resize(h*theta_C_star, d_left, d_right);
+         A_Aug_Matrix(1,0) := resize(h*theta_est(1), d_left, d_right);
          A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
          A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,3) := resize(-h*theta_C_star, d_left, d_right);          
+         A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right);          
                      
          elsif Mode = 1 then
          ----------------------------------------
          -- Mode 1 - A:B matrix Switch is conducting current building up
          ----------------------------------------
-         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
+         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*theta_est(0), d_left, d_right);
          A_Aug_Matrix(0,1) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h*theta_est(0), d_left, d_right);
          A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
          A_Aug_Matrix(1,0) := to_sfixed(0, d_left, d_right);
          A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
          A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,3) := resize(-h*theta_C_star, d_left, d_right); 
+         A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right); 
                     
          else
-         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
-         A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
-         A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
+         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*theta_est(0), d_left, d_right);
+         A_Aug_Matrix(0,1) := resize(-h*theta_est(0), d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h*theta_est(0), d_left, d_right);
          A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,0) := resize(h*theta_C_star, d_left, d_right);
+         A_Aug_Matrix(1,0) := resize(h*theta_est(1), d_left, d_right);
          A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
          A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,3) := resize(-h*theta_C_star, d_left, d_right);          
+         A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right);          
          end if;
 
        -------------------------------------------
@@ -261,13 +268,13 @@ mult: process(Clk, load)
         else
         State := S11;
         end if;
-        B <= resize(r*z_w(0), B'high, B'low);
-           
-       when S11 =>
-        wa <= resize((B - z_w(1)) + v_in, wa'high, wa'low);
-        wb <= resize(z_w(0) - load, wb'high, wb'low);
+        B <= resize(r*z_val(0), B'high, B'low);
+      -- W martix calculation     
+        when S11 =>
+        wa <= resize((B - z_val(1)) + v_in, wa'high, wa'low);
+        wb <= resize(z_val(0) - load, wb'high, wb'low);
         State := S13;
-       when S12 =>
+        when S12 =>
         wa <= resize(B + v_in, wa'high, wa'low);
         wb <= resize(to_sfixed(-1,n_left,n_right) * load, wb'high, wb'low);
         State := S13;
@@ -276,23 +283,103 @@ mult: process(Clk, load)
         w(0,0) <= resize(h*wa, d_left, d_right);
         w(1,1) <= resize(h*wb, d_left, d_right);
         State := S14;
-        
+       ------------------------------------------------
+       -- H matrix calculation 
+       -----------------------------------------------
         when S14 =>
-        z_w(0) <= resize(z_w(0) + (w(0,0)*theta_L_star), n_left, n_right);
-        z_w(1) <= resize(z_w(1) + (w(1,1)*theta_C_star), n_left, n_right);
+        A <= A_aug_Matrix(0,0);
+        B <= H_est(0,0);
         State := S15;
         
+        when S15 =>
+        A <= A_aug_Matrix(0,1);
+        B <= H_est(1,0);
+        P <= A*B;
+        State := S16;
+        
+        when S16 =>
+        A <= A_aug_Matrix(0,0);
+        B <= H_est(0,1);
+        P <= A*B;
+        Sum <= resize(P, Sum'high, Sum'low);
+        State := S17;
+        
+        when S17 =>
+        A <= A_aug_Matrix(0,1);
+        B <= H_est(1,1);
+        P <= A*B;
+        Sum <= resize(Sum + P, Sum'high, Sum'low);
+        State := S18;
+                
+        when S18 =>
+        A <= A_aug_Matrix(1,0);
+        B <= H_est(0,0);
+        P <= A*B;
+        Sum <= resize(P, Sum'high, Sum'low);
+        H_est(0,0) <= resize(Sum + w(0,0), n_left, n_right);
+        State := S19;
+        
+        when S19 =>
+        A <= A_aug_Matrix(1,1);
+        B <= H_est(1,0);
+        P <= A*B;
+        Sum <= resize(Sum + P, Sum'high, Sum'low);
+        State := S20;
+        
+        when S20 =>
+        A <= A_aug_Matrix(1,0);
+        B <= H_est(0,1);
+        P <= A*B;
+        Sum <= resize(P, Sum'high, Sum'low);
+        H_est(0,1) <= resize(Sum, n_left, n_right);
+        State := S21;
+        
+        when S21 =>
+        A <= A_aug_Matrix(1,1);
+        B <= H_est(1,1);
+        P <= A*B;
+        Sum <= resize(Sum + P, Sum'high, Sum'low);
+        State := S22;
+        
+        when S22 =>
+        P <= A*B;
+        Sum <= resize(P, Sum'high, Sum'low);
+        H_est(1,0) <= resize(Sum, n_left, n_right);
+        State := S23;
+                
+        when S23 =>
+        Sum <= resize(Sum + P, Sum'high, Sum'low);
+        State := S24;
+                        
+        when S24 =>
+        H_est(1,1) <= resize(Sum + w(1,1), n_left, n_right);                      
+        State := S25;
      -----------------------------------------
      -- Error discretization
      -----------------------------------------
-       when S15 =>
-        Done <= '1';
+       when S25 =>
         err_val_d(0) <= resize(h*err_val(0), d_left, d_right);
         err_val_d(1) <= resize(h*err_val(1), d_left, d_right);
-        State := S16;
+        State := S26;
         
-       when S16 =>
-        pc_z_w <= z_w;
+       when S26 =>
+        h_err(0) <= resize((H_est(0,0)*err_val_d(0)) + (H_est(1,0)*err_val_d(1)), d_left, d_right);
+        h_err(1) <= resize((H_est(0,1)*err_val_d(0)) + (H_est(1,1)*err_val_d(1)), d_left, d_right);
+        State := S27;
+       
+       when S27 =>
+        g_h_err(0) <= resize(G(0,0)*h_err(0), n_left, n_right);
+        g_h_err(1) <= resize(G(1,1)*h_err(1), n_left, n_right);
+        State := S28;
+        
+       when S28 =>
+        theta_est(0) <= resize(theta_est(0) + g_h_err(0), n_left, n_right);
+        theta_est(1) <= resize(theta_est(1) + g_h_err(1), n_left, n_right);
+        State := S29;
+                 
+       When S29 =>
+        Done <= '1';
+        pc_theta <= theta_est; 
         State := S0;
        
      end case;

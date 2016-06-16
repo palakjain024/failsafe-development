@@ -118,7 +118,7 @@ Port ( -- General
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
-       pc_z_w : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
           ); 
@@ -152,7 +152,7 @@ signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 -- Processor core
 signal z_val, err_val : vect2;
-signal pc_z_w : vect2;
+signal pc_theta: vect2;
 
 begin
 
@@ -237,12 +237,12 @@ de_inst_load: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(16.5,15,-16),
-              dac_min => to_sfixed(0,15,-16)
+              dac_max => to_sfixed(20,15,-16),
+              dac_min => to_sfixed(-20,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => pc_z_w(0),  -- For inductor current
+              dac_in => err_val(1),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
@@ -252,7 +252,7 @@ scaler_theta_c: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => pc_z_w(1),  -- For capacitor voltage
+            dac_in => z_val(1),  -- For capacitor voltage
             dac_val => dac_c); 
 -- Processor core
 pc_inst: processor_core port map (
@@ -261,7 +261,7 @@ ena => ena,
 pc_pwm => p_pwm1_out,
 load => iload_in,
 pc_x => plt_x,
-pc_z_w => pc_z_w,
+pc_theta => pc_theta,
 pc_err => err_val,
 pc_z => z_val
 );              

@@ -16,7 +16,7 @@ Port ( -- General
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
-       pc_z_w : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
           );   
@@ -33,7 +33,7 @@ architecture Behavioral of processor_core is
           pc_x : in vect2;
           load : in sfixed(n_left downto n_right);
           Done : out STD_LOGIC := '0';
-          pc_z_w : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+          pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
           pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
           pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
         );
@@ -58,7 +58,7 @@ Mode => mode,
 pc_x => pc_x,
 load => load,
 Done => done,
-pc_z_w => pc_z_w,
+pc_theta => pc_theta,
 pc_err => pc_err,
 pc_z => pc_z
 );
