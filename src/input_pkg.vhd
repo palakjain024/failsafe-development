@@ -47,8 +47,8 @@ package input_pkg is
   -- Matrices
   type mat22 is array (0 to 1, 0 to 1) of sfixed(15 downto -16); -- for A,B
   type mat24 is array (0 to 1, 0 to 3) of sfixed(0 downto -35);  -- for augumented [A:B]
-  type discrete_mat22 is array (0 to 1, 0 to 1) of sfixed(0 downto -35); -- for H
-  
+  type discrete_mat22 is array (0 to 1, 0 to 1) of sfixed(0 downto -35); -- for w
+  type H_mat22 is array (0 to 1, 0 to 1) of sfixed(2 downto -35); -- for H
   -- Precision
   constant n_left: integer := 15;
   constant n_right: integer := -16;

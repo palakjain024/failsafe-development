@@ -45,10 +45,10 @@ architecture Behavioral of plant_x is
     signal w : discrete_mat22 := ((to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)),
                                   (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)));
     -- H matrix
-   signal H_est : discrete_mat22 := ((to_sfixed(0.00100, d_left, d_right), to_sfixed(0, d_left, d_right)),
-                                      (to_sfixed(0, d_left, d_right), to_sfixed(0.00100, d_left, d_right))); 
-   signal H_mem : discrete_mat22 := ((to_sfixed(0.00100, d_left, d_right), to_sfixed(0, d_left, d_right)),
-                                      (to_sfixed(0, d_left, d_right), to_sfixed(0.00100, d_left, d_right)));
+   signal H_est : H_mat22 := ((to_sfixed(0.00100, 2, d_right), to_sfixed(0, 2, d_right)),
+                                      (to_sfixed(0, 2, d_right), to_sfixed(0.00100, 2, d_right))); 
+   signal H_mem : H_mat22 := ((to_sfixed(0.00100, 2, d_right), to_sfixed(0, 2, d_right)),
+                                      (to_sfixed(0, 2, d_right), to_sfixed(0.00100, 2, d_right)));
     -- H_est transpose * discretixed error * gain
     signal h_err : discrete_vect2;
     signal g_h_err : vect2;
@@ -289,10 +289,10 @@ mult: process(Clk, load)
        -- H matrix calculation 
        -----------------------------------------------
         when S14 =>
-        H_est(0,0) <= resize(A_Aug_Matrix(0,0) * H_mem(0,0) + A_Aug_Matrix(0,1) * H_mem(1,0) + w(0,0),d_left, d_right);
-        H_est(0,1) <= resize(A_Aug_Matrix(0,0) * H_mem(0,1) + A_Aug_Matrix(0,1) * H_mem(1,1),d_left, d_right);
-        H_est(1,0) <= resize(A_Aug_Matrix(1,0) * H_mem(0,0) + A_Aug_Matrix(1,1) * H_mem(1,0),d_left, d_right);
-        H_est(1,1) <= resize(A_Aug_Matrix(1,0) * H_mem(0,1) + A_Aug_Matrix(1,1) * H_mem(1,1) + w(1,1),d_left, d_right);
+        H_est(0,0) <= resize(A_Aug_Matrix(0,0) * H_mem(0,0) + A_Aug_Matrix(0,1) * H_mem(1,0) + w(0,0),2, d_right);
+        H_est(0,1) <= resize(A_Aug_Matrix(0,0) * H_mem(0,1) + A_Aug_Matrix(0,1) * H_mem(1,1),2, d_right);
+        H_est(1,0) <= resize(A_Aug_Matrix(1,0) * H_mem(0,0) + A_Aug_Matrix(1,1) * H_mem(1,0),2, d_right);
+        H_est(1,1) <= resize(A_Aug_Matrix(1,0) * H_mem(0,1) + A_Aug_Matrix(1,1) * H_mem(1,1) + w(1,1),2, d_right);
         State := S15;
        
        When S15 =>
