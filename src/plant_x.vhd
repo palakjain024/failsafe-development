@@ -45,8 +45,10 @@ architecture Behavioral of plant_x is
     signal w : discrete_mat22 := ((to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)),
                                   (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)));
     -- H matrix
-    signal H_est : mat22 := ((to_sfixed(0.00100, n_left, n_right), to_sfixed(0, n_left, n_right)),
-                             (to_sfixed(0, n_left, n_right), to_sfixed(0.00100, n_left, n_right))); 
+   signal H_est : discrete_mat22 := ((to_sfixed(0.00100, d_left, d_right), to_sfixed(0, d_left, d_right)),
+                                      (to_sfixed(0, d_left, d_right), to_sfixed(0.00100, d_left, d_right))); 
+   signal H_mem : discrete_mat22 := ((to_sfixed(0.00100, d_left, d_right), to_sfixed(0, d_left, d_right)),
+                                      (to_sfixed(0, d_left, d_right), to_sfixed(0.00100, d_left, d_right)));
     -- H_est transpose * discretixed error * gain
     signal h_err : discrete_vect2;
     signal g_h_err : vect2;
@@ -58,7 +60,7 @@ begin
 mult: process(Clk, load)
   
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20);
    variable     State         : STATE_VALUE := S0;
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
@@ -287,97 +289,43 @@ mult: process(Clk, load)
        -- H matrix calculation 
        -----------------------------------------------
         when S14 =>
-        A <= A_aug_Matrix(0,0);
-        B <= H_est(0,0);
+        H_est(0,0) <= resize(A_Aug_Matrix(0,0) * H_mem(0,0) + A_Aug_Matrix(0,1) * H_mem(1,0) + w(0,0),d_left, d_right);
+        H_est(0,1) <= resize(A_Aug_Matrix(0,0) * H_mem(0,1) + A_Aug_Matrix(0,1) * H_mem(1,1),d_left, d_right);
+        H_est(1,0) <= resize(A_Aug_Matrix(1,0) * H_mem(0,0) + A_Aug_Matrix(1,1) * H_mem(1,0),d_left, d_right);
+        H_est(1,1) <= resize(A_Aug_Matrix(1,0) * H_mem(0,1) + A_Aug_Matrix(1,1) * H_mem(1,1) + w(1,1),d_left, d_right);
         State := S15;
-        
-        when S15 =>
-        A <= A_aug_Matrix(0,1);
-        B <= H_est(1,0);
-        P <= A*B;
-        State := S16;
-        
-        when S16 =>
-        A <= A_aug_Matrix(0,0);
-        B <= H_est(0,1);
-        P <= A*B;
-        Sum <= resize(P, Sum'high, Sum'low);
-        State := S17;
-        
-        when S17 =>
-        A <= A_aug_Matrix(0,1);
-        B <= H_est(1,1);
-        P <= A*B;
-        Sum <= resize(Sum + P, Sum'high, Sum'low);
-        State := S18;
-                
-        when S18 =>
-        A <= A_aug_Matrix(1,0);
-        B <= H_est(0,0);
-        P <= A*B;
-        Sum <= resize(P, Sum'high, Sum'low);
-        H_est(0,0) <= resize(Sum + w(0,0), n_left, n_right);
-        State := S19;
-        
-        when S19 =>
-        A <= A_aug_Matrix(1,1);
-        B <= H_est(1,0);
-        P <= A*B;
-        Sum <= resize(Sum + P, Sum'high, Sum'low);
-        State := S20;
-        
-        when S20 =>
-        A <= A_aug_Matrix(1,0);
-        B <= H_est(0,1);
-        P <= A*B;
-        Sum <= resize(P, Sum'high, Sum'low);
-        H_est(0,1) <= resize(Sum, n_left, n_right);
-        State := S21;
-        
-        when S21 =>
-        A <= A_aug_Matrix(1,1);
-        B <= H_est(1,1);
-        P <= A*B;
-        Sum <= resize(Sum + P, Sum'high, Sum'low);
-        State := S22;
-        
-        when S22 =>
-        P <= A*B;
-        Sum <= resize(P, Sum'high, Sum'low);
-        H_est(1,0) <= resize(Sum, n_left, n_right);
-        State := S23;
-                
-        when S23 =>
-        Sum <= resize(Sum + P, Sum'high, Sum'low);
-        State := S24;
-                        
-        when S24 =>
-        H_est(1,1) <= resize(Sum + w(1,1), n_left, n_right);                      
-        State := S25;
+       
+       When S15 =>
+         H_mem(0,0) <= H_est(0,0);
+         H_mem(0,1) <= H_est(0,1);
+         H_mem(1,0) <= H_est(1,0);
+         H_mem(1,1) <= H_est(1,1);
+         State := S16;
+                 
      -----------------------------------------
      -- Error discretization
      -----------------------------------------
-       when S25 =>
+       when S16 =>
         err_val_d(0) <= resize(h*err_val(0), d_left, d_right);
         err_val_d(1) <= resize(h*err_val(1), d_left, d_right);
-        State := S26;
+        State := S17;
         
-       when S26 =>
+       when S17 =>
         h_err(0) <= resize((H_est(0,0)*err_val_d(0)) + (H_est(1,0)*err_val_d(1)), d_left, d_right);
         h_err(1) <= resize((H_est(0,1)*err_val_d(0)) + (H_est(1,1)*err_val_d(1)), d_left, d_right);
-        State := S27;
+        State := S18;
        
-       when S27 =>
+       when S18 =>
         g_h_err(0) <= resize(G(0,0)*h_err(0), n_left, n_right);
         g_h_err(1) <= resize(G(1,1)*h_err(1), n_left, n_right);
-        State := S28;
+        State := S19;
         
-       when S28 =>
+       when S19 =>
         theta_est(0) <= resize(theta_est(0) + g_h_err(0), n_left, n_right);
         theta_est(1) <= resize(theta_est(1) + g_h_err(1), n_left, n_right);
-        State := S29;
+        State := S20;
                  
-       When S29 =>
+       When S20 =>
         Done <= '1';
         pc_theta <= theta_est; 
         State := S0;

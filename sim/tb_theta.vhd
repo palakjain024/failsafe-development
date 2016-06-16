@@ -112,7 +112,7 @@ end process;
 
 pc_inst: processor_core port map (
 clk => clk,
-ena => ena,
+ena => '1',
 pc_pwm => p_pwm1_out,
 load => pulsed_load,
 pc_x => plt_x,
@@ -131,10 +131,6 @@ plt_x => plt_x);
         
 mainLOOP: process(clk, p_pwm1_out)
 begin
-
-if p_pwm1_out'event and p_pwm1_out = '1' then
-ena <= '1';
-end if;
 
 if clk'event and clk = '1' then
   --- For Mode Selection
