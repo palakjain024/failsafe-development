@@ -22,7 +22,7 @@ package input_pkg is
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(100,15,-16);
   constant v_out : sfixed(15 downto -16)  := to_sfixed(200, 15, -16);
-  constant i_load : sfixed(15 downto -16) := to_sfixed(3,15,-16);
+  constant i_load : sfixed(15 downto -16) := to_sfixed(4,15,-16);
   constant f_load : integer := 3141592*2; 
   
   -- Initial values of il and vc (Initial state input)
@@ -36,7 +36,7 @@ package input_pkg is
   constant theta_C_star : sfixed(15 downto -16):= to_sfixed(10000, 15, -16);
   -- Adaptive Gain for theta correction
   constant e11 : sfixed(24 downto -10) := to_sfixed(-0.1,24,-10);
-  constant e22 : sfixed(24 downto -10) := to_sfixed(-2000,24,-10);
+  constant e22 : sfixed(24 downto -10) := to_sfixed(-3e6,24,-10);
   type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
   
   -- vectors

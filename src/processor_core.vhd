@@ -16,6 +16,7 @@ Port ( -- General
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
+       theta_done : out STD_LOGIC;
        pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
@@ -43,8 +44,6 @@ architecture Behavioral of processor_core is
  -- INPUT  
  signal start : STD_LOGIC := '0';
  signal mode  : INTEGER range 0 to 2 := 0;
- -- OUTPUT
- signal done: STD_LOGIC := '1';
  -- Misc
  signal counter: integer range -1 to f_load;
  
@@ -57,7 +56,7 @@ Start => start,
 Mode => mode,
 pc_x => pc_x,
 load => load,
-Done => done,
+Done => theta_done,
 pc_theta => pc_theta,
 pc_err => pc_err,
 pc_z => pc_z

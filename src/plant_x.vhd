@@ -3,9 +3,10 @@ library IEEE;
 library IEEE_PROPOSED;
 library work;
 
+use IEEE.NUMERIC_STD.ALL;
+use ieee.std_logic_unsigned.all;
 use IEEE_PROPOSED.FIXED_PKG.ALL;
 use IEEE.std_logic_1164.all;
-use IEEE.std_logic_arith.all;
 use work.input_pkg.all;
 
 entity plant_x is
@@ -24,13 +25,12 @@ end plant_x;
 
 architecture Behavioral of plant_x is
     
-    signal	Count0	: UNSIGNED (2 downto 0):="000";
-	signal	A       : sfixed(d_left downto d_right);
-	signal	B       : sfixed(n_left downto n_right);
-	signal	P       : sfixed(A'left+B'left+1 downto A'right+B'right);
-	signal	Sum	    : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
+   	signal	Count0 : UNSIGNED (2 downto 0):="000";
+    signal	A      : sfixed(d_left downto d_right);
+    signal	B      : sfixed(n_left downto n_right);
+    signal	P      : sfixed(n_left + d_left + 1 downto n_right + d_right);
+    signal	Sum	   : sfixed(n_left + d_left + 4 downto n_right + d_right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
     signal 	j0, k0, k2, k3 : INTEGER := 0;
-    
     signal wa : sfixed(n_left downto n_right);
     signal wb : sfixed(n_left downto n_right);
     -- For error calculation
@@ -89,8 +89,8 @@ mult: process(Clk, load)
              end if;
         -- For starting the computation process
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
-           Done <= '0';
-           Count0 <= "000";
+            Done <= '0';
+            Count0 <= "000";
            if( Start = '1' ) then
                State := S1;
            else
@@ -137,84 +137,84 @@ mult: process(Clk, load)
        -------------------------------------------
        --    State S1 (filling up of pipeline)
        -------------------------------------------
-       when S1 =>
-           A <= A_Aug_Matrix(j0, k0);  
-           B <= State_inp_Matrix(k0);
-           k0 <= k0 +1;
-           Count0 <= Count0 + 1;
-           State := S2;
+        when S1 =>
+        A <= A_Aug_Matrix(j0, k0);  
+        B <= State_inp_Matrix(k0);
+        k0 <= k0 +1;
+        Count0 <= Count0 + 1;
+        State := S2;
 
-       ---------------------------------------
-       --    State S2 (more of filling up)
-       ---------------------------------------
-       when S2 =>
-           A <= A_Aug_Matrix(j0, k0);  
-           B <= State_inp_Matrix(k0);
+    ---------------------------------------
+    --    State S2 (more of filling up)
+    ---------------------------------------
+    when S2 =>
+        A <= A_Aug_Matrix(j0, k0);  
+        B <= State_inp_Matrix(k0);
 
-           P <= A * B;
-           k0 <= k0 +1;
-           Count0 <= Count0 + 1;
-           State := S3;
+        P <= A * B;
+        k0 <= k0 +1;
+        Count0 <= Count0 + 1;
+        State := S3;
 
-       -------------------------------------------
-       --    State S3 (even more of filling up)
-       -------------------------------------------
-       when S3 =>
-           A <= A_Aug_Matrix(j0, k0);  
-           B <= State_inp_Matrix(k0);
+    -------------------------------------------
+    --    State S3 (even more of filling up)
+    -------------------------------------------
+    when S3 =>
+        A <= A_Aug_Matrix(j0, k0);  
+        B <= State_inp_Matrix(k0);
 
-           P <= A * B;
-           
-           if (k2 = 0) then
-               Sum <= resize(P, Sum'high, Sum'low);
-           else             
-               Sum <= resize(Sum + P, Sum'high, Sum'low);
-           end if;
-           k2 <= k2+1;
-           k0 <= k0+1;
-           Count0 <= Count0 + 1;
-           State := S4;
-
-       -------------------------------------------------
-       --    State S4 (pipeline full, complete work)
-       -------------------------------------------------
-       when S4 =>
-           A <= A_Aug_Matrix(j0, k0);  
-           B <= State_inp_Matrix(k0);
-
-           P <= A * B;
-
-           if (k2 = 0) then
-               Sum <= resize(P, Sum'high, Sum'low);
-               C_Matrix(k3) := resize(Sum, n_left, n_right);
-               k3 <= k3 +1;
-           else
-               Sum <= resize(Sum + P, Sum'high, Sum'low);
-           end if;
-
-           if (k2 = 3) then
-               k2 <= 0;
-               else
-                  k2 <= k2 + 1;
-           end if;
-           
+        P <= A * B;
         
-           ----------------------------------
-           -- check if all initiations done
-           ----------------------------------
-           if (Count0 = 7) then
-               State := S5;
-           else
-               State := S4;                
-               Count0 <= Count0 + 1;
-              if (k0 = 3) then
-               j0 <= j0 +1;
-               k0 <= 0;
-               else 
-               k0 <= k0 +1;
-               end if;
-           end if;
+        if (k2 = 0) then
+            Sum <= resize(P, Sum'high, Sum'low);
+        else             
+            Sum <= resize(Sum + P, Sum'high, Sum'low);
+        end if;
+        k2 <= k2+1;
+        k0 <= k0+1;
+        Count0 <= Count0 + 1;
+        State := S4;
 
+    -------------------------------------------------
+    --    State S4 (pipeline full, complete work)
+    -------------------------------------------------
+    when S4 =>
+        A <= A_Aug_Matrix(j0, k0);  
+        B <= State_inp_Matrix(k0);
+
+        P <= A * B;
+
+        if (k2 = 0) then
+            Sum <= resize(P, Sum'high, Sum'low);
+            C_Matrix(k3) := resize(Sum, n_left, n_right);
+            k3 <= k3 +1;
+        else
+            Sum <= resize(Sum + P, Sum'high, Sum'low);
+        end if;
+
+        if (k2 = 3) then
+            k2 <= 0;
+            else
+               k2 <= k2 + 1;
+        end if;
+        
+     
+        ----------------------------------
+        -- check if all initiations done
+        ----------------------------------
+        if (Count0 = 7) then
+            State := S5;
+        else
+            State := S4;                
+            Count0 <= Count0 + 1;
+           if (k0 = 3) then
+            j0 <= j0 +1;
+            k0 <= 0;
+            else 
+            k0 <= k0 +1;
+            end if;
+        end if;
+        
        ------------------------------------------------
        --    State S5 (start flushing the pipeline)
        ------------------------------------------------

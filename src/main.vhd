@@ -118,6 +118,7 @@ Port ( -- General
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
+       theta_done : out STD_LOGIC;
        pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
@@ -153,6 +154,7 @@ signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 -- Processor core
 signal z_val, err_val : vect2;
 signal pc_theta: vect2;
+signal theta_done : STD_LOGIC;
 
 begin
 
