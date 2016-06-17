@@ -5,7 +5,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports clk]
 set_property PACKAGE_PIN G22 [get_ports ena]
 set_property IOSTANDARD LVCMOS33 [get_ports ena]
 
-
+set_property PACKAGE_PIN R6 [get_ports algo_status]
+set_property IOSTANDARD LVCMOS33 [get_ports algo_status]
 # Mapping PWM module to PMOD JC1_p (AB7) and JC1_n (AB6) PWM (reset on switch SW0)
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]

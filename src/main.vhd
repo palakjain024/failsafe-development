@@ -14,6 +14,7 @@ entity main is
            clk : in STD_LOGIC;
            pwm_reset: in STD_LOGIC;
            ena : in STD_LOGIC;
+           algo_status : out STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -249,12 +250,12 @@ scaler_theta_l: scaler generic map (
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(330,15,-16),
+            dac_max => to_sfixed(33000,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => z_val(1),  -- For capacitor voltage
+            dac_in => pc_theta(1),  -- For capacitor voltage
             dac_val => dac_c); 
 -- Processor core
 pc_inst: processor_core port map (
@@ -273,6 +274,7 @@ main_loop: process (clk)
      if (clk = '1' and clk'event) then
        pwm_out_t(0) <= p_pwm1_out;
        pwm_n_out_t(0)  <= p_pwm2_out;
+       algo_status <= ena;
       end if;
  end process main_loop;
  
