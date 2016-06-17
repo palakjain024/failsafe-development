@@ -17,7 +17,7 @@ Port ( -- General
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
        theta_done : out STD_LOGIC;
-       pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
+       pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),theta_C_init);
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
           );   
@@ -34,7 +34,7 @@ architecture Behavioral of processor_core is
           pc_x : in vect2;
           load : in sfixed(n_left downto n_right);
           Done : out STD_LOGIC := '0';
-          pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),to_sfixed(6667,n_left,n_right));
+          pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),theta_C_init);
           pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
           pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
         );
