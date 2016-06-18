@@ -37,6 +37,7 @@ package input_pkg is
   constant theta_C_init : sfixed(15 downto -16):= to_sfixed(20000, 15, -16);
   -- Adaptive Gain for theta correction
   constant e11 : sfixed(24 downto -10) := to_sfixed(-0.1,24,-10);
+  constant e22 : sfixed(24 downto -10) := to_sfixed(-1e7,24,-10);
   type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
   
   -- vectors
