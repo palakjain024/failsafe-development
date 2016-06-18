@@ -240,8 +240,8 @@ de_inst_load: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(20,15,-16),
-              dac_min => to_sfixed(-20,15,-16)
+              dac_max => to_sfixed(50,15,-16),
+              dac_min => to_sfixed(-50,15,-16)
               )
               port map (
               clk => clk,
