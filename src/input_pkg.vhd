@@ -20,7 +20,7 @@ package input_pkg is
   constant r : sfixed(1 downto -30) := to_sfixed(-0.82, 1,-30);       -- inductor resistance
   
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(80,15,-16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(50,15,-16);
   constant v_out : sfixed(15 downto -16)  := to_sfixed(100, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(3,15,-16);
   constant f_load : integer := 3141592*2; 
