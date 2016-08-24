@@ -120,7 +120,7 @@ Port ( -- General
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
        theta_done : out STD_LOGIC;
-       pc_theta : out vect2 := (to_sfixed(200,n_left,n_right),theta_C_init);
+       pc_theta : out vect2 := (theta_L_star,theta_C_star);
        pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
           ); 
@@ -240,8 +240,8 @@ de_inst_load: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(50,15,-16),
-              dac_min => to_sfixed(-50,15,-16)
+              dac_max => to_sfixed(10,15,-16),
+              dac_min => to_sfixed(-10,15,-16)
               )
               port map (
               clk => clk,
@@ -250,7 +250,7 @@ scaler_theta_l: scaler generic map (
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(33000,15,-16),
+            dac_max => to_sfixed(1650,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (

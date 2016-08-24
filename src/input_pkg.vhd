@@ -17,11 +17,11 @@ package input_pkg is
     constant c_Dead_t : integer :=  0;
   -- constant inputs
   constant h : sfixed(0 downto -35) := to_sfixed(0.0000005, 0, -35); -- Fixed time step
-  constant r : sfixed(1 downto -30) := to_sfixed(-0.82, 1,-30);       -- inductor resistance
+  constant r : sfixed(1 downto -30) := to_sfixed(-0.082, 1,-30);       -- inductor resistance
   
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(100,15,-16);
-  constant v_out : sfixed(15 downto -16)  := to_sfixed(200, 15, -16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(190,15,-16);
+  constant v_out : sfixed(15 downto -16)  := to_sfixed(380, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(4,15,-16);
   constant f_load : integer := 3141592*2; 
   
@@ -31,13 +31,13 @@ package input_pkg is
   
   -- theta_star parameters
   constant L_star :  sfixed(0 downto -35) := to_sfixed(0.005, 0, -35);
-  constant C_star :  sfixed(0 downto -35) := to_sfixed(0.0001, 0, -35);
+  constant C_star :  sfixed(0 downto -35) := to_sfixed(0.00285, 0, -35);
   constant theta_L_star : sfixed(15 downto -16) := to_sfixed(200, 15, -16);
-  constant theta_C_star : sfixed(15 downto -16):= to_sfixed(10000, 15, -16);
-  constant theta_C_init : sfixed(15 downto -16):= to_sfixed(20000, 15, -16);
+  constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
+  
   -- Adaptive Gain for theta correction
   constant e11 : sfixed(24 downto -10) := to_sfixed(-0.1,24,-10);
-  constant e22 : sfixed(24 downto -10) := to_sfixed(-1e7,24,-10);
+  constant e22 : sfixed(24 downto -10) := to_sfixed(-20000,24,-10);
   type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
   
   -- vectors
