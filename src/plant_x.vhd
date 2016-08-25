@@ -88,7 +88,7 @@ mult: process(Clk, load)
              else
              G <= ((to_sfixed(0,24,-10), to_sfixed(0,24,-10)),
                    (to_sfixed(0,24,-10), to_sfixed(0,24,-10)));
-             end if;
+           end if;
         -- For starting the computation process
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
             Done <= '0';
