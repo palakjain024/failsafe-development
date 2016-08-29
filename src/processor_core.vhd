@@ -68,10 +68,10 @@ begin
 if clk'event and clk = '1' then
           
             if counter = 0 then
-                if (pc_pwm = '0') then
+                if (pc_pwm = '1') then
                 -- Mode
                   mode <= 0;
-                elsif(pc_pwm = '1') then
+                elsif(pc_pwm = '0') then
                 -- Mode
                     mode <= 1; 
                 else mode <= 0;
