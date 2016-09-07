@@ -221,7 +221,7 @@ de_inst_il: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             adc_in => adc_il,
             done => de_done_il,
             adc_val => plt_x(0));
-de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
+de_inst_vc: descaler generic map (adc_factor => to_sfixed(1000,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
