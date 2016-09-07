@@ -2,7 +2,7 @@
 set_property PACKAGE_PIN Y9 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 
-set_property PACKAGE_PIN G22 [get_ports ena]
+set_property PACKAGE_PIN H22 [get_ports ena]
 set_property IOSTANDARD LVCMOS33 [get_ports ena]
 
 set_property PACKAGE_PIN R6 [get_ports algo_status]
