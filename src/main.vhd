@@ -247,22 +247,22 @@ de_inst_vin: descaler generic map (adc_factor => to_sfixed(30,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(3.3,15,-16),
-              dac_min => to_Sfixed(-3.3,15,-16)
+              dac_max => to_sfixed(16.5,15,-16),
+              dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => ip(2),  -- For inductor current
+              dac_in => z_val(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3.3,15,-16),
-            dac_min => to_sfixed(-3.3,15,-16)
+            dac_max => to_sfixed(66,15,-16),
+            dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => ip(0),  -- For capacitor voltage
+            dac_in => z_val(1),  -- For capacitor voltage
             dac_val => dac_c); 
               
 --
@@ -316,7 +316,7 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= resize(vin_p/v_out, n_left, n_right);
+       duty_ratio <= resize(v_in/v_out, n_left, n_right);
        state := S1;
        
        when S1 =>
