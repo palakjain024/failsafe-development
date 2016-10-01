@@ -12,7 +12,7 @@ entity plant_x is
      port (   Clk : in STD_LOGIC;
               Start : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
-              vin_p: in sfixed(n_left downto n_right);
+              load: in sfixed(n_left downto n_right);
               Done : out STD_LOGIC := '0';
               plt_x : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
            );
@@ -37,14 +37,14 @@ mult: process(Clk, vin_p)
 
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
-   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, i_load);
+   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, load);
    variable C_Matrix             : vect2;
 
    begin
            
    if (Clk'event and Clk = '1') then
    State_inp_Matrix(2) := v_in;
-   State_inp_Matrix(3) := i_load;
+   State_inp_Matrix(3) := load;
    case Mode is
            
              when 0 =>
