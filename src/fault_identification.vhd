@@ -77,8 +77,8 @@ main_loop: process(clk)
             When S2 =>
             
          B(0) <= resize(to_sfixed(0, n_left, n_right) * avg_norm(1), n_left, n_right);
-         B(1) <= resize(to_sfixed(-1.8, n_left, n_right) * avg_norm(1), n_left, n_right);
-         B(2) <= resize(to_sfixed(10, n_left, n_right) * avg_norm(1), n_left, n_right);       
+         B(1) <= resize(to_sfixed(-1.5, n_left, n_right) * avg_norm(1), n_left, n_right);
+         B(2) <= resize(to_sfixed(-1, n_left, n_right) * avg_norm(1), n_left, n_right);       
          State := S3;
           
            When S3 =>

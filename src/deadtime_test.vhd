@@ -24,7 +24,7 @@ begin
        
     begin
         if (CLK 'event and CLK = '1') then
-            if (p_Pwm_In = '1') then
+            if (p_Pwm_In = '0') then
                 if (var_Dead_Count1 < c_Dead_t) then
                     var_Dead_Count1 := var_Dead_Count1 + 1;
                 else null;
@@ -39,7 +39,7 @@ begin
             else null;
             end if;
 -----------------------------------
-            if (sig_Not_Pwm_In = '1') then
+            if (sig_Not_Pwm_In = '0') then
                 if (var_Dead_Count2 < c_Dead_t) then
                     var_Dead_Count2 := var_Dead_Count2 + 1;
                 else null;

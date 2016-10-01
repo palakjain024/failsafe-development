@@ -12,6 +12,7 @@ use work.input_pkg.all;
 entity main is
     Port ( -- General
            clk : in STD_LOGIC;
+           pwm_ena : in STD_LOGIC;
            pwm_f: in STD_LOGIC;
            sensor : in STD_LOGIC;
            -- Fault flags
@@ -170,7 +171,7 @@ begin
 pwm_inst: pwm 
  port map(
     clk => clk, 
-    reset_n => '1', 
+    reset_n => pwm_ena, 
     ena => ena, 
     duty => duty, 
     pwm_out => pwm_out, 
@@ -247,22 +248,22 @@ de_inst_vin: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(16.5,15,-16),
-              dac_min => to_Sfixed(0,15,-16)
+              dac_max => to_sfixed(3.3,15,-16),
+              dac_min => to_Sfixed(-3.3,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => z_val(0),  -- For inductor current
+              dac_in => avg_norm(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(66,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(3.3,15,-16),
+            dac_min => to_sfixed(-3.3,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => z_val(1),  -- For capacitor voltage
+            dac_in => avg_norm(1),  -- For capacitor voltage
             dac_val => dac_c); 
               
 --
@@ -276,7 +277,7 @@ main_loop: process (clk)
        pwm_n_out_t(0)  <= p_pwm2_out;
        else
        pwm_out_t(0) <= '0';
-       pwm_n_out_t(0) <= '0';
+       pwm_n_out_t(0) <= '1';
        end if;
        pc_pwm <= p_pwm1_out;
        

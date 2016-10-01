@@ -2,14 +2,17 @@
 set_property PACKAGE_PIN Y9 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 
+#Mapping flag for sensor fault injection SW7 M15
+set_property PACKAGE_PIN M15 [get_ports sensor]
+set_property IOSTANDARD LVCMOS33 [get_ports sensor]
+#Mapping flag for sensor fault injection SW6 H17
+set_property PACKAGE_PIN H17 [get_ports pwm_f]
+set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
+
+
 #Mapping flag for fault detection JC3_p
 set_property PACKAGE_PIN R6 [get_ports FD_flag]
 set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
-
-#Mapping flag for sensor fault injection SW1 g22
-set_property PACKAGE_PIN G22 [get_ports sensor]
-set_property IOSTANDARD LVCMOS33 [get_ports sensor]
-
 #Mapping flag for fault identification (JC3_N(T6) JC4_P(T4) JC4_N(U4) )
 set_property PACKAGE_PIN T6 [get_ports {FI_flag[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[0]}]
@@ -20,15 +23,17 @@ set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[1]}]
 set_property PACKAGE_PIN U4 [get_ports {FI_flag[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[2]}]
 
-# Mapping PWM module to PMOD JC1_p (AB7) and JC1_n (AB6) PWM (reset on switch SW0)
+
+# Mapping PWM module to PMOD JC1_p (AB7) and JC1_n (AB6) PWM (reset on switch SW0(F22))
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 
 set_property PACKAGE_PIN AB6 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
-set_property PACKAGE_PIN F22 [get_ports pwm_f]
-set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
+set_property PACKAGE_PIN F22 [get_ports pwm_ena]
+set_property IOSTANDARD LVCMOS33 [get_ports pwm_ena]
+
 
 # Digilent PMOD DA21 DAC to PMOD JA1 to JA4 (For theta and err)
 set_property PACKAGE_PIN Y11 [get_ports DA_nSYNC]

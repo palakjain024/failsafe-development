@@ -14,7 +14,7 @@ package input_pkg is
     constant bits_resolution : INTEGER := 8;            --bits of resolution setting the duty cycle
     constant phases          : INTEGER := 1;            --number of output pwms and phases
   -- Deadtime
-  constant c_Dead_t : integer :=  200;
+  constant c_Dead_t : integer :=  80;
   
   -- constant inputs
   constant h : sfixed(0 downto -35) := to_sfixed(0.0000005, 0, -35); -- Fixed time step
