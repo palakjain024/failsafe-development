@@ -16,7 +16,7 @@ Port ( -- General
        FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
-       vin_p :  in sfixed(n_left downto n_right);
+       load :  in sfixed(n_left downto n_right);
        pc_x :   in vect2;
        ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
        avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
@@ -32,7 +32,7 @@ architecture Behavioral of processor_core is
   port (   Clk : in STD_LOGIC;
           Start : in STD_LOGIC;
           Mode : in INTEGER range 0 to 2;
-          vin_p: in sfixed(n_left downto n_right);
+          load: in sfixed(n_left downto n_right);
           Done : out STD_LOGIC := '0';
           plt_x : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
            );
@@ -90,7 +90,7 @@ Plant_inst: plant_x port map (
 Clk => clk,
 Start => start,
 Mode => mode,
-vin_p => vin_p,
+load => load,
 Done => done,
 plt_x => z_val
 );

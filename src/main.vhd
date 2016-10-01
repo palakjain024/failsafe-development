@@ -121,7 +121,7 @@ Port ( -- General
        FI_flag : out STD_LOGIC_VECTOR(2 downto 0);
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
-       vin_p :  in sfixed(n_left downto n_right);
+       load :  in sfixed(n_left downto n_right);
        pc_x :   in vect2;
        ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
        avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
@@ -153,13 +153,13 @@ signal adc_plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_
 signal de_done_il, de_done_vc, de_done_vin : STD_LOGIC;
 -- ADC signals
 signal AD_sync_1, AD_sync_2: STD_LOGIC;
-signal adc_vin_p, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
+signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
 signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal z_val: vect2;
-signal vin_p: sfixed(n_left downto n_right);
+signal load: sfixed(n_left downto n_right);
 signal avg_norm: vect2;
 signal ip       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right)); 
 
@@ -202,7 +202,7 @@ adc_1_inst: pmodAD1_ctrl port map (
     SDATA2 => AD_D1_1, 
     SCLK   => AD_SCK_1,
     nCS    => AD_CS_1,
-    DATA1  => adc_vin_p,    -- Voltage
+    DATA1  => adc_load,    -- Load
     DATA2  => adc_no_use,  -- Not using 
     START  => AD_sync_1, 
     DONE   => AD_sync_1
@@ -221,7 +221,7 @@ adc_2_inst: pmodAD1_ctrl port map (
         );  
         
 -- ADC Retrieval   
-de_inst_il: descaler generic map (adc_factor => to_sfixed(5,15,-16) )
+de_inst_il: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
@@ -235,13 +235,13 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
             adc_in => adc_vc,
             done => de_done_vc,
             adc_val => adc_plt_x(1)); 
-de_inst_vin: descaler generic map (adc_factor => to_sfixed(30,15,-16) )
+de_inst_vin: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
                         port map (
                         clk => clk,
                         start => AD_sync_1,
-                        adc_in => adc_vin_p,
+                        adc_in => adc_load,
                         done => de_done_vin,
-                        adc_val => vin_p);   
+                        adc_val => load);   
         
 -- DAC Scaler       
 scaler_theta_l: scaler generic map (
@@ -298,7 +298,7 @@ pc_inst: processor_core
  FD_flag => FD_flag,
  FI_flag => FI_flag,
  pc_pwm => pc_pwm,
- vin_p => vin_p,
+ load => load,
  pc_x => plt_x,
  ip => ip,
  avg_norm_p => avg_norm,

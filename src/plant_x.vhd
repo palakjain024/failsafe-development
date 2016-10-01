@@ -29,7 +29,7 @@ architecture Behavioral of plant_x is
     
 begin
 
-mult: process(Clk, vin_p)
+mult: process(Clk)
   
    -- General Variables for multiplication and addition
    type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8);
@@ -47,46 +47,45 @@ mult: process(Clk, vin_p)
    State_inp_Matrix(3) := load;
    case Mode is
            
-             when 0 =>
-              ----------------------------------------
-              -- Mode 0 - A:B matrix diode is conducting
-              ----------------------------------------
-              A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
-              A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
-              A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
-              A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,0) := resize(h/C_star, d_left, d_right);
-              A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - (h/(R_load * C_star)), d_left, d_right);
-              A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right);          
-          
-      
-                  
-              when 1 =>
-              ----------------------------------------
-              -- Mode 1 - A:B matrix Switch is conducting current building up
-              ----------------------------------------
-              A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
-              A_Aug_Matrix(0,1) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
-              A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,0) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - (h/(R_load * C_star)), d_left, d_right);
-              A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right); 
+            when 0 =>
+             -- For State Matrix calculation
+                      ----------------------------------------
+                      -- Mode 0 - A:B matrix diode is conducting
+                      ----------------------------------------
+                      A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*ltheta, d_left, d_right);
+                      A_Aug_Matrix(0,1) := resize(-h*ltheta, d_left, d_right);
+                      A_Aug_Matrix(0,2) := resize(h*ltheta, d_left, d_right);
+                      A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+                      A_Aug_Matrix(1,0) := resize(h*ctheta, d_left, d_right);
+                      A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+                      A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+                      A_Aug_Matrix(1,3) := resize(-h*ctheta, d_left, d_right);          
+                
+            when 1 =>
+                    ----------------------------------------
+                    -- Mode 1 - A:B matrix Switch is conducting current building up
+                    ----------------------------------------
+                    A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*ltheta, d_left, d_right);
+                    A_Aug_Matrix(0,1) := to_sfixed(0, d_left, d_right);
+                    A_Aug_Matrix(0,2) := resize(h*ltheta, d_left, d_right);
+                    A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+                    A_Aug_Matrix(1,0) := to_sfixed(0, d_left, d_right);
+                    A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+                    A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+                    A_Aug_Matrix(1,3) := resize(-h*ctheta, d_left, d_right); 
          
                      
-              when others =>
-              A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)/L_star, d_left, d_right);
-              A_Aug_Matrix(0,1) := resize(-h/L_star, d_left, d_right);
-              A_Aug_Matrix(0,2) := resize(h/L_star, d_left, d_right);
-              A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,0) := resize(h/C_star, d_left, d_right);
-              A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - (h/(R_load * C_star)), d_left, d_right);
-              A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-              A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right);          
+            when others =>
+                   A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*ltheta, d_left, d_right);
+                   A_Aug_Matrix(0,1) := resize(-h*ltheta, d_left, d_right);
+                   A_Aug_Matrix(0,2) := resize(h*ltheta, d_left, d_right);
+                   A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
+                   A_Aug_Matrix(1,0) := resize(h*ctheta, d_left, d_right);
+                   A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+                   A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
+                   A_Aug_Matrix(1,3) := resize(-h*ctheta, d_left, d_right);             
                        
-             end case;
+    end case;
                  
               
        case State is

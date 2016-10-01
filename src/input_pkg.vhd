@@ -18,28 +18,25 @@ package input_pkg is
   
   -- constant inputs
   constant h : sfixed(0 downto -35) := to_sfixed(0.0000005, 0, -35); -- Fixed time step
-  constant r : sfixed(1 downto -30) := to_sfixed(-0.82, 1,-30);       -- inductor resistance
+  constant r : sfixed(2 downto -29) := to_sfixed(-1.10, 2,-29);       -- inductor resistance
   
+  -- theta_star parameters
+   constant L_star :  sfixed(0 downto -35) := to_sfixed(0.00532, 0, -35);
+   constant C_star :  sfixed(0 downto -35) := to_sfixed(0.00185, 0, -35);
+   constant R_load :  sfixed(15 downto -16) := to_sfixed(21.3, 15, -16);
+   constant ltheta :  sfixed(15 downto -16) := to_sfixed(188, 15, -16);
+   constant ctheta :  sfixed(15 downto -16) := to_sfixed(540.54, 15, -16); 
+   
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(36,15,-16);
-  constant v_out : sfixed(15 downto -16)  := to_sfixed(80, 15, -16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(28,15,-16);
+  constant v_out : sfixed(15 downto -16)  := to_sfixed(50, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(0,15,-16);
   constant f_load : integer := 3141592*2; 
   
   -- Initial values of il and vc (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(3, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(100,15,-16);
-  
-  -- theta_star parameters
-  constant L_star :  sfixed(0 downto -35) := to_sfixed(0.005, 0, -35);
-  constant C_star :  sfixed(0 downto -35) := to_sfixed(0.0001, 0, -35);
-  constant R_load :  sfixed(15 downto -16) := to_sfixed(21.3, 15, -16);
-  
-  -- Adaptive Gain for theta correction
-  constant e11 : sfixed(24 downto -10) := to_sfixed(-500,24,-10);
-  constant e22 : sfixed(24 downto -10) := to_sfixed(-0.1,24,-10);
-  type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
-  
+   
   -- vectors
   type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
   type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for augumented [z;u]
