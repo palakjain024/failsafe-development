@@ -1,4 +1,4 @@
--- PWM Module
+-- PWM Module for power trench
 library IEEE;
 library IEEE_PROPOSED;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -15,8 +15,8 @@ ENTITY pwm IS
       reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
       ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
       duty      : IN  sfixed(n_left downto n_right);                       --duty cycle (range given by bit resolution)
-      pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
-      pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));         --pwm inverse outputs
+      pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');          --pwm outputs
+      pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'));         --pwm inverse outputs
 END pwm;
 
 ARCHITECTURE logic OF pwm IS
@@ -36,7 +36,7 @@ BEGIN
     IF(reset_n = '0') THEN                                                   --asynchronous reset
       count <= (OTHERS => 0);                                                --clear counter
       pwm_out <= (OTHERS => '0');                                            --clear pwm outputs
-      pwm_n_out <= (OTHERS => '0');                                          --clear pwm inverse outputs
+      pwm_n_out <= (OTHERS => '1');                                          --clear pwm inverse outputs
     ELSIF(clk'EVENT AND clk = '1') THEN                                      --rising system clock edge
       IF(ena = '1') THEN                                                     --latch in new duty cycle
         half_duty_new <= to_integer(duty*to_sfixed(period, 31, 0))/2;                                      --determine clocks in 1/2 duty cycle
@@ -51,11 +51,11 @@ BEGIN
       END LOOP;
       FOR i IN 0 to phases-1 LOOP                                            --control outputs for each phase
         IF(count(i) = half_duty(i)) THEN                                       --phase's falling edge reached
-          pwm_out(i) <= '0';                                                     --deassert the pwm output
-          pwm_n_out(i) <= '1';                                                   --assert the pwm inverse output
+          pwm_out(i) <= '1';                                                     --deassert the pwm output
+          pwm_n_out(i) <= '0';                                                   --assert the pwm inverse output
         ELSIF(count(i) = period - half_duty(i)) THEN                           --phase's rising edge reached
-          pwm_out(i) <= '1';                                                     --assert the pwm output
-          pwm_n_out(i) <= '0';                                                   --deassert the pwm inverse output
+          pwm_out(i) <= '0';                                                     --assert the pwm output
+          pwm_n_out(i) <= '1';                                                   --deassert the pwm inverse output
         END IF;
       END LOOP;
     END IF;

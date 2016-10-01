@@ -7,13 +7,13 @@ use work.input_pkg.all;
 entity deadtime_test is
      Port ( clk : in STD_LOGIC;
            p_Pwm_In : in STD_LOGIC;
-           p_Pwm1_Out : out STD_LOGIC := '0';
-           p_Pwm2_Out : out STD_LOGIC := '0');
+           p_Pwm1_Out : out STD_LOGIC := '1';
+           p_Pwm2_Out : out STD_LOGIC := '1');
 end deadtime_test;
 
 architecture Behavioral of deadtime_test is
 
-signal sig_Not_Pwm_In: std_logic := '0';
+signal sig_Not_Pwm_In: std_logic := '1';
 
 begin
     sig_Not_Pwm_In <= not p_Pwm_In;

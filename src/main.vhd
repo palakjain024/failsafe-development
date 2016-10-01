@@ -48,15 +48,15 @@ component pwm
         reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
         ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
         duty      : IN  sfixed(n_left downto n_right);                       --duty cycle
-        pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
-        pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));          --pwm inverse outputs
+        pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');          --pwm outputs
+        pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'));          --pwm inverse outputs
 end component pwm;
 -- Dead Time Module
 component deadtime_test
          Port ( clk : in STD_LOGIC;
                p_Pwm_In : in STD_LOGIC;
-               p_Pwm1_Out : out STD_LOGIC := '0';
-               p_Pwm2_Out : out STD_LOGIC := '0');
+               p_Pwm1_Out : out STD_LOGIC := '1';
+               p_Pwm2_Out : out STD_LOGIC := '1');
 end component deadtime_test;
 -- DAC Module
 component pmodDA2_ctrl
