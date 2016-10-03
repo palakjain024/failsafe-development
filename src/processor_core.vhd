@@ -125,13 +125,13 @@ if clk'event and clk = '1' then
             pc_z <= z_val;
             avg_norm_p <= avg_norm;
             if counter = 0 then
-                if (pc_pwm = '0') then
+                if (pc_pwm = '0') then -- top switch is conducting
                 -- Mode
                   mode <= 0;
-                elsif(pc_pwm = '1') then
+                elsif(pc_pwm = '1') then -- bottom switch is conducting
                 -- Mode
                     mode <= 1; 
-                else mode <= 0;
+                else mode <= 1;
                 end if;
             end if;   
  -- For constant time step 500 ns Matrix Mutiplication to run  
