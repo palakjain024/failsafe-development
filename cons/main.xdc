@@ -24,11 +24,11 @@ set_property PACKAGE_PIN U4 [get_ports {FI_flag[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[2]}]
 
 
-# Mapping PWM module to PMOD JC1_p (AB7) and JC1_n (AB6) PWM (reset on switch SW0(F22))
-set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
+# Mapping PWM module to PMOD JC1_p (AB7 bottom switch) and JC1_n (AB6 top switch) PWM (reset on switch SW0(F22))
+set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 
-set_property PACKAGE_PIN AB6 [get_ports {pwm_n_out_t[0]}]
+set_property PACKAGE_PIN AB7 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
 set_property PACKAGE_PIN F22 [get_ports pwm_ena]
