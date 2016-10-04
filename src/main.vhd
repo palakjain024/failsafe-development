@@ -249,12 +249,12 @@ de_inst_vin: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(3.3,15,-16),
-              dac_min => to_Sfixed(-3.3,15,-16)
+              dac_max => to_sfixed(16.5,15,-16),
+              dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => avg_norm(0),  -- For inductor current
+              dac_in => plt_x(0),  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
