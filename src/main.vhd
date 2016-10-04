@@ -126,6 +126,7 @@ Port ( -- General
        pc_x :   in vect2;
        ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
        avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z :   out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );   
 end component processor_core;
@@ -161,7 +162,7 @@ signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal z_val: vect2;
 signal load: sfixed(n_left downto n_right);
-signal avg_norm: vect2;
+signal avg_norm, norm: vect2;
 signal ip       : ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right)); 
 
 
@@ -303,6 +304,7 @@ pc_inst: processor_core
  pc_x => plt_x,
  ip => ip,
  avg_norm_p => avg_norm,
+ norm_p => norm,
  pc_z => z_val);
 
 -- duty cycle cal

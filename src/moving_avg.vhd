@@ -70,7 +70,7 @@ if (Clk'event and Clk = '1') then
    
    when S2 =>
    we <= '1';
-   avg <= resize(sum/to_sfixed(2048, n_left, n_right), n_left, n_right);
+   avg <= resize(sum*to_sfixed(0.000488, d_left, d_right), n_left, n_right);
    done <= '1';
    State := S3;
    

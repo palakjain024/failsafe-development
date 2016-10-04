@@ -20,6 +20,7 @@ Port ( -- General
        pc_x :   in vect2;
        ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
        avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        pc_z :   out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );   
 end processor_core;
@@ -124,6 +125,7 @@ begin
 if clk'event and clk = '1' then
             pc_z <= z_val;
             avg_norm_p <= avg_norm;
+            norm_p <= norm;
             if counter = 0 then
                 if (pc_pwm = '0') then -- top switch is conducting
                 -- Mode
@@ -174,7 +176,7 @@ fault_detection: process(clk)
                             abs_err_val(0) <= resize(abs(err_val(0)), n_left, n_right);
                             abs_err_val(1) <= resize(abs(err_val(1)), n_left, n_right);
                             norm(0) <= resize(err_val(0)*to_sfixed(0.35, n_left, n_right), n_left, n_right);
-                            norm(1) <= resize(err_val(1)*to_sfixed(0.033, n_left, n_right), n_left, n_right);
+                            norm(1) <= resize(err_val(1)*to_sfixed(0.0666, n_left, n_right), n_left, n_right);
                             State := S3;
                             
                             when S3 =>
