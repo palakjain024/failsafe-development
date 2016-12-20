@@ -13,14 +13,13 @@ Port ( -- General
        Clk : in STD_LOGIC;
        ena : in STD_LOGIC;
        -- Converter state estimator
-       pc_pwm : in STD_LOGIC;
-       load : in sfixed(n_left downto n_right);
-       pc_x : in vect2;
+       vpv : in sfixed(n_left downto n_right);
+       pc_x : in sfixed(n_left downto n_right);
        theta_done : out STD_LOGIC;
-       pc_theta : out vect2 := (theta_L_star,theta_C_star);
-       pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-          );   
+       pc_theta : out vect3Q := (theta_L_star,theta_C_star,theta_RC_star);
+       pc_err : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       pc_z : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right)
+       );   
 end processor_core;
 
 architecture Behavioral of processor_core is
@@ -30,22 +29,20 @@ architecture Behavioral of processor_core is
   port (  Clk : in STD_LOGIC;
           ena : in STD_LOGIC;
           Start : in STD_LOGIC;
-          Mode : in INTEGER range 0 to 2;
-          pc_x : in vect2;
-          load : in sfixed(n_left downto n_right);
+          pc_x : in sfixed(n_left downto n_right);
+          vpv : in sfixed(n_left downto n_right);
           Done : out STD_LOGIC := '0';
-          pc_theta : out vect2 := (theta_L_star,theta_C_star);
-          pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-          pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+          pc_theta : out vect3Q := (theta_L_star,theta_C_star,theta_RC_star);
+          pc_err : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+          pc_z : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right)
         );
  end component plant_x;
  
  -- Signal definition for components
  -- INPUT  
  signal start : STD_LOGIC := '0';
- signal mode  : INTEGER range 0 to 2 := 0;
  -- Misc
- signal counter: integer range -1 to f_load;
+ signal counter: integer range -1 to 1e3;
  
 begin
 
@@ -53,30 +50,19 @@ Plant_inst: plant_x port map (
 Clk => clk,
 ena => ena,
 Start => start,
-Mode => mode,
 pc_x => pc_x,
-load => load,
+vpv => vpv,
 Done => theta_done,
 pc_theta => pc_theta,
 pc_err => pc_err,
 pc_z => pc_z
 );
 
-CoreLOOP: process(clk, pc_pwm)
+CoreLOOP: process(clk)
 begin
 
 if clk'event and clk = '1' then
           
-            if counter = 0 then
-                if (pc_pwm = '1') then
-                -- Mode
-                  mode <= 0;
-                elsif(pc_pwm = '0') then
-                -- Mode
-                    mode <= 1; 
-                else mode <= 0;
-                end if;
-            end if;   
  -- For constant time step 500 ns Matrix Mutiplication to run  
                     if (counter = 2) then
                       start <= '1';

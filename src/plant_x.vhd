@@ -10,68 +10,71 @@ use IEEE.std_logic_1164.all;
 use work.input_pkg.all;
 
 entity plant_x is
-     port (   Clk : in STD_LOGIC;
-              ena : in STD_LOGIC;
-              Start : in STD_LOGIC;
-              Mode : in INTEGER range 0 to 2;
-              pc_x : in vect2;
-              load : in sfixed(n_left downto n_right);
-              Done : out STD_LOGIC := '0';
-              pc_theta : out vect2 := (theta_L_star,theta_C_star);
-              pc_err : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-              pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       port (  Clk : in STD_LOGIC;
+               ena : in STD_LOGIC;
+               Start : in STD_LOGIC;
+               pc_x : in sfixed(n_left downto n_right);
+               vpv : in sfixed(n_left downto n_right);
+               Done : out STD_LOGIC := '0';
+               pc_theta : out vect3Q := (theta_L_star,theta_C_star,theta_RC_star);
+               pc_err : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+               pc_z : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right)
            );
 end plant_x;
 
 architecture Behavioral of plant_x is
     
-   	signal	Count0 : UNSIGNED (2 downto 0):="000";
+   	signal	Count0 : UNSIGNED (2 downto 0):= "000";
     signal	A      : sfixed(d_left downto d_right);
     signal	B      : sfixed(n_left downto n_right);
     signal	P      : sfixed(n_left + d_left + 1 downto n_right + d_right);
-    signal	Sum	   : sfixed(n_left + d_left + 4 downto n_right + d_right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
+    signal	Sum	   : sfixed(n_left + d_left + 4 downto n_right + d_right); 
+     -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
     signal 	j0, k0, k2, k3 : INTEGER := 0;
-    signal wa : sfixed(n_left downto n_right);
-    signal wb : sfixed(n_left downto n_right);
+     
     -- For error calculation
-    signal err_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-    signal err_val_d : discrete_vect2 := (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right));
-    signal   z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+    signal err_val   : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       
+    -- For z estimation
+    signal     z_val : vect2 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
     
     -- For Gain matrix
     signal G : gain_mat; -- Negative of G matrix
     
     -- For w discretized matrix
-    signal w : discrete_mat22 := ((to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)),
-                                  (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)));
-    -- H matrix
-   signal H_est : H_mat22 := ((to_sfixed(0.00100, 2, d_right), to_sfixed(0, 2, d_right)),
-                                      (to_sfixed(0, 2, d_right), to_sfixed(0.00100, 2, d_right))); 
-   signal H_mem : H_mat22 := ((to_sfixed(0.00100, 2, d_right), to_sfixed(0, 2, d_right)),
-                                      (to_sfixed(0, 2, d_right), to_sfixed(0.00100, 2, d_right)));
+    signal wa : sfixed(n_left downto n_right);
+    signal w : discrete_mat23 := ((to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)),
+                                  (to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right),to_sfixed(0,d_left,d_right)));
+                                  
+    -- H and L matrix
+   signal L_est : L_mat23 := ((to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right)),
+                              (to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right))); 
+   signal L_mem : L_mat23 := ((to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right)),
+                              (to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right)));
+   
+   signal H_est : vect3H := (to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right), to_sfixed(0.001, lmat_left, lmat_right));
     -- H_est transpose * discretixed error * gain
-    signal h_err : discrete_vect2;
-    signal g_h_err : vect2;
+    signal h_err : vect3;
+    signal g_h_err : vect3;
     -- Theta
-    signal theta_est : vect2 := (theta_L_star,theta_C_star);
+    signal theta_est : vect3Q := (theta_L_star,theta_C_star,theta_RC_star);
     
 begin
 
-mult: process(Clk, load)
+mult: process(Clk, vpv)
   
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19);
    variable     State         : STATE_VALUE := S0;
-   -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
-   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, load);
+   variable State_inp_Matrix     : vect4:= (il0, vc0, vpv, to_sfixed(0,n_left,n_right));
    variable C_Matrix             : vect2;
 
    begin
            
    if (Clk'event and Clk = '1') then
-   State_inp_Matrix(2) := v_in;
-   State_inp_Matrix(3) := load;
+   State_inp_Matrix(2) := vpv;
+   State_inp_Matrix(3) := to_sfixed(0, n_left, n_right);
    
                  
               
@@ -82,12 +85,12 @@ mult: process(Clk, load)
        when S0 =>
        
        -- To enable parameter estimator algorithm
+       -- Gain are multiplied by h so lesser precision will be fine
            if ena = '1' then
-             G <= ((e11, to_sfixed(0,24,-10)),
-                   (to_sfixed(0,24,-10), e22));
+             G <= (e11, e22, e33);
              else
-             G <= ((to_sfixed(0,24,-10), to_sfixed(0,24,-10)),
-                   (to_sfixed(0,24,-10), to_sfixed(0,24,-10)));
+             G <= (e00, e00, e00);
+                 
            end if;
         -- For starting the computation process
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
@@ -99,42 +102,16 @@ mult: process(Clk, load)
                State := S0;
            end if;
          -- For State Matrix calculation
-         if Mode = 0 then
-         ----------------------------------------
-         -- Mode 0 - A:B matrix diode is conducting
-         ----------------------------------------
          A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,1) := resize(-h*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,2) := resize(h*theta_est(0), d_left, d_right);
+         A_Aug_Matrix(0,1) := resize(to_sfixed(-1, n_left, n_right)*h * theta_est(0), d_left, d_right);
+         A_Aug_Matrix(0,2) := resize(h * theta_est(0), d_left, d_right);
          A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,0) := resize(h*theta_est(1), d_left, d_right);
-         A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
+         A_Aug_Matrix(1,0) := resize(h * theta_est(1), d_left, d_right);
+         A_Aug_Matrix(1,1) := resize(to_sfixed(1, n_left, n_right) - h*theta_est(2), d_left, d_right);
          A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right);          
+         A_Aug_Matrix(1,3) := to_sfixed(0, d_left, d_right);          
                      
-         elsif Mode = 1 then
-         ----------------------------------------
-         -- Mode 1 - A:B matrix Switch is conducting current building up
-         ----------------------------------------
-         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,1) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(0,2) := resize(h*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,0) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
-         A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right); 
-                    
-         else
-         A_Aug_Matrix(0,0) := resize(to_sfixed(1, n_left, n_right) + (h*r)*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,1) := resize(-h*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,2) := resize(h*theta_est(0), d_left, d_right);
-         A_Aug_Matrix(0,3) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,0) := resize(h*theta_est(1), d_left, d_right);
-         A_Aug_Matrix(1,1) := to_sfixed(1, d_left, d_right);
-         A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
-         A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right);          
-         end if;
+        
 
        -------------------------------------------
        --    State S1 (filling up of pipeline)
@@ -250,82 +227,84 @@ mult: process(Clk, load)
        
         State_inp_Matrix(0) := C_Matrix(0);
         State_inp_Matrix(1) := C_Matrix(1);
-        z_val <= C_Matrix;
-        pc_z <=  C_Matrix;
+        -- remember to revert sign of z in W mat
+        z_val(0) <= resize(to_sfixed(-1, n_left, n_right) * C_Matrix(0), n_left, n_right);
+        z_val(1) <= C_Matrix(1);
+        pc_z <=  resize(to_sfixed(-1, n_left, n_right) * C_Matrix(0), n_left, n_right);
         State := S9;
         
        when S9 =>
-       err_val(0) <= resize(z_val(0) - pc_x(0), n_left, n_right);
-       err_val(1) <= resize(z_val(1) - pc_x(1), n_left, n_right);
+       err_val <= resize(z_val(0) - pc_x, n_left, n_right);
        State := S10;
-       ---------------------------------------
-       -- Calculation of W matrix
-       ---------------------------------------
+      
        when S10 =>
        pc_err <= err_val;
-       
-       -- mode 1 means less terms, mode 0 means more term
-        if mode = 1 then
-        State := S12;
-        else
-        State := S11;
-        end if;
-        B <= resize(r*z_val(0), B'high, B'low);
-      -- W martix calculation     
+       B <= resize(r*C_Matrix(0), B'high, B'low);
+       State := S11;
+       -------------------------------------
+       -- W martix calculation 
+       --------------------------------------    
         when S11 =>
-        wa <= resize((B - z_val(1)) + v_in, wa'high, wa'low);
-        wb <= resize(z_val(0) - load, wb'high, wb'low);
-        State := S13;
+        wa <= resize(B - z_val(1) + vpv, wa'high, wa'low);
+        State := S12;
+        ---------------------------------------
+        -- Discretization of W matrix
+        ---------------------------------------
         when S12 =>
-        wa <= resize(B + v_in, wa'high, wa'low);
-        wb <= resize(to_sfixed(-1,n_left,n_right) * load, wb'high, wb'low);
-        State := S13;
-        
-        when S13 =>
         w(0,0) <= resize(h*wa, d_left, d_right);
-        w(1,1) <= resize(h*wb, d_left, d_right);
-        State := S14;
+        w(1,1) <= resize(h*C_Matrix(0), d_left, d_right);
+        w(1,2) <= resize(h*to_sfixed(-1,n_left,n_right)*C_Matrix(1), d_left, d_right);
+        
+        State := S13;
        ------------------------------------------------
        -- H matrix calculation 
        -----------------------------------------------
-        when S14 =>
-        H_est(0,0) <= resize(A_Aug_Matrix(0,0) * H_mem(0,0) + A_Aug_Matrix(0,1) * H_mem(1,0) + w(0,0),2, d_right);
-        H_est(0,1) <= resize(A_Aug_Matrix(0,0) * H_mem(0,1) + A_Aug_Matrix(0,1) * H_mem(1,1),2, d_right);
-        H_est(1,0) <= resize(A_Aug_Matrix(1,0) * H_mem(0,0) + A_Aug_Matrix(1,1) * H_mem(1,0),2, d_right);
-        H_est(1,1) <= resize(A_Aug_Matrix(1,0) * H_mem(0,1) + A_Aug_Matrix(1,1) * H_mem(1,1) + w(1,1),2, d_right);
-        State := S15;
+        when S13 =>
+        L_est(0,0) <= resize(A_Aug_Matrix(0,0) * L_mem(0,0) + A_Aug_Matrix(0,1) * L_mem(1,0) + w(0,0), lmat_left, lmat_right);
+        L_est(0,1) <= resize(A_Aug_Matrix(0,0) * L_mem(0,1) + A_Aug_Matrix(0,1) * L_mem(1,1), lmat_left, lmat_right);
+        L_est(0,2) <= resize(A_Aug_Matrix(0,0) * L_mem(0,2) + A_Aug_Matrix(0,1) * L_mem(1,2), lmat_left, lmat_right);
+        L_est(1,0) <= resize(A_Aug_Matrix(1,0) * L_mem(0,0) + A_Aug_Matrix(1,1) * L_mem(1,0), lmat_left, lmat_right);
+        L_est(1,1) <= resize(A_Aug_Matrix(1,0) * L_mem(0,1) + A_Aug_Matrix(1,1) * L_mem(1,1) + w(1,1), lmat_left, lmat_right);
+        L_est(1,2) <= resize(A_Aug_Matrix(1,0) * L_mem(0,2) + A_Aug_Matrix(1,1) * L_mem(1,2) + w(1,2), lmat_left, lmat_right);
+        State := S14;
        
-       When S15 =>
-         H_mem(0,0) <= H_est(0,0);
-         H_mem(0,1) <= H_est(0,1);
-         H_mem(1,0) <= H_est(1,0);
-         H_mem(1,1) <= H_est(1,1);
-         State := S16;
+       When S14 =>
+         L_mem(0,0) <= L_est(0,0);
+         L_mem(0,1) <= L_est(0,1);
+         L_mem(0,2) <= L_est(0,2);
+         L_mem(1,0) <= L_est(1,0);
+         L_mem(1,1) <= L_est(1,1);
+         L_mem(1,2) <= L_est(1,2);
+         State := S15;
                  
      -----------------------------------------
      -- Error discretization
      -----------------------------------------
+       when S15 =>
+        H_est(0) <= resize(to_sfixed(-1, n_left, n_right) * L_est(0,0), n_left, n_right);
+        H_est(1) <= resize(to_sfixed(-1, n_left, n_right) * L_est(0,1), n_left, n_right);
+        H_est(2) <= resize(to_sfixed(-1, n_left, n_right) * L_est(0,2), n_left, n_right);
+        State := S16;
+        
        when S16 =>
-        err_val_d(0) <= resize(h*err_val(0), d_left, d_right);
-        err_val_d(1) <= resize(h*err_val(1), d_left, d_right);
+        h_err(0) <= resize(L_est(0,0)*err_val, n_left, n_right);
+        h_err(1) <= resize(L_est(0,1)*err_val, n_left, n_right);
+        h_err(2) <= resize(L_est(0,2)*err_val, n_left, n_right);
         State := S17;
-        
-       when S17 =>
-        h_err(0) <= resize((H_est(0,0)*err_val_d(0)) + (H_est(1,0)*err_val_d(1)), d_left, d_right);
-        h_err(1) <= resize((H_est(0,1)*err_val_d(0)) + (H_est(1,1)*err_val_d(1)), d_left, d_right);
-        State := S18;
        
-       when S18 =>
-        g_h_err(0) <= resize(G(0,0)*h_err(0), n_left, n_right);
-        g_h_err(1) <= resize(G(1,1)*h_err(1), n_left, n_right);
-        State := S19;
+       when S17 =>
+        g_h_err(0) <= resize(G(0)*h_err(0), n_left, n_right);
+        g_h_err(1) <= resize(G(1)*h_err(1), n_left, n_right);
+        g_h_err(2) <= resize(G(2)*h_err(2), n_left, n_right);
+        State := S18;
         
-       when S19 =>
-        theta_est(0) <= resize(theta_est(0) + g_h_err(0), n_left, n_right);
-        theta_est(1) <= resize(theta_est(1) + g_h_err(1), n_left, n_right);
-        State := S20;
+       when S18 =>
+        theta_est(0) <= resize(theta_est(0) + g_h_err(0), 29, -2);
+        theta_est(1) <= resize(theta_est(1) + g_h_err(1), 29, -2);
+        theta_est(2) <= resize(theta_est(2) + g_h_err(2), 29, -2);
+        State := S19;
                  
-       When S20 =>
+       When S19 =>
         Done <= '1';
         pc_theta <= theta_est; 
         State := S0;
