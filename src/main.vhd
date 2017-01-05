@@ -164,25 +164,35 @@ de_inst_vpv: descaler generic map (adc_factor => to_sfixed(1,15,-16) )
             adc_val => vpv_off); 
         
 -- DAC Scaler       
+--scaler_theta_l: scaler generic map (
+--              dac_left => 15,
+--              dac_right => -16,
+--              dac_max => to_sfixed(33,15,-16),
+--              dac_min => to_sfixed(-33,15,-16)
+--              )
+--              port map (
+--              clk => clk,
+--              dac_in => z_val,  -- For inductor current
+--              dac_val => dac_l);
 scaler_theta_l: scaler generic map (
-              dac_left => 15,
-              dac_right => -16,
-              dac_max => to_sfixed(33,15,-16),
-              dac_min => to_sfixed(-33,15,-16)
-              )
-              port map (
-              clk => clk,
-              dac_in => z_val,  -- For inductor current
-              dac_val => dac_l);                  
-scaler_theta_c: scaler generic map (
-            dac_left => 15,
-            dac_right => -16,
-            dac_max => to_sfixed(33,15,-16),
-            dac_min => to_sfixed(-33,15,-16)
+            dac_left => 29,
+            dac_right => -2,
+            dac_max => to_sfixed(32000,15,-16),
+            dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => err_val,  -- For capacitor voltage
+            dac_in => pc_theta(1),  -- For inductor current
+            dac_val => dac_l);                             
+scaler_theta_c: scaler generic map (
+            dac_left => 29,
+            dac_right => -2,
+            dac_max => to_sfixed(32000,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => pc_theta(2),  -- For capacitor voltage
             dac_val => dac_c);
             
 -- Processor core
