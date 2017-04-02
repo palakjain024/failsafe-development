@@ -1,6 +1,8 @@
 # Moved to ACE-lib in powergroup organization (private repository). Soon, after full develoment, we will publish all codes for failsafe networks.
 
-# failsafe-development
+The project is still active. If you have any question, please contact me through email-id palakjain@u.nus.edu
+
+# Gist of failsafe-development
 Resilient Power Distribution Networks for rural electrification and Zero energy buildings
 
 The idea is to develop fault prediction, fault diagnosis and fault remediation algorithms and hardware solution 
