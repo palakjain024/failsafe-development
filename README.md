@@ -1,3 +1,5 @@
+# Moved to ACE-lib in powergroup organization (private repository). Soon, after full develoment, we will publish all codes for failsafe networks.
+
 # failsafe-development
 Resilient Power Distribution Networks for rural electrification and Zero energy buildings
 
@@ -9,4 +11,3 @@ In this repository, you will find algorithms for fault diagnosis of switching po
 batteries and network faults.
 
 Moreover, we have hardware solutions for highly reliable power electronics converter with fault remediation strategies.
-
