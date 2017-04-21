@@ -165,7 +165,7 @@ mult: process(Clk, load)
                Sum <= resize(Sum + P, Sum'high, Sum'low);
            end if;
 
-           if (k2 = 3) then
+           if (k2 = 5) then
                k2 <= 0;
                else
                   k2 <= k2 + 1;
@@ -175,12 +175,12 @@ mult: process(Clk, load)
            ----------------------------------
            -- check if all initiations done
            ----------------------------------
-           if (Count0 = 7) then
+           if (Count0 = 11) then
                State := S5;
            else
                State := S4;                
                Count0 <= Count0 + 1;
-              if (k0 = 3) then
+              if (k0 = 5) then
                j0 <= j0 +1;
                k0 <= 0;
                else 

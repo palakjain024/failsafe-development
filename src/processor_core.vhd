@@ -11,9 +11,6 @@ use work.input_pkg.all;
 entity processor_core is
 Port ( -- General
        Clk : in STD_LOGIC;
-       -- Input fault flag
-       input_f : in STD_LOGIC;
-       FI_vin : out STD_LOGIC;
        -- Converter fault flag;
        FD_flag : out STD_LOGIC;
        FI_flag :out STD_LOGIC_VECTOR(1 downto 0); 
@@ -39,41 +36,9 @@ architecture Behavioral of processor_core is
        plt_x : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
             );
  end component plant_x;
- -- Fault identification
- component fault_identification
-  Port ( 
-           clk : in STD_LOGIC;
-           start : in STD_LOGIC;
-           FD_flag : in STD_LOGIC;
-           avg_norm : in vect2;
-           done : out STD_LOGIC := '0';
-           ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
-           FI_flag : out STD_LOGIC_Vector(1 downto 0):= (others => '0')
-         );
- end component;
- --Moving average
- component moving_avg is
-  Port ( clk : in STD_LOGIC;
-         start : in STD_LOGIC;
-         datain : in sfixed(n_left downto n_right);
-         done: out STD_LOGIC;
-         avg: out sfixed(n_left downto n_right)
-        );
- end component moving_avg;
- 
+
  -- Signal definition for components
- 
- -- fault identification
- signal fd_value: sfixed(d_left downto d_right);
- signal flag: STD_LOGIC; 
- 
- 
- signal err_val, z_val, abs_err_val: vect2;
- signal norm: vect2;
- signal abs_norm: vect2;
- -- Moving avg
- signal avg_norm: vect2;
-  -- INPUT  
+ -- INPUT  
  signal start : STD_LOGIC := '0';
  signal mode  : INTEGER range 0 to 2 := 0;
  -- OUTPUT
@@ -91,29 +56,6 @@ load => load,
 Done => done,
 plt_x => z_val
 );
-
-moving_avg_gamma_il: moving_avg port map (
-clk => clk,
-start => start,
-datain => norm(0),
-done => done_avg_il,
-avg => avg_norm(0));
-
-moving_avg_gamma_vc: moving_avg port map (
-clk => clk,
-start => start,
-datain => norm(1),
-done => done_avg_vc,
-avg => avg_norm(1));
-
-fI_inst: fault_identification port map (
-clk => clk,
-start => start,
-FD_flag => flag,
-avg_norm => avg_norm,
-done => done_FI,
-ip => ip,
-FI_flag => FI_flag);
 
 CoreLOOP: process(clk, pc_pwm)
 begin
@@ -191,12 +133,6 @@ fault_detection: process(clk)
                             when S5 =>
                             
                             -- Fault detection and identification when input fault, here can think of implementing both input fault as well as other converter faults (Multiple faults)
-                            -- Single fault case
-                            if input_f = '1' then
-                               FI_vin <= '1'; -- output port
-                               FD_flag <= '1';
-                            else
-                             -- Fault detection if no input fault
                                if fd_value > to_sfixed(0.2, d_left, d_right) then
                                FD_flag <= '1'; -- output port
                                flag <= '1';
@@ -204,9 +140,8 @@ fault_detection: process(clk)
                                FD_flag <= '0';
                                flag <= '0';
                                end if;
-                               FI_vin <= '0';
-                            end if;
-                            
+                               
+                                                       
                             State := S0;  
                    end case;
              end if;
