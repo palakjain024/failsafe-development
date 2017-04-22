@@ -13,13 +13,14 @@ Port ( -- General
        Clk : in STD_LOGIC;
        -- Converter fault flag;
        FD_flag : out STD_LOGIC;
-       FI_flag :out STD_LOGIC_VECTOR(1 downto 0); 
+       --FI_flag :out STD_LOGIC_VECTOR(1 downto 0); 
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
-       ip: inout ip_array := (to_sfixed(0, n_left, n_right), to_sfixed(0, n_left, n_right));
-       avg_norm_p: out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       err_val : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       residual_eval : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right); 
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
           );   
 end processor_core;
@@ -28,23 +29,38 @@ architecture Behavioral of processor_core is
  -- Component definition
  -- Converter estimator
  component plant_x
- port (   Clk : in STD_LOGIC;
-       Start : in STD_LOGIC;
-       Mode : in INTEGER range 0 to 2;
-       load : in sfixed(n_left downto n_right);
-       Done : out STD_LOGIC := '0';
-       plt_x : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-            );
+ port (    Clk : in STD_LOGIC;
+           Start : in STD_LOGIC;
+           Mode : in INTEGER range 0 to 2;
+           load : in sfixed(n_left downto n_right);
+           plt_x : in vect2;
+           done : out STD_LOGIC := '0';
+           plt_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+        );
  end component plant_x;
 
  -- Signal definition for components
  -- INPUT  
  signal start : STD_LOGIC := '0';
  signal mode  : INTEGER range 0 to 2 := 0;
+ 
  -- OUTPUT
- signal done, done_avg_il, done_avg_vc, done_FI : STD_LOGIC := '1';
+ signal done: STD_LOGIC := '1';
+ signal z_val: vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+ 
+ -- Fault detection
+ signal err_val_out : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+ signal norm_out : sfixed(n_left downto n_right):= to_sfixed(0, n_left, n_right);
+ signal residual_funct_out : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+ signal residual_eval_out : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+ signal flag : STD_LOGIC;
+ 
  -- Misc
- signal counter: integer range -1 to f_load;
+ signal A_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+ signal B_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+ signal P_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+ signal Sum_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
+ signal counter: integer range -1 to 50000 := 0;
  
 begin
 
@@ -53,8 +69,9 @@ Clk => clk,
 Start => start,
 Mode => mode,
 load => load,
+plt_x => pc_x,
 Done => done,
-plt_x => z_val
+plt_z => z_val
 );
 
 CoreLOOP: process(clk, pc_pwm)
@@ -62,8 +79,11 @@ begin
 
 if clk'event and clk = '1' then
             pc_z <= z_val;
-            avg_norm_p <= avg_norm;
-            if counter = 0 then
+            err_val <= err_val_out;
+            norm <= norm_out;
+            residual_eval <= residual_eval_out;
+             
+        if counter = 0 then
                 if (pc_pwm = '0') then
                 -- Mode
                   mode <= 0;
@@ -72,9 +92,9 @@ if clk'event and clk = '1' then
                     mode <= 1; 
                 else mode <= 0;
                 end if;
-            end if;   
+         end if;   
  -- For constant time step 500 ns Matrix Mutiplication to run  
-                    if (counter = 2) then
+                    if (counter = 1) then
                       start <= '1';
                       elsif (counter = 3) then
                       start <= '0';
@@ -88,11 +108,11 @@ if clk'event and clk = '1' then
                      end if;          
 end if;
 end process; 
-------------------------------
+--------------------------------
 fault_detection: process(clk)
             
-        type state_value is (S0, S1, S2, S3, S4, S5);
-        variable State : state_value := S0;
+    type state_value is (S0, S1, S2, S3, S4, S5, S6);
+    variable State : state_value := S0;
               begin
                   if (clk = '1' and clk'event) then
                    
@@ -100,45 +120,49 @@ fault_detection: process(clk)
                             
                             when S0 =>
                                        if( Start = '1' ) then
+                                           err_val_out(0) <= resize(pc_x(0) - z_val(0), n_left, n_right);
+                                           err_val_out(1) <= resize(pc_x(1) - z_val(1), n_left, n_right);
                                            State := S1;
                                        else
                                            State := S0;
                                        end if;
                             when S1 =>
-                            err_val(0) <= resize(pc_x(0) - z_val(0), n_left, n_right);
-                            err_val(1) <= resize(pc_x(1) - z_val(1), n_left, n_right);
+                            A_ref <= err_val_out(0);
+                            B_ref <= err_val_out(0);
                             State := S2;
                             
                             when S2 =>
-                            abs_err_val(0) <= resize(abs(err_val(0)), n_left, n_right);
-                            abs_err_val(1) <= resize(abs(err_val(1)), n_left, n_right);
-                            norm(0) <= resize(err_val(0)*to_sfixed(0.2, n_left, n_right), n_left, n_right);
-                            norm(1) <= resize(err_val(1)*to_sfixed(0.005, n_left, n_right), n_left, n_right);
+                            A_ref <= err_val_out(1);
+                            B_ref <= err_val_out(1);
+                            P_ref <= resize(A_ref*B_ref, n_left, n_right);
                             State := S3;
                             
                             when S3 =>
-                            abs_norm(0) <= resize(abs(norm(0)), n_left, n_right);
-                            abs_norm(1) <= resize(abs(norm(1)), n_left, n_right);
+                            P_ref <= resize(A_ref*B_ref, n_left, n_right);
+                            Sum_ref <= P_ref;
                             State := S4;
                             
                             when S4 =>
-                            -- Calculation of infinity norm       
-                            if abs_norm(0) >= abs_norm(1) then
-                            fd_value <= resize(abs_norm(0), d_left, d_right);
-                            else
-                            fd_value <= resize(abs_norm(1), d_left, d_right);
-                            end if;
+                            norm_out <= resize(Sum_ref + P_ref, n_left, n_right);
+                            A_ref <= resize(to_sfixed(0.999995,d_left,d_right) * residual_funct_out, n_left, n_right);
+                            B_ref <= resize(h*norm_out, n_left, n_right);
                             State := S5;
                             
                             when S5 =>
+                            A_ref <= resize(to_sfixed(100,n_left,n_right) * residual_funct_out, n_left, n_right);
+                            B_ref <= resize(to_sfixed(100,n_left,n_right) * norm_out, n_left, n_right);
+                            residual_funct_out <= resize(A_ref + B_ref, n_left, n_right);
+                            State := S6;
                             
+                            when S6 =>
+                            residual_eval_out <= resize(A_ref + B_ref, n_left, n_right);
                             -- Fault detection and identification when input fault, here can think of implementing both input fault as well as other converter faults (Multiple faults)
-                               if fd_value > to_sfixed(0.2, d_left, d_right) then
+                               flag <= '0';
+                               if residual_eval_out > fd_th or flag <= '1' then
                                FD_flag <= '1'; -- output port
                                flag <= '1';
                                else
-                               FD_flag <= '0';
-                               flag <= '0';
+                               null;
                                end if;
                                
                                                        
