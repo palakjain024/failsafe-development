@@ -17,6 +17,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
 set_property PACKAGE_PIN R6 [get_ports FD_flag]
 set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 
+set_property PACKAGE_PIN G22 [get_ports reset_fd]
+set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+
 # Digilent PMOD DA21 DAC to PMOD JA1 to JA4 (For theta and err)
 set_property PACKAGE_PIN Y11 [get_ports DA_nSYNC]
 set_property IOSTANDARD LVCMOS33 [get_ports DA_nSYNC]

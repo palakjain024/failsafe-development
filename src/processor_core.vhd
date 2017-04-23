@@ -13,6 +13,7 @@ Port ( -- General
        Clk : in STD_LOGIC;
        -- Converter fault flag;
        FD_flag : out STD_LOGIC;
+       reset_fd : in STD_LOGIC;
        --FI_flag :out STD_LOGIC_VECTOR(1 downto 0); 
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
@@ -53,7 +54,7 @@ architecture Behavioral of processor_core is
  signal norm_out : sfixed(n_left downto n_right):= to_sfixed(0, n_left, n_right);
  signal residual_funct_out : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
  signal residual_eval_out : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
- signal flag : STD_LOGIC;
+ signal flag : STD_LOGIC := '0';
  
  -- Misc
  signal A_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
@@ -82,6 +83,7 @@ if clk'event and clk = '1' then
             err_val <= err_val_out;
             norm <= norm_out;
             residual_eval <= residual_eval_out;
+            FD_flag <= flag;
              
         if counter = 0 then
                 if (pc_pwm = '0') then
@@ -109,13 +111,26 @@ if clk'event and clk = '1' then
 end if;
 end process; 
 --------------------------------
-fault_detection: process(clk)
+fault_detection: process(clk, reset_fd)
             
     type state_value is (S0, S1, S2, S3, S4, S5, S6);
     variable State : state_value := S0;
               begin
                   if (clk = '1' and clk'event) then
+                   -- Fault detection
                    
+                     flag <= '0';
+                     if residual_eval_out > fd_th or flag = '1' then
+                     flag <= '1';
+                         if (reset_fd = '1') then
+                         flag <= '0';
+                         else
+                         flag <= '1';
+                         end if;
+                     else
+                     flag <= '0';
+                     end if;
+                     
                     case state is
                             
                             when S0 =>
@@ -144,28 +159,16 @@ fault_detection: process(clk)
                             
                             when S4 =>
                             norm_out <= resize(Sum_ref + P_ref, n_left, n_right);
-                            A_ref <= resize(to_sfixed(0.999995,d_left,d_right) * residual_funct_out, n_left, n_right);
-                            B_ref <= resize(h*norm_out, n_left, n_right);
                             State := S5;
                             
                             when S5 =>
-                            A_ref <= resize(to_sfixed(100,n_left,n_right) * residual_funct_out, n_left, n_right);
-                            B_ref <= resize(to_sfixed(100,n_left,n_right) * norm_out, n_left, n_right);
-                            residual_funct_out <= resize(A_ref + B_ref, n_left, n_right);
+                            A_ref <= resize(to_sfixed(0.999995,d_left,d_right) * residual_funct_out, n_left, n_right);
+                            B_ref <= resize(h*norm_out, n_left, n_right);
                             State := S6;
                             
                             when S6 =>
-                            residual_eval_out <= resize(A_ref + B_ref, n_left, n_right);
-                            -- Fault detection and identification when input fault, here can think of implementing both input fault as well as other converter faults (Multiple faults)
-                               flag <= '0';
-                               if residual_eval_out > fd_th or flag <= '1' then
-                               FD_flag <= '1'; -- output port
-                               flag <= '1';
-                               else
-                               null;
-                               end if;
-                               
-                                                       
+                            residual_funct_out <= resize(A_ref + B_ref, n_left, n_right);
+                            residual_eval_out <= resize(norm_out + residual_funct_out, n_left, n_right);                             
                             State := S0;  
                    end case;
              end if;

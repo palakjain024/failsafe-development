@@ -61,7 +61,7 @@ package input_pkg is
      constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
  
  -- Fd threshold
-     constant fd_th : sfixed(15 downto -16) := to_sfixed(1.5, 15, -16); 
+     constant fd_th : sfixed(15 downto -16) := to_sfixed(2.5, 15, -16); 
       
  -- Address
      constant address_size: integer range 0 to 1000 := 10;

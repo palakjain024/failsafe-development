@@ -18,6 +18,7 @@ entity main is
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            -- Flags
            FD_flag : out STD_LOGIC;
+           reset_fd : in STD_LOGIC;
            -- DAC ports
            DA_DATA1 : out STD_LOGIC;
            DA_DATA2 : out STD_LOGIC;
@@ -115,6 +116,7 @@ Port ( -- General
        Clk : in STD_LOGIC;
        -- Converter fault flag;
        FD_flag : out STD_LOGIC;
+       reset_fd : in STD_LOGIC;
        -- FI_flag :out STD_LOGIC_VECTOR(1 downto 0); 
        -- Converter state estimator
        pc_pwm : in STD_LOGIC;
@@ -167,7 +169,7 @@ begin
 pwm_inst: pwm 
  port map(
     clk => clk, 
-    reset_n => pwm_f, 
+    reset_n => '1', 
     ena => ena, 
     duty => duty, 
     pwm_out => pwm_out, 
@@ -249,12 +251,12 @@ scaler_theta_l: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => norm,  -- For inductor current
+              dac_in => residual_eval,  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(1650,15,-16),
+            dac_max => to_sfixed(66,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
@@ -265,6 +267,7 @@ scaler_theta_c: scaler generic map (
 pc_inst: processor_core port map (
             Clk => clk,
             FD_flag => FD_flag,
+            reset_fd => reset_fd,
             --FI_flag => FI_flag,
             pc_pwm => p_pwm1_out,
             load => load,
@@ -278,8 +281,13 @@ pc_inst: processor_core port map (
 main_loop: process (clk)
  begin
      if (clk = '1' and clk'event) then
-       pwm_out_t(0) <= p_pwm1_out;
-       pwm_n_out_t(0)  <= p_pwm2_out;
+             if pwm_f = '0' then
+               pwm_out_t(0) <= p_pwm1_out;
+               pwm_n_out_t(0)  <= p_pwm2_out;
+             else
+               pwm_out_t(0) <= '0';
+               pwm_n_out_t(0)  <= '0';
+             end if;
       end if;
  end process main_loop;
  

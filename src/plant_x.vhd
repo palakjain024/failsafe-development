@@ -55,57 +55,56 @@ mult: process(Clk, load)
            ----------------------------------------
            -- Mode 0 - A:B matrix diode is conducting
            ----------------------------------------
-            A_Aug_Matrix := ( 
-                (to_sfixed( 0.999458300000000,A'high,A'low),
-                 to_sfixed(-0.000036950000000,A'high,A'low), 
-                 to_sfixed( 0.000100000000000,A'high,A'low), 
-                 to_sfixed( 0,A'high,A'low),
-                 to_sfixed( 0.000533500000000,A'high,A'low),
-                 to_sfixed(-0.000063050000000,A'high,A'low)),
-                (to_sfixed( 0.000101488600000,A'high,A'low), 
-                 to_sfixed( 0.999561650000000,A'high,A'low),
-                 to_sfixed( 0,A'high,A'low),
-                 to_sfixed(-0.000175438600000,A'high,A'low),
-                 to_sfixed( 0.000073950000000,A'high,A'low),
-                 to_sfixed( 0.000438350000000,A'high,A'low))
-                );
+           A_Aug_Matrix := ( 
+                          (to_sfixed(0.999458300000000,A'high,A'low),
+                           to_sfixed(-0.000036950000000,A'high,A'low), 
+                           to_sfixed( 0.000100000000000,A'high,A'low), 
+                           to_sfixed( 0,A'high,A'low),
+                           to_sfixed( 0.000533500000000,A'high,A'low),
+                           to_sfixed(-0.000063050000000,A'high,A'low)),
+                          (to_sfixed(0.000101488600000,A'high,A'low), 
+                           to_sfixed(0.999561650000000,A'high,A'low),
+                           to_sfixed(0,A'high,A'low),
+                           to_sfixed(-0.000175438600000,A'high,A'low),
+                           to_sfixed( 0.000073950000000,A'high,A'low),
+                           to_sfixed( 0.000438350000000,A'high,A'low))
+                          );
        
                    
               when 1 =>
               ----------------------------------------
               -- Mode 1 - A:B matrix Switch is conducting current building up
               ----------------------------------------
-              A_Aug_Matrix := ( 
-                               (to_sfixed( 0.999458300000000,A'high,A'low),
-                                to_sfixed( 0.000063050000000,A'high,A'low), 
-                                to_sfixed( 0.000100000000000,A'high,A'low), 
-                                to_sfixed( 0,A'high,A'low),
-                                to_sfixed( 0.000533500000000,A'high,A'low),
-                                to_sfixed(-0.000063050000000,A'high,A'low)),
-                               (to_sfixed(-0.000073950000000,A'high,A'low), 
-                                to_sfixed( 0.999561650000000,A'high,A'low),
-                                to_sfixed( 0,A'high,A'low),
-                                to_sfixed(-0.000175438600000,A'high,A'low),
-                                to_sfixed( 0.000073950000000,A'high,A'low),
-                                to_sfixed( 0.000438350000000,A'high,A'low))
-                               );
-                      
-               when others =>
                A_Aug_Matrix := ( 
                              (to_sfixed( 0.999458300000000,A'high,A'low),
-                              to_sfixed(-0.000036950000000,A'high,A'low), 
+                              to_sfixed( 0.000063050000000,A'high,A'low), 
                               to_sfixed( 0.000100000000000,A'high,A'low), 
                               to_sfixed( 0,A'high,A'low),
                               to_sfixed( 0.000533500000000,A'high,A'low),
                               to_sfixed(-0.000063050000000,A'high,A'low)),
-                             (to_sfixed( 0.000101488600000,A'high,A'low), 
+                             (to_sfixed(-0.000073950000000,A'high,A'low), 
                               to_sfixed( 0.999561650000000,A'high,A'low),
                               to_sfixed( 0,A'high,A'low),
                               to_sfixed(-0.000175438600000,A'high,A'low),
                               to_sfixed( 0.000073950000000,A'high,A'low),
                               to_sfixed( 0.000438350000000,A'high,A'low))
                              );
-             
+                      
+               when others =>
+                A_Aug_Matrix := ( 
+                                        (to_sfixed(0.999458300000000,A'high,A'low),
+                                         to_sfixed(-0.000036950000000,A'high,A'low), 
+                                         to_sfixed( 0.000100000000000,A'high,A'low), 
+                                         to_sfixed( 0,A'high,A'low),
+                                         to_sfixed( 0.000533500000000,A'high,A'low),
+                                         to_sfixed(-0.000063050000000,A'high,A'low)),
+                                        (to_sfixed(0.000101488600000,A'high,A'low), 
+                                         to_sfixed(0.999561650000000,A'high,A'low),
+                                         to_sfixed(0,A'high,A'low),
+                                         to_sfixed(-0.000175438600000,A'high,A'low),
+                                         to_sfixed( 0.000073950000000,A'high,A'low),
+                                         to_sfixed( 0.000438350000000,A'high,A'low))
+                                        );
              end case;
                  
               
