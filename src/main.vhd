@@ -117,16 +117,23 @@ Port ( -- General
        -- Converter fault flag;
        FD_flag : out STD_LOGIC;
        reset_fd : in STD_LOGIC;
-       -- FI_flag :out STD_LOGIC_VECTOR(1 downto 0); 
-       -- Converter state estimator
+       -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
+       -- FD logic
        err_val : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       residual_eval : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right); 
-       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-          ); 
+       residual_funct : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right); 
+       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       -- Fault identification
+       C_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       C_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       L_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       L_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       SW_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))     
+          );   
 end component processor_core;
 
 -- Signal Definition
@@ -160,8 +167,15 @@ signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 -- Processor core
 signal z_val : vect2;
 signal err_val : vect2;
-signal norm : sfixed(n_left downto n_right);
-signal residual_eval : sfixed(n_left downto n_right); 
+signal residual_funct : sfixed(n_left downto n_right);
+signal residual_eval, norm : sfixed(n_left downto n_right); 
+-- Fault identification
+signal C_residual:  sfixed(n_left downto n_right);
+signal C_zval : vect2;
+signal L_residual:  sfixed(n_left downto n_right);
+signal L_zval : vect2;
+signal SW_residual:  sfixed(n_left downto n_right);
+signal SW_zval : vect2;
 
 begin
 
@@ -234,7 +248,7 @@ de_inst_il: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             adc_in => adc_il,
             done => de_done_il,
             adc_val => plt_x(0));
-de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
+de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
@@ -246,12 +260,12 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(100,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
+              dac_max => to_sfixed(66,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => residual_eval,  -- For inductor current
+              dac_in => SW_residual,  -- For inductor current
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
@@ -261,21 +275,26 @@ scaler_theta_c: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => residual_eval,  -- For capacitor voltage
+            dac_in => L_residual,  -- For capacitor voltage
             dac_val => dac_c); 
 -- Processor_core
 pc_inst: processor_core port map (
             Clk => clk,
             FD_flag => FD_flag,
             reset_fd => reset_fd,
-            --FI_flag => FI_flag,
             pc_pwm => p_pwm1_out,
             load => load,
             pc_x => plt_x,
             err_val => err_val,
+            residual_funct => residual_funct,
             norm => norm,
-            residual_eval => residual_eval,
-            pc_z => z_val
+            pc_z => z_val,
+            C_residual => C_residual,
+            C_zval => C_zval,
+            L_residual => L_residual,
+            L_zval => L_zval,
+            SW_residual => SW_residual,
+            SW_zval => SW_zval
             );              
 -- Main loop
 main_loop: process (clk)

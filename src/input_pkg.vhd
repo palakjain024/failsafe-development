@@ -19,11 +19,11 @@ package input_pkg is
     
  -- constant inputs
      constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
-     constant r : sfixed(1 downto -30) := to_sfixed(-0.82, 1,-30);       -- inductor resistance
+     constant r : sfixed(1 downto -30) := to_sfixed(-0.082, 1,-30);       -- inductor resistance
     
  -- inputs that could change (keep precison same for all)
-     constant v_in : sfixed(15 downto -16)   := to_sfixed(100,15,-16);
-     constant v_out : sfixed(15 downto -16)  := to_sfixed(200, 15, -16);
+     constant v_in : sfixed(15 downto -16)   := to_sfixed(190,15,-16);
+     constant v_out : sfixed(15 downto -16)  := to_sfixed(380, 15, -16);
      constant i_load : sfixed(15 downto -16) := to_sfixed(2,15,-16);
     
  -- Initial values of il and vc (Initial state input)
@@ -31,12 +31,12 @@ package input_pkg is
      constant vc0 : sfixed(15 downto -16) := to_sfixed(100,15,-16);
     
   -- theta parameters
-     constant L_theta :  sfixed(15 downto -16) := to_sfixed(200, 15, -16);
-     constant C_theta :  sfixed(15 downto -16) := to_sfixed(350.8772,15, -16);
-     constant L_theta_min :  sfixed(15 downto -16) := to_sfixed(166, 15, -16);
-     constant C_theta_min :  sfixed(15 downto -16) := to_sfixed(292,15, -16);
-     constant L_theta_max :  sfixed(15 downto -16) := to_sfixed(1000, 15, -16);
-     constant C_theta_max :  sfixed(15 downto -16) := to_sfixed(1754.4, 15, -16);
+     constant L_theta :  sfixed(1 downto -30) := to_sfixed(0.0000999999, 1, -30);
+     constant C_theta :  sfixed(1 downto -30) := to_sfixed(0.0001754386,1, -30);
+     constant L_theta_min :  sfixed(1 downto -30) := to_sfixed(0.000083, 1, -30);
+     constant C_theta_min :  sfixed(1 downto -30) := to_sfixed(0.000146, 1, -30);
+     constant L_theta_max :  sfixed(1 downto -30) := to_sfixed(0.0005, 1, -30);
+     constant C_theta_max :  sfixed(1 downto -30) := to_sfixed(0.0008772, 1, -30);
     
  -- vectors
      type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
@@ -61,7 +61,7 @@ package input_pkg is
      constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
  
  -- Fd threshold
-     constant fd_th : sfixed(15 downto -16) := to_sfixed(2.5, 15, -16); 
+     constant fd_th : sfixed(15 downto -16) := to_sfixed(4.5, 15, -16); 
       
  -- Address
      constant address_size: integer range 0 to 1000 := 10;
