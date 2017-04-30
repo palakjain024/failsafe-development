@@ -29,7 +29,9 @@ Port ( -- General
        L_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        L_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        SW_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))        
+       SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       R_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))        
           );     
 end processor_core;
 
@@ -50,6 +52,7 @@ architecture Behavioral of processor_core is
  component Filter_C
  port (      Clk : in STD_LOGIC;
              Start : in STD_LOGIC;
+             flag : in STD_LOGIC;
              Mode : in INTEGER range 0 to 2;
              load : in sfixed(n_left downto n_right);
              plt_x : in vect2;
@@ -63,6 +66,7 @@ architecture Behavioral of processor_core is
  component Filter_L
  port (      Clk : in STD_LOGIC;
               Start : in STD_LOGIC;
+               flag : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
               load : in sfixed(n_left downto n_right);
               plt_x : in vect2;
@@ -76,6 +80,7 @@ architecture Behavioral of processor_core is
  component Filter_SW
    port (      Clk : in STD_LOGIC;
                 Start : in STD_LOGIC;
+                 flag : in STD_LOGIC;
                 Mode : in INTEGER range 0 to 2;
                 load : in sfixed(n_left downto n_right);
                 plt_x : in vect2;
@@ -85,6 +90,19 @@ architecture Behavioral of processor_core is
                 SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
              );
   end component Filter_SW;
+  
+  Component Filter_R
+   port (      Clk : in STD_LOGIC;
+               Start : in STD_LOGIC;
+               Mode : in INTEGER range 0 to 2;
+               load : in sfixed(n_left downto n_right);
+               plt_x : in vect2;
+               done : out STD_LOGIC := '0';
+               R_norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+               R_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+               R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+            );
+  end component Filter_R;
 
  -- Signal definition for components
  -- INPUT  
@@ -109,6 +127,8 @@ architecture Behavioral of processor_core is
  signal L_done : STD_LOGIC := '1';
  signal SW_norm : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
  signal SW_done : STD_LOGIC := '1';
+ signal R_norm : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+ signal R_done : STD_LOGIC := '1';
  
  -- Misc
  signal A_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
@@ -133,6 +153,7 @@ plt_z => z_val
 filterc_inst: Filter_C port map (
 Clk => clk,
 Start => start,
+flag => flag,
 Mode => mode,
 load => load,
 plt_x => pc_x,
@@ -145,6 +166,7 @@ C_zval => C_zval
 filterl_inst: Filter_L port map (
 Clk => clk,
 Start => start,
+flag => flag,
 Mode => mode,
 load => load,
 plt_x => pc_x,
@@ -157,6 +179,7 @@ L_zval => L_zval
 filterSW_inst: Filter_SW port map (
 Clk => clk,
 Start => start,
+flag => flag,
 Mode => mode,
 load => load,
 plt_x => pc_x,
@@ -165,6 +188,19 @@ SW_norm => SW_norm,
 SW_residual => SW_residual,
 SW_zval => SW_zval
 );
+
+filterR_inst: Filter_R port map (
+Clk => clk,
+Start => start,
+Mode => mode,
+load => load,
+plt_x => pc_x,
+Done => R_done,
+R_norm => R_norm,
+R_residual => R_residual,
+R_zval => R_zval
+);
+
 
 CoreLOOP: process(clk, pc_pwm)
 begin
@@ -213,7 +249,9 @@ fault_detection: process(clk, reset_fd)
                    -- Fault detection
                    
                      flag <= '0';
-                     if residual_eval_out > fd_th then
+                     if residual_eval_out > fd_th or flag = '1' then
+                     
+                     flag <= '1';
                          if (reset_fd = '1') then
                          flag <= '0';
                          else
@@ -265,4 +303,5 @@ fault_detection: process(clk, reset_fd)
                    end case;
              end if;
      end process;
+ 
 end Behavioral;

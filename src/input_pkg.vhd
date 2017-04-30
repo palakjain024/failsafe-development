@@ -31,12 +31,18 @@ package input_pkg is
      constant vc0 : sfixed(15 downto -16) := to_sfixed(100,15,-16);
     
   -- theta parameters
-     constant L_theta :  sfixed(1 downto -30) := to_sfixed(0.0000999999, 1, -30);
+     constant L_theta :  sfixed(1 downto -30) := to_sfixed(0.0001, 1, -30);
      constant C_theta :  sfixed(1 downto -30) := to_sfixed(0.0001754386,1, -30);
+     
      constant L_theta_min :  sfixed(1 downto -30) := to_sfixed(0.000083, 1, -30);
-     constant C_theta_min :  sfixed(1 downto -30) := to_sfixed(0.000146, 1, -30);
      constant L_theta_max :  sfixed(1 downto -30) := to_sfixed(0.0005, 1, -30);
+     
+     constant C_theta_min :  sfixed(1 downto -30) := to_sfixed(0.0001466, 1, -30);
      constant C_theta_max :  sfixed(1 downto -30) := to_sfixed(0.0008772, 1, -30);
+     
+     constant R_theta_min :  sfixed(1 downto -30) := to_sfixed(-0.0000065, 1, -30); -- Actual: -rmin * L_theta
+     constant R_theta_max :  sfixed(1 downto -30) := to_sfixed(-0.000164, 1, -30); -- Actual: -rmax * L_theta
+     
     
  -- vectors
      type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u

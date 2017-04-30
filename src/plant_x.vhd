@@ -30,7 +30,7 @@ architecture Behavioral of plant_x is
     
 begin
 
-mult: process(Clk, load)
+mult: process(Clk, load, plt_x)
   
    -- General Variables for multiplication and addition
    type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8);

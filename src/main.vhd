@@ -19,11 +19,16 @@ entity main is
            -- Flags
            FD_flag : out STD_LOGIC;
            reset_fd : in STD_LOGIC;
-           -- DAC ports
+           -- DAC ports 1
            DA_DATA1 : out STD_LOGIC;
            DA_DATA2 : out STD_LOGIC;
-           DA_CLK_OUT : out STD_LOGIC;
-           DA_nSYNC : out STD_LOGIC;
+           DA_CLK_OUT_1 : out STD_LOGIC;
+           DA_nSYNC_1 : out STD_LOGIC;
+           -- DAC ports 2
+           DA_DATA3 : out STD_LOGIC;
+           DA_DATA4 : out STD_LOGIC;
+           DA_CLK_OUT_2 : out STD_LOGIC;
+           DA_nSYNC_2 : out STD_LOGIC;
            -- ADC ports 1
            AD_CS_1 : out STD_LOGIC;
            AD_D0_1 : in STD_LOGIC;
@@ -132,7 +137,9 @@ Port ( -- General
        L_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        L_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        SW_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))     
+       SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       R_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))     
           );   
 end component processor_core;
 
@@ -149,10 +156,13 @@ signal p_pwm1_out: std_logic;  --pwm outputs with dead band
 signal p_pwm2_out: std_logic;  --pwm inverse outputs with dead band  
 
 -- DAC signals         
-signal DA_sync: STD_LOGIC;
+signal DA_sync1: STD_LOGIC;
+signal DA_sync2: STD_LOGIC;
 -- DAC scaler output
 signal dac_c: std_logic_vector(11 downto 0);
 signal dac_l: std_logic_vector(11 downto 0);
+signal dac_sw: std_logic_vector(11 downto 0);
+signal dac_fd: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
 signal load : sfixed(n_left downto n_right);
@@ -176,6 +186,8 @@ signal L_residual:  sfixed(n_left downto n_right);
 signal L_zval : vect2;
 signal SW_residual:  sfixed(n_left downto n_right);
 signal SW_zval : vect2;
+signal R_residual:  sfixed(n_left downto n_right);
+signal R_zval : vect2;
 
 begin
 
@@ -197,17 +209,28 @@ port map(
     p_pwm2_out => p_pwm2_out);
  
 -- ADC and DAC
-dac_inst: pmodDA2_ctrl port map (
+dac_1_inst: pmodDA2_ctrl port map (
     CLK => CLK,
     RST => '0', 
     D1 => DA_DATA1, 
     D2 => DA_DATA2, 
-    CLK_OUT => DA_CLK_OUT, 
-    nSYNC => DA_nSYNC, 
+    CLK_OUT => DA_CLK_OUT_1, 
+    nSYNC => DA_nSYNC_1, 
     DATA1 => dac_l, 
     DATA2 => dac_C, 
-    START => DA_sync, 
-    DONE => DA_sync);
+    START => DA_sync1, 
+    DONE => DA_sync1);
+dac_2_inst: pmodDA2_ctrl port map (
+        CLK => CLK,
+        RST => '0', 
+        D1 => DA_DATA3, 
+        D2 => DA_DATA4, 
+        CLK_OUT => DA_CLK_OUT_2, 
+        nSYNC => DA_nSYNC_2, 
+        DATA1 => dac_sw, 
+        DATA2 => dac_fd, 
+        START => DA_sync2, 
+        DONE => DA_sync2);
 adc_1_inst: pmodAD1_ctrl port map (
     CLK => CLK,       
     RST => '0',
@@ -260,23 +283,43 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(66,15,-16),
+              dac_max => to_sfixed(33,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => SW_residual,  -- For inductor current
+              dac_in => SW_zval(0),  -- For inductor
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(66,15,-16),
+            dac_max => to_sfixed(660,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => L_residual,  -- For capacitor voltage
-            dac_val => dac_c); 
+            dac_in => SW_zval(1),  -- For capacitor
+            dac_val => dac_c);
+scaler_theta_sw: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(33,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => SW_zval(0),  -- For switch
+            dac_val => dac_sw);
+scaler_theta_fd: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(33,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => SW_zval(0),  -- For FD observer
+            dac_val => dac_fd);
 -- Processor_core
 pc_inst: processor_core port map (
             Clk => clk,
@@ -294,7 +337,9 @@ pc_inst: processor_core port map (
             L_residual => L_residual,
             L_zval => L_zval,
             SW_residual => SW_residual,
-            SW_zval => SW_zval
+            SW_zval => SW_zval,
+            R_residual => R_residual,
+            R_zval => R_zval
             );              
 -- Main loop
 main_loop: process (clk)
