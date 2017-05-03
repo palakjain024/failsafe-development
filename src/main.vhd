@@ -8,7 +8,6 @@ use IEEE_PROPOSED.FIXED_PKG.ALL;
 library work;
 use work.input_pkg.all;
 
-  
 entity main is
     Port ( -- General
            clk : in STD_LOGIC;
@@ -19,6 +18,7 @@ entity main is
            -- Flags
            FD_flag : out STD_LOGIC;
            reset_fd : in STD_LOGIC;
+           FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0');
            -- DAC ports 1
            DA_DATA1 : out STD_LOGIC;
            DA_DATA2 : out STD_LOGIC;
@@ -122,6 +122,8 @@ Port ( -- General
        -- Converter fault flag;
        FD_flag : out STD_LOGIC;
        reset_fd : in STD_LOGIC;
+       -- FI flag
+       FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0');
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
@@ -132,11 +134,11 @@ Port ( -- General
        norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right); 
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        -- Fault identification
-       C_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       C_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        C_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       L_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       L_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        L_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       SW_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       SW_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        R_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))     
@@ -283,14 +285,34 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
+              dac_max => to_sfixed(66,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => SW_zval(0),  -- For inductor
+              dac_in => C_residual,  -- For inductor
               dac_val => dac_l);                  
 scaler_theta_c: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(66,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => L_residual,  -- For capacitor
+            dac_val => dac_c);
+scaler_theta_sw: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(66,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => SW_residual,  -- For switch
+            dac_val => dac_sw);
+scaler_theta_fd: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
             dac_max => to_sfixed(660,15,-16),
@@ -298,33 +320,14 @@ scaler_theta_c: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => SW_zval(1),  -- For capacitor
-            dac_val => dac_c);
-scaler_theta_sw: scaler generic map (
-            dac_left => n_left,
-            dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
-            dac_min => to_sfixed(0,15,-16)
-            )
-            port map (
-            clk => clk,
-            dac_in => SW_zval(0),  -- For switch
-            dac_val => dac_sw);
-scaler_theta_fd: scaler generic map (
-            dac_left => n_left,
-            dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
-            dac_min => to_sfixed(0,15,-16)
-            )
-            port map (
-            clk => clk,
-            dac_in => SW_zval(0),  -- For FD observer
+            dac_in => C_zval(1),  -- For FD observer
             dac_val => dac_fd);
 -- Processor_core
 pc_inst: processor_core port map (
             Clk => clk,
             FD_flag => FD_flag,
             reset_fd => reset_fd,
+            FI_flag => FI_flag,
             pc_pwm => p_pwm1_out,
             load => load,
             pc_x => plt_x,
@@ -332,11 +335,11 @@ pc_inst: processor_core port map (
             residual_funct => residual_funct,
             norm => norm,
             pc_z => z_val,
-            C_residual => C_residual,
+            C_residual_out => C_residual,
             C_zval => C_zval,
-            L_residual => L_residual,
+            L_residual_out => L_residual,
             L_zval => L_zval,
-            SW_residual => SW_residual,
+            SW_residual_out => SW_residual,
             SW_zval => SW_zval,
             R_residual => R_residual,
             R_zval => R_zval

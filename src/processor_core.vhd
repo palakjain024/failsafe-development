@@ -11,9 +11,11 @@ use work.input_pkg.all;
 entity processor_core is
 Port ( -- General
        Clk : in STD_LOGIC;
-       -- Converter fault flag;
+       -- Converter fault flag
        FD_flag : out STD_LOGIC;
        reset_fd : in STD_LOGIC;
+       -- FI flag
+       FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0');
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
@@ -24,11 +26,11 @@ Port ( -- General
        norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right); 
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
         -- Fault identification
-       C_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       C_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        C_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       L_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       L_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        L_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       SW_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       SW_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        R_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))        
@@ -64,9 +66,9 @@ architecture Behavioral of processor_core is
  end component Filter_C;
  
  component Filter_L
- port (      Clk : in STD_LOGIC;
+ port (       Clk : in STD_LOGIC;
               Start : in STD_LOGIC;
-               flag : in STD_LOGIC;
+              flag : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
               load : in sfixed(n_left downto n_right);
               plt_x : in vect2;
@@ -103,7 +105,27 @@ architecture Behavioral of processor_core is
                R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
             );
   end component Filter_R;
-
+-- fault identification logic
+component moving_avg is
+Port ( clk : in STD_LOGIC;
+           start : in STD_LOGIC;
+           datain : in sfixed(n_left downto n_right);
+           done: out STD_LOGIC;
+           avg: out sfixed(n_left downto n_right)
+      );
+end component moving_avg;
+ 
+component fault_identification
+ Port ( 
+            clk : in STD_LOGIC;
+            start : in STD_LOGIC;
+            FD_flag : in STD_LOGIC;
+            Residual  : in vect3;
+            done : out STD_LOGIC := '0';
+            FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0')
+          );
+end component fault_identification;
+----------------------------------------------------------------------------
  -- Signal definition for components
  -- INPUT  
  signal start : STD_LOGIC := '0';
@@ -129,6 +151,12 @@ architecture Behavioral of processor_core is
  signal SW_done : STD_LOGIC := '1';
  signal R_norm : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
  signal R_done : STD_LOGIC := '1';
+ 
+ -- Fault identification logic
+ signal C_residual, L_residual, SW_residual: sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+ signal C_residual_avg, L_residual_avg, SW_residual_avg: sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+ signal L_done_avg, C_done_avg, SW_done_avg, fi_done : STD_LOGIC := '1';
+ signal Residual: vect3 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
  
  -- Misc
  signal A_ref : sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
@@ -200,18 +228,61 @@ R_norm => R_norm,
 R_residual => R_residual,
 R_zval => R_zval
 );
+-------- Fault Identification logic --------
+moving_avg_inst_C: moving_avg port map (
+clk => clk,
+start => start,
+datain => C_residual,
+done => C_done_avg,
+avg => C_residual_avg
+ );
+ 
+moving_avg_inst_L: moving_avg port map (
+ clk => clk,
+ start => start,
+ datain => L_residual,
+ done => L_done_avg,
+ avg => L_residual_avg
+  );
+  
+moving_avg_inst_SW: moving_avg port map (
+  clk => clk,
+  start => start,
+  datain => SW_residual,
+  done => SW_done_avg,
+  avg => SW_residual_avg
+   );
+ 
+FI_inst: fault_identification port map (
+  clk => clk,
+  start => start,
+  FD_flag => flag,
+  Residual => Residual,
+  done => FI_done,
+  FI_flag => FI_flag
+  );
 
 
 CoreLOOP: process(clk, pc_pwm)
 begin
 
 if clk'event and clk = '1' then
+            -- Output to main
             pc_z <= z_val;
             err_val <= err_val_out;
             residual_funct <= residual_funct_out;
             norm <= norm_out;
             --residual_eval <= residual_eval_out;
             FD_flag <= flag;
+            C_Residual_out <= C_residual;
+            L_Residual_out <= L_residual;
+            SW_Residual_out <= SW_residual;
+            
+            
+            -- FI logic
+            Residual(0) <= C_Residual_avg;
+            Residual(1) <= L_Residual_avg;
+            Residual(2) <= SW_Residual_avg;
              
         if counter = 0 then
                 if (pc_pwm = '0') then
@@ -239,7 +310,7 @@ if clk'event and clk = '1' then
 end if;
 end process; 
 
----------------------------------------
+---------- Fault detection logic -------------------------
 fault_detection: process(clk, reset_fd)
             
     type state_value is (S0, S1, S2, S3, S4, S5, S6);
@@ -303,5 +374,4 @@ fault_detection: process(clk, reset_fd)
                    end case;
              end if;
      end process;
- 
-end Behavioral;
+ end Behavioral;
