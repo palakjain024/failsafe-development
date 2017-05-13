@@ -43,6 +43,7 @@ package input_pkg is
      constant R_theta_min :  sfixed(1 downto -30) := to_sfixed(-0.0000065, 1, -30); -- Actual: -rmin * L_theta
      constant R_theta_max :  sfixed(1 downto -30) := to_sfixed(-0.000164, 1, -30); -- Actual: -rmax * L_theta
      
+     constant epsilon : sfixed(1 downto -30) := to_sfixed(0.995, 1, -30); -- For residual cal
     
  -- vectors
      type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
@@ -52,8 +53,14 @@ package input_pkg is
  -- Matrices
      type mat22 is array (0 to 1, 0 to 1) of sfixed(15 downto -16); -- for A,B,L
      type mat26 is array (0 to 1, 0 to 5) of sfixed(1 downto -30);  -- for augumented [A:B:L]
-    
+ 
+ -- Type
+     subtype result_type is std_logic_vector (31 downto 0);
+     subtype dac_type is std_logic_vector (11 downto 0);
+       
  -- Precision
+     --constant res_left: integer := 23;
+     --constant res_right: integer := -8;
      constant n_left: integer := 15;
      constant n_right: integer := -16;
      constant d_left: integer := 1;

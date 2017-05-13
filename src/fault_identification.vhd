@@ -26,7 +26,7 @@ main_loop: process(clk)
 
         type STATE_VALUE is (S0, S1, S2);
         variable State : STATE_VALUE := S0;
-        variable min_num : sfixed(n_left downto n_right) := to_sfixed(30000, n_left, n_right);
+        variable min_num : sfixed(n_left downto n_right) := to_sfixed(32768, n_left, n_right);
         variable index : integer range -1 to 3 := 3;
         
         begin
@@ -52,7 +52,7 @@ main_loop: process(clk)
                        end if; 
                        
              -- initilization of min_number               
-             min_num := to_sfixed(30000, n_left, n_right);
+             min_num := to_sfixed(32768, n_left, n_right);
              index := 3;           
           --------------------------------------------------------
            -- state S1 (Find min residual)
@@ -62,7 +62,7 @@ main_loop: process(clk)
                                 
               -- Finding min residual
                   for i in 0 to 2 loop
-                     if Residual(i) < min_num then
+                     if Residual(i) <= min_num then
                         min_num := Residual(i);
                         index := i;
                      end if;

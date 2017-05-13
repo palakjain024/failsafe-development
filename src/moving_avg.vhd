@@ -1,11 +1,13 @@
 -- For averaging residual
 library IEEE;
 library IEEE_PROPOSED;
+library work;
+
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use ieee.std_logic_unsigned.all;
 use IEEE_PROPOSED.FIXED_PKG.ALL;
-library work;
+
 use work.input_pkg.all;
 
 entity moving_avg is

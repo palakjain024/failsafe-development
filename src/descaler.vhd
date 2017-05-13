@@ -46,7 +46,7 @@ conv: process (clk)
                                                          
                when V1 =>
              
-               inlevel <= resize(((vmax - vmin) * adc_factor)/adc_width, n_left, n_right);
+               inlevel <= resize(to_sfixed(0.00080566, d_left, d_right) * adc_factor, n_left, n_right);
                sfixed_adc_val <= to_sfixed(to_integer(unsigned(adc_in)), n_left, n_right);
                conv_step := V2;
                

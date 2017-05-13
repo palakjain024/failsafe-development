@@ -119,39 +119,34 @@ end component;
 component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
-       -- Converter fault flag;
-       FD_flag : out STD_LOGIC;
        reset_fd : in STD_LOGIC;
-       -- FI flag
+       -- Converter fault flag;
+       FD_flag : out STD_LOGIC := '0';
+       -- Converter FI flag
        FI_flag : out STD_LOGIC_Vector(2 downto 0):= (others => '0');
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2;
        -- FD logic
-       err_val : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       residual_funct : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       norm : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right); 
+       FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       -- Fault identification
+       -- C Filter
        C_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       C_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       L_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       L_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       SW_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       SW_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       R_residual : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       R_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))     
-          );   
+       --C_residual_avg_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       C_zval : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       ); 
 end component processor_core;
 
--- Signal Definition
+ 
+-- Signal Definition 
+
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
 signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);         --pwm inverse outputs
 signal ena : STD_LOGIC := '0';
-signal duty_ratio : sfixed(n_left downto n_right);
-signal duty : sfixed(n_left downto n_right);
+signal duty_ratio : sfixed(n_left downto n_right) := to_sfixed(0.5,n_left,n_right);
+signal duty : sfixed(n_left downto n_right) := to_sfixed(0.5,n_left,n_right);
 
 -- Deadtime
 signal p_pwm1_out: std_logic;  --pwm outputs with dead band
@@ -167,7 +162,7 @@ signal dac_sw: std_logic_vector(11 downto 0);
 signal dac_fd: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
-signal load : sfixed(n_left downto n_right);
+signal load : sfixed(n_left downto n_right) := to_sfixed(2,n_left,n_right) ;
 signal plt_x : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal de_done_il, de_done_vc, de_done_load : STD_LOGIC;
 
@@ -177,19 +172,16 @@ signal adc_load, adc_no_use : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_vc, adc_il : std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
-signal z_val : vect2;
-signal err_val : vect2;
-signal residual_funct : sfixed(n_left downto n_right);
-signal residual_eval, norm : sfixed(n_left downto n_right); 
--- Fault identification
+signal FD_residual:  sfixed(n_left downto n_right);
+signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 signal C_residual:  sfixed(n_left downto n_right);
-signal C_zval : vect2;
-signal L_residual:  sfixed(n_left downto n_right);
-signal L_zval : vect2;
-signal SW_residual:  sfixed(n_left downto n_right);
-signal SW_zval : vect2;
-signal R_residual:  sfixed(n_left downto n_right);
-signal R_zval : vect2;
+--signal C_residual_avg:  sfixed(n_left downto n_right);
+signal C_zval: vect2;
+--signal L_residual:  sfixed(n_left downto n_right);
+--signal L_zval : vect2;
+--signal SW_residual:  sfixed(n_left downto n_right);
+--signal SW_zval : vect2;
+
 
 begin
 
@@ -218,8 +210,8 @@ dac_1_inst: pmodDA2_ctrl port map (
     D2 => DA_DATA2, 
     CLK_OUT => DA_CLK_OUT_1, 
     nSYNC => DA_nSYNC_1, 
-    DATA1 => dac_l, 
-    DATA2 => dac_C, 
+    DATA1 => dac_c, 
+    DATA2 => dac_l, 
     START => DA_sync1, 
     DONE => DA_sync1);
 dac_2_inst: pmodDA2_ctrl port map (
@@ -285,34 +277,14 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(66,15,-16),
+              dac_max => to_sfixed(33,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => C_residual,  -- For inductor
-              dac_val => dac_l);                  
+              dac_in => z_val(0),  -- For capacitor
+              dac_val => dac_c);                  
 scaler_theta_c: scaler generic map (
-            dac_left => n_left,
-            dac_right => n_right,
-            dac_max => to_sfixed(66,15,-16),
-            dac_min => to_sfixed(0,15,-16)
-            )
-            port map (
-            clk => clk,
-            dac_in => L_residual,  -- For capacitor
-            dac_val => dac_c);
-scaler_theta_sw: scaler generic map (
-            dac_left => n_left,
-            dac_right => n_right,
-            dac_max => to_sfixed(66,15,-16),
-            dac_min => to_sfixed(0,15,-16)
-            )
-            port map (
-            clk => clk,
-            dac_in => SW_residual,  -- For switch
-            dac_val => dac_sw);
-scaler_theta_fd: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
             dac_max => to_sfixed(660,15,-16),
@@ -320,8 +292,29 @@ scaler_theta_fd: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => C_zval(1),  -- For FD observer
+            dac_in => z_val(1),  -- For inductor
+            dac_val => dac_l);
+scaler_theta_sw: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(9.9,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => C_residual,  -- For switch
+            dac_val => dac_sw);
+scaler_theta_fd: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(3.3,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => FD_residual,  -- For FD observer
             dac_val => dac_fd);
+            
 -- Processor_core
 pc_inst: processor_core port map (
             Clk => clk,
@@ -331,19 +324,16 @@ pc_inst: processor_core port map (
             pc_pwm => p_pwm1_out,
             load => load,
             pc_x => plt_x,
-            err_val => err_val,
-            residual_funct => residual_funct,
-            norm => norm,
+            FD_residual_out => FD_residual,
             pc_z => z_val,
             C_residual_out => C_residual,
-            C_zval => C_zval,
-            L_residual_out => L_residual,
-            L_zval => L_zval,
-            SW_residual_out => SW_residual,
-            SW_zval => SW_zval,
-            R_residual => R_residual,
-            R_zval => R_zval
-            );              
+            C_zval => C_zval
+--            L_residual_out => L_residual,
+--            L_zval => L_zval,
+--            SW_residual_out => SW_residual,
+--            SW_zval => SW_zval
+            ); 
+                         
 -- Main loop
 main_loop: process (clk)
  begin
@@ -354,10 +344,12 @@ main_loop: process (clk)
              else
                pwm_out_t(0) <= '0';
                pwm_n_out_t(0)  <= '0';
-             end if;
+             end if;                                 
+ 
       end if;
  end process main_loop;
- 
+
+
 -- duty cycle cal
 duty_cycle_uut: process (clk)
 
