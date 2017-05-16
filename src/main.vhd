@@ -297,22 +297,22 @@ scaler_theta_c: scaler generic map (
 scaler_theta_sw: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(9.9,15,-16),
+            dac_max => to_sfixed(33,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => C_residual,  -- For switch
+            dac_in => C_zval(0),  -- For switch
             dac_val => dac_sw);
 scaler_theta_fd: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3.3,15,-16),
+            dac_max => to_sfixed(660,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => FD_residual,  -- For FD observer
+            dac_in => C_zval(1),  -- For FD observer
             dac_val => dac_fd);
             
 -- Processor_core
@@ -321,7 +321,7 @@ pc_inst: processor_core port map (
             FD_flag => FD_flag,
             reset_fd => reset_fd,
             FI_flag => FI_flag,
-            pc_pwm => p_pwm1_out,
+            pc_pwm => p_pwm2_out,
             load => load,
             pc_x => plt_x,
             FD_residual_out => FD_residual,

@@ -36,6 +36,7 @@ architecture Behavioral of processor_core is
  component plant_x
  port (   Clk : in STD_LOGIC;
           Start : in STD_LOGIC;
+          pc_pwm : in STD_LOGIC;
           Mode : in INTEGER range 0 to 2;
           load : in sfixed(n_left downto n_right);
           plt_x : in vect2;
@@ -86,6 +87,7 @@ begin
 Plant_inst: plant_x port map (
 Clk => clk,
 Start => start,
+pc_pwm => pc_pwm,
 Mode => mode,
 load => load,
 plt_x => pc_x,
@@ -119,14 +121,14 @@ CoreLOOP: process(clk, pc_pwm)
                     
                     C_residual_out <= C_residual;
            
-                    -- To determine Mode
+                    -- To determine Mode PWM for bot switch
                     if counter = 0 then
                             if (pc_pwm = '0') then
                             -- Mode
-                              mode <= 0;
+                              mode <= 1;
                             elsif(pc_pwm = '1') then
                             -- Mode
-                                mode <= 1; 
+                                mode <= 0; 
                             else mode <= 0;
                             end if;
                      end if;   

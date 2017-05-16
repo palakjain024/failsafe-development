@@ -27,8 +27,8 @@ package input_pkg is
      constant i_load : sfixed(15 downto -16) := to_sfixed(2,15,-16);
     
  -- Initial values of il and vc (Initial state input)
-     constant il0 : sfixed(15 downto -16) := to_sfixed(2, 15,-16);
-     constant vc0 : sfixed(15 downto -16) := to_sfixed(100,15,-16);
+     constant il0 : sfixed(15 downto -16) := to_sfixed(4, 15,-16);
+     constant vc0 : sfixed(15 downto -16) := to_sfixed(380,15,-16);
     
   -- theta parameters
      constant L_theta :  sfixed(1 downto -30) := to_sfixed(0.0001, 1, -30);

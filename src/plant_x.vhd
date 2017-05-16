@@ -12,6 +12,7 @@ use work.input_pkg.all;
 entity plant_x is
      port (   Clk : in STD_LOGIC;
               Start : in STD_LOGIC;
+              pc_pwm : in STD_LOGIC;
               Mode : in INTEGER range 0 to 2;
               load : in sfixed(n_left downto n_right);
               plt_x : in vect2;
@@ -25,16 +26,26 @@ architecture Behavioral of plant_x is
 
      -- Debug core
     COMPONENT ila_0
-    PORT (
-        clk : IN STD_LOGIC;
-        probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
-    );
-    END COMPONENT  ; 
-   
-   -- ILA core
-      signal probe0, probe1: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
-   
+     
+     PORT (
+         clk : IN STD_LOGIC;
+     
+     
+     
+         probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+         probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+         probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+         probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+         probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+         probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+         probe6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+         probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+     );
+     END COMPONENT  ;
+     
+   -- ila core signals
+      signal probe0_pil, probe1_zil, probe2_pvc, probe3_zvc, probe4_eil, probe5_evc : STD_LOGIC_VECTOR(31 downto 0);
+      signal probe7_resd : STD_LOGIC_VECTOR(31 downto 0);
    -- Matrix cal 
       signal	Count0	: UNSIGNED (3 downto 0):="0000";
 	  signal	A       : sfixed(d_left downto d_right);
@@ -67,74 +78,82 @@ mult: process(Clk, load, plt_x)
    begin
            
    if (Clk'event and Clk = '1') then
-   
-     
-   -- For ILA core
-     probe0 <= result_type(err_val(0));
-     probe1 <= result_type(err_val(1));
-     
-    State_inp_Matrix(2) := v_in;
-    State_inp_Matrix(3) := load;
-    State_inp_Matrix(4) := plt_x(0);
-    State_inp_Matrix(5) := plt_x(1);
     
-   case Mode is
-           
-           when 0 =>
+    
+   -- Debug core
+     probe0_pil <= result_type(plt_x(0));
+     probe1_zil <= result_type(z_val(0)); 
+     probe2_pvc <= result_type(plt_x(1));  
+     probe3_zvc <= result_type(z_val(1)); 
+     probe4_eil <= result_type(err_val(0));
+     probe5_evc <= result_type(err_val(1));
+     probe7_resd <= result_type(residual_eval); 
+   
+    -- LO gain
+    A_Aug_Matrix(0,4) := to_sfixed( 0.000533500000000,d_left,d_right);
+    A_Aug_Matrix(0,5) := to_sfixed(-0.000063050000000,d_left,d_right);
+    A_Aug_Matrix(1,4) := to_sfixed( 0.000073950000000,d_left,d_right);
+    A_Aug_Matrix(1,5) := to_sfixed( 0.000438350000000,d_left,d_right);
+    
+    -- LO gain zero
+--    A_Aug_Matrix(0,4) := to_sfixed( 0,d_left,d_right);
+--    A_Aug_Matrix(0,5) := to_sfixed( 0,d_left,d_right);
+--    A_Aug_Matrix(1,4) := to_sfixed( 0,d_left,d_right);
+--    A_Aug_Matrix(1,5) := to_sfixed( 0,d_left,d_right);
+                            
+          if Mode = 0 then
            ----------------------------------------
            -- Mode 0 - A:B matrix diode is conducting
            ----------------------------------------
-           A_Aug_Matrix := ( 
-                          (to_sfixed(0.999458300000000,A'high,A'low),
-                           to_sfixed(-0.000036950000000,A'high,A'low), 
-                           to_sfixed( 0.000100000000000,A'high,A'low), 
-                           to_sfixed( 0,A'high,A'low),
-                           to_sfixed( 0.000533500000000,A'high,A'low),
-                           to_sfixed(-0.000063050000000,A'high,A'low)),
-                          (to_sfixed(0.000101488600000,A'high,A'low), 
-                           to_sfixed(0.999561650000000,A'high,A'low),
-                           to_sfixed(0,A'high,A'low),
-                           to_sfixed(-0.000175438600000,A'high,A'low),
-                           to_sfixed( 0.000073950000000,A'high,A'low),
-                           to_sfixed( 0.000438350000000,A'high,A'low))
-                          );
-       
+           
+           -- Gain zero
+           --A_Aug_Matrix(0,0) := to_sfixed(0.999991800000000,d_left,d_right);
+           --A_Aug_Matrix(0,1) := to_sfixed(-0.000100000000000,d_left,d_right);
+           -- LO Gain
+           A_Aug_Matrix(0,0) := to_sfixed(0.999458300000000,d_left,d_right);
+           A_Aug_Matrix(0,1) := to_sfixed(-0.000036950000000,d_left,d_right);
+           -- B matrix
+           A_Aug_Matrix(0,2) := to_sfixed(0.000100000000000,d_left,d_right); 
+           A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
+           
+           -- Gain zero
+           --A_Aug_Matrix(1,0) := to_sfixed(0.000175438600000,d_left,d_right); 
+           --A_Aug_Matrix(1,1) := to_sfixed(1.000000000000000,d_left,d_right);
+           -- LO gain
+           A_Aug_Matrix(1,0) := to_sfixed(0.000101488600000,d_left,d_right); 
+           A_Aug_Matrix(1,1) := to_sfixed(0.999561650000000,d_left,d_right);
+           -- B matrix
+           A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
+           A_Aug_Matrix(1,3) := to_sfixed(-0.000175438600000,d_left,d_right);
+           
                    
-              when 1 =>
-              ----------------------------------------
-              -- Mode 1 - A:B matrix Switch is conducting current building up
-              ----------------------------------------
-               A_Aug_Matrix := ( 
-                             (to_sfixed( 0.999458300000000,A'high,A'low),
-                              to_sfixed( 0.000063050000000,A'high,A'low), 
-                              to_sfixed( 0.000100000000000,A'high,A'low), 
-                              to_sfixed( 0,A'high,A'low),
-                              to_sfixed( 0.000533500000000,A'high,A'low),
-                              to_sfixed(-0.000063050000000,A'high,A'low)),
-                             (to_sfixed(-0.000073950000000,A'high,A'low), 
-                              to_sfixed( 0.999561650000000,A'high,A'low),
-                              to_sfixed( 0,A'high,A'low),
-                              to_sfixed(-0.000175438600000,A'high,A'low),
-                              to_sfixed( 0.000073950000000,A'high,A'low),
-                              to_sfixed( 0.000438350000000,A'high,A'low))
-                             );
-                      
-               when others =>
-                A_Aug_Matrix := ( 
-                                (to_sfixed(0.999458300000000,A'high,A'low),
-                                 to_sfixed(-0.000036950000000,A'high,A'low), 
-                                 to_sfixed( 0.000100000000000,A'high,A'low), 
-                                 to_sfixed( 0,A'high,A'low),
-                                 to_sfixed( 0.000533500000000,A'high,A'low),
-                                 to_sfixed(-0.000063050000000,A'high,A'low)),
-                                (to_sfixed(0.000101488600000,A'high,A'low), 
-                                 to_sfixed(0.999561650000000,A'high,A'low),
-                                 to_sfixed(0,A'high,A'low),
-                                 to_sfixed(-0.000175438600000,A'high,A'low),
-                                 to_sfixed( 0.000073950000000,A'high,A'low),
-                                 to_sfixed( 0.000438350000000,A'high,A'low))
-                                );
-             end case;
+           elsif Mode = 1 then
+           ----------------------------------------
+           -- Mode 1 - A:B matrix Switch is conducting current building up
+           ----------------------------------------
+           -- Gain zero
+           --A_Aug_Matrix(0,0) := to_sfixed(0.999991800000000,d_left,d_right);
+           --A_Aug_Matrix(0,1) := to_sfixed(0,d_left,d_right);
+           -- LO Gain
+           A_Aug_Matrix(0,0) := to_sfixed( 0.999458300000000,d_left,d_right);
+           A_Aug_Matrix(0,1) := to_sfixed( 0.000063050000000,d_left,d_right);
+           -- B matrix 
+           A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000,d_left,d_right);
+           A_Aug_Matrix(0,3) := to_sfixed( 0,d_left,d_right);
+           
+           -- Gain zero              
+           --A_Aug_Matrix(1,0) := to_sfixed(0,d_left,d_right); 
+           --A_Aug_Matrix(1,1) := to_sfixed(1,d_left,d_right);
+           -- LO Gain
+           A_Aug_Matrix(1,0) := to_sfixed(-0.000073950000000,d_left,d_right); 
+           A_Aug_Matrix(1,1) := to_sfixed( 0.999561650000000,d_left,d_right);
+           -- B matrix
+           A_Aug_Matrix(1,2) := to_sfixed( 0,d_left,d_right);
+           A_Aug_Matrix(1,3) := to_sfixed(-0.000175438600000,d_left,d_right);
+            
+           else null;
+           end if;
+            
                  
               
       case State is
@@ -148,6 +167,12 @@ mult: process(Clk, load, plt_x)
                               
                               FD_residual <= residual_eval;
                               if( start = '1' ) then
+                                  -- Initialization  
+                                  State_inp_Matrix(2) := v_in;
+                                  State_inp_Matrix(3) := load;
+                                  State_inp_Matrix(4) := plt_x(0);
+                                  State_inp_Matrix(5) := plt_x(1);
+                                  
                                   State := S1;
                               else
                                   State := S0;
@@ -267,8 +292,8 @@ mult: process(Clk, load, plt_x)
                            State := S9;
                            
                          when S9 =>
-                           err_val(0) <= resize(State_inp_Matrix(4) - C_Matrix(0), n_left, n_right);
-                           err_val(1) <= resize(State_inp_Matrix(5) - C_Matrix(1), n_left, n_right);
+                           err_val(0) <= resize(plt_x(0) - C_Matrix(0), n_left, n_right);
+                           err_val(1) <= resize(plt_x(1) - C_Matrix(1), n_left, n_right);
                            State := S10;
                            
                          when S10 =>
@@ -311,7 +336,16 @@ mult: process(Clk, load, plt_x)
       ila_inst_0: ila_0
       PORT MAP (
           clk => clk,
-          probe0 => probe0, 
-          probe1 => probe1 
+      
+      
+      
+          probe0 => probe0_pil, 
+          probe1 => probe1_zil, 
+          probe2 => probe2_pvc,  
+          probe3 => probe3_zvc, 
+          probe4 => probe4_eil, 
+          probe5 => probe5_evc,
+          probe6(0) => pc_pwm,
+          probe7 => probe7_resd
       );
 end Behavioral;

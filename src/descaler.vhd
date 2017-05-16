@@ -21,13 +21,17 @@ end descaler;
 architecture Behavioral of descaler is   
 
    signal sfixed_adc_val : sfixed(n_left downto n_right);
-   signal inlevel : sfixed(n_left downto n_right):= to_sfixed(0, n_left, n_right);
+   signal inlevel : sfixed(d_left downto d_right):= to_sfixed(0, d_left, d_right);
+   signal	A     : sfixed(d_left downto d_right);
+   signal   B     : sfixed(n_left downto n_right);
+   signal   P     : sfixed(d_left downto d_right);
+  
    
 begin
 conv: process (clk)
                    
                    
-                           type adc_conv is (V0, V1, V2);
+                           type adc_conv is (V0, V1, V2, V3, V4);
                            variable conv_step : adc_conv := V0;
                           
   begin
@@ -40,19 +44,29 @@ conv: process (clk)
                
                if start = '1' then
                conv_step := V1;
+               A  <= to_sfixed(0.00080566, d_left, d_right);
+               B  <= adc_factor;
                else
                conv_step := V0;
                end if;
                                                          
                when V1 =>
-             
-               inlevel <= resize(to_sfixed(0.00080566, d_left, d_right) * adc_factor, n_left, n_right);
+               P <= resize(A * B , d_left, d_right);
                sfixed_adc_val <= to_sfixed(to_integer(unsigned(adc_in)), n_left, n_right);
                conv_step := V2;
                
                when V2 =>
+               inlevel <= P;
+               B <= sfixed_adc_val;
+               conv_step := V3;
+               
+               when V3 =>
+               A <= inlevel;
+               conv_step := V4;
+               
+               when V4 =>
                done <= '1';
-               adc_val <= resize(sfixed_adc_val * inlevel, n_left, n_right);
+               adc_val <= resize(A * B, n_left, n_right);
                conv_step := V0;                                                                          
                end case;
          end if;
