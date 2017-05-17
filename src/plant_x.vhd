@@ -24,28 +24,29 @@ end plant_x;
 
 architecture Behavioral of plant_x is
 
-     -- Debug core
-    COMPONENT ila_0
+--     -- Debug core
+--    COMPONENT ila_0
      
-     PORT (
-         clk : IN STD_LOGIC;
+--     PORT (
+--         clk : IN STD_LOGIC;
      
      
      
-         probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-         probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-         probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-         probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-         probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-         probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-         probe6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-         probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
-     );
-     END COMPONENT  ;
+--         probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+--         probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+--     );
+--     END COMPONENT  ;
      
-   -- ila core signals
-      signal probe0_pil, probe1_zil, probe2_pvc, probe3_zvc, probe4_eil, probe5_evc : STD_LOGIC_VECTOR(31 downto 0);
-      signal probe7_resd : STD_LOGIC_VECTOR(31 downto 0);
+--   -- ila core signals
+--      signal probe0_pil, probe1_zil, probe2_pvc, probe3_zvc, probe4_eil, probe5_evc : STD_LOGIC_VECTOR(31 downto 0);
+--      signal probe7_resd : STD_LOGIC_VECTOR(31 downto 0);
+      
    -- Matrix cal 
       signal	Count0	: UNSIGNED (3 downto 0):="0000";
 	  signal	A       : sfixed(d_left downto d_right);
@@ -78,16 +79,15 @@ mult: process(Clk, load, plt_x)
    begin
            
    if (Clk'event and Clk = '1') then
-    
-    
-   -- Debug core
-     probe0_pil <= result_type(plt_x(0));
-     probe1_zil <= result_type(z_val(0)); 
-     probe2_pvc <= result_type(plt_x(1));  
-     probe3_zvc <= result_type(z_val(1)); 
-     probe4_eil <= result_type(err_val(0));
-     probe5_evc <= result_type(err_val(1));
-     probe7_resd <= result_type(residual_eval); 
+   
+--  -- Debug core
+--     probe0_pil <= result_type(plt_x(0));
+--     probe1_zil <= result_type(z_val(0)); 
+--     probe2_pvc <= result_type(plt_x(1));  
+--     probe3_zvc <= result_type(z_val(1)); 
+--     probe4_eil <= result_type(err_val(0));
+--     probe5_evc <= result_type(err_val(1));
+--     probe7_resd <= result_type(residual_eval); 
    
     -- LO gain
     A_Aug_Matrix(0,4) := to_sfixed( 0.000533500000000,d_left,d_right);
@@ -331,21 +331,21 @@ mult: process(Clk, load, plt_x)
            end if;
       end process;
 
-      -- Debug core
+--      -- Debug core
             
-      ila_inst_0: ila_0
-      PORT MAP (
-          clk => clk,
+--      ila_inst_0: ila_0
+--      PORT MAP (
+--          clk => clk,
       
       
       
-          probe0 => probe0_pil, 
-          probe1 => probe1_zil, 
-          probe2 => probe2_pvc,  
-          probe3 => probe3_zvc, 
-          probe4 => probe4_eil, 
-          probe5 => probe5_evc,
-          probe6(0) => pc_pwm,
-          probe7 => probe7_resd
-      );
+--          probe0 => probe0_pil, 
+--          probe1 => probe1_zil, 
+--          probe2 => probe2_pvc,  
+--          probe3 => probe3_zvc, 
+--          probe4 => probe4_eil, 
+--          probe5 => probe5_evc,
+--          probe6(0) => pc_pwm,
+--          probe7 => probe7_resd
+--      );
 end Behavioral;

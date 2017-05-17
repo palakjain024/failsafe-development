@@ -23,9 +23,34 @@ end Filter_C;
 
 architecture Behavioral of Filter_C is
 
+--   -- Debug core
+--    COMPONENT ila_0
+     
+--     PORT (
+--         clk : IN STD_LOGIC;
+     
+     
+     
+--         probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+--         probe6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+--         probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+--     );
+--     END COMPONENT  ;
+     
+--   -- ila core signals
+--    signal probe0_pil, probe1_zil, probe2_pvc, probe3_zvc, probe4_eil, probe5_evc : STD_LOGIC_VECTOR(31 downto 0);
+--    signal probe7_resd : STD_LOGIC_VECTOR(31 downto 0); 
+--    signal probe6 : STD_LOGIC_VECTOR(0 downto 0) := "0"; 
+        
    -- Matrix cal
     signal	Count0	  : UNSIGNED (3 downto 0):="0000";
     signal    A       : sfixed(d_left downto d_right);
+    signal	  An      : sfixed(n_left downto n_right);
     signal    B       : sfixed(n_left downto n_right);
     signal    P       : sfixed(n_left downto n_right);
     signal    Sum     : sfixed(n_left downto n_right);
@@ -60,10 +85,16 @@ mult: process(Clk, load, plt_x)
    begin
            
    if (Clk'event and Clk = '1') then
-    State_inp_Matrix(2) := v_in;
-    State_inp_Matrix(3) := load;
-    State_inp_Matrix(4) := plt_x(0);
-    State_inp_Matrix(5) := plt_x(1);
+      
+   
+  -- Debug core
+    probe0_pil <= result_type(plt_x(0));
+    probe1_zil <= result_type(zval(0)); 
+    probe2_pvc <= result_type(plt_x(1));  
+    probe3_zvc <= result_type(zval(1)); 
+    probe4_eil <= result_type(errval(0));
+    probe5_evc <= result_type(errval(1));
+    probe7_resd <= result_type(residual_eval);  
     
  case State is
          ------------------------------------------
@@ -78,76 +109,82 @@ mult: process(Clk, load, plt_x)
              -- Start the FI filter
                      if( start = '1' ) then
                          State := S1;
-                    -- Matrix calculation
-                    
-                    -- Discretize LO gain
-                     A_Aug_Matrix(0,4) := to_sfixed(0.000279450000000,d_left,d_right);
-                     A_Aug_Matrix(0,5) := to_sfixed(0.000495300000000,d_left,d_right);
-                     A_Aug_Matrix(1,4) := to_sfixed(0.000083750000000,d_left,d_right);
-                     A_Aug_Matrix(1,5) := to_sfixed(0.002336950000000,d_left,d_right);
-                     
+                         
+                          -- Initialization  
+                          State_inp_Matrix(2) := v_in;
+                          State_inp_Matrix(3) := load;
+                          State_inp_Matrix(4) := plt_x(0);
+                          State_inp_Matrix(5) := plt_x(1);
+                          
+                          -- Matrix calculation
+                             -- Discretize LO gain
+                             A_Aug_Matrix(0,4) := to_sfixed(0.000279450000000,d_left,d_right);
+                             A_Aug_Matrix(0,5) := to_sfixed(0.000495300000000,d_left,d_right);
+                             A_Aug_Matrix(1,4) := to_sfixed(0.000083750000000,d_left,d_right);
+                             A_Aug_Matrix(1,5) := to_sfixed(0.002336950000000,d_left,d_right);
+                             
                       
-                      if Mode = 0 then
-                     Mode_top <= Mode;
-                     -------------------------------------------------
-                     -- Mode 0 - A:B matrix diode is conducting s1 = 1
-                     --------------------------------------------------
-                     A_Aug_Matrix(0,0) := to_sfixed( 0.999712350000000,d_left,d_right);
-                     A_Aug_Matrix(0,1) := to_sfixed(-0.000595300000000 ,d_left,d_right); 
-                     A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000 ,d_left,d_right); 
-                     A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
-                     A_Aug_Matrix(1,1) := to_sfixed( 0.99766305000000,d_left,d_right);
-                     A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
-                     
-                     if ( ePsigh > to_sfixed(0, n_left, n_right) or ePsigh = to_sfixed(0, n_left, n_right) ) then
-                     A_Aug_Matrix(1,0) := to_sfixed( 0.000793450000000,d_left,d_right);
-                     A_Aug_Matrix(1,3) := to_sfixed(-0.000877200000000 ,d_left,d_right);
-                     else
-                     A_Aug_Matrix(1,0) := to_sfixed( 0.000062250000000,d_left,d_right);
-                     A_Aug_Matrix(1,3) := to_sfixed(-0.000146000000000,d_left,d_right);              
-                     end if; 
-                                                 
-                     elsif Mode = 1 then
-                     Mode_top <= Mode;
-                    ---------------------------------------------------------------
-                    -- Mode 1 - A:B matrix Switch is conducting current building up
-                    ---------------------------------------------------------------
-                     A_Aug_Matrix(0,0) := to_sfixed(0.999712350000000,d_left,d_right);
-                     A_Aug_Matrix(0,1) := to_sfixed(-0.000495300000000 ,d_left,d_right); 
-                     A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000 ,d_left,d_right); 
-                     A_Aug_Matrix(0,3) := to_sfixed( 0,d_left,d_right);
-                     A_Aug_Matrix(1,1) := to_sfixed( 0.99766305000000,d_left,d_right);
-                     A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
-                     A_Aug_Matrix(1,0) := to_sfixed( -0.000083750000000,d_left,d_right);
-                     
-                     if ( ePsigh > to_sfixed(0, n_left, n_right) or ePsigh = to_sfixed(0, n_left, n_right) ) then
-                     A_Aug_Matrix(1,3) := to_sfixed(-0.000877200000000 ,d_left,d_right);
-                     else
-                     A_Aug_Matrix(1,3) := to_sfixed(-0.000146000000000,d_left,d_right);
-                     end if; 
-                                       
-                                           
-                     else
-                     A_Aug_Matrix(0,0) := to_sfixed( 0.999850339050000,d_left,d_right);
-                     A_Aug_Matrix(0,1) := to_sfixed(-0.000100000000000 ,d_left,d_right); 
-                     A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000 ,d_left,d_right); 
-                     A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
-                  
-                     A_Aug_Matrix(1,0) := to_sfixed(0.000175438600000,d_left,d_right);
-                     A_Aug_Matrix(1,1) := to_sfixed(1,d_left,d_right);
-                     A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
-                     A_Aug_Matrix(1,3) := to_sfixed(-0.000175438600000,d_left,d_right);
-                       
-                                      
-                   end if;
-     
+                                 if Mode = 0 then
+                                 Mode_top <= Mode;
+                                 -------------------------------------------------
+                                 -- Mode 0 - A:B matrix diode is conducting s1 = 1
+                                 --------------------------------------------------
+                                 A_Aug_Matrix(0,0) := to_sfixed( 0.999712350000000,d_left,d_right);
+                                 A_Aug_Matrix(0,1) := to_sfixed(-0.000595300000000 ,d_left,d_right); 
+                                 A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000 ,d_left,d_right); 
+                                 A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
+                                 A_Aug_Matrix(1,1) := to_sfixed( 0.99766305000000,d_left,d_right);
+                                 A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
+                                 
+                                 if ( ePsigh > to_sfixed(0, n_left, n_right) or ePsigh = to_sfixed(0, n_left, n_right) ) then
+                                 A_Aug_Matrix(1,0) := to_sfixed( 0.000793450000000,d_left,d_right);
+                                 A_Aug_Matrix(1,3) := to_sfixed(-0.000877200000000 ,d_left,d_right);
+                                 else
+                                 A_Aug_Matrix(1,0) := to_sfixed( 0.000062250000000,d_left,d_right);
+                                 A_Aug_Matrix(1,3) := to_sfixed(-0.000146000000000,d_left,d_right);              
+                                 end if; 
+                                                             
+                                 elsif Mode = 1 then
+                                 Mode_top <= Mode;
+                                ---------------------------------------------------------------
+                                -- Mode 1 - A:B matrix Switch is conducting current building up
+                                ---------------------------------------------------------------
+                                 A_Aug_Matrix(0,0) := to_sfixed(0.999712350000000,d_left,d_right);
+                                 A_Aug_Matrix(0,1) := to_sfixed(-0.000495300000000 ,d_left,d_right); 
+                                 A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000 ,d_left,d_right); 
+                                 A_Aug_Matrix(0,3) := to_sfixed( 0,d_left,d_right);
+                                 A_Aug_Matrix(1,1) := to_sfixed( 0.99766305000000,d_left,d_right);
+                                 A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
+                                 A_Aug_Matrix(1,0) := to_sfixed( -0.000083750000000,d_left,d_right);
+                                 
+                                 if ( ePsigh > to_sfixed(0, n_left, n_right) or ePsigh = to_sfixed(0, n_left, n_right) ) then
+                                 A_Aug_Matrix(1,3) := to_sfixed(-0.000877200000000 ,d_left,d_right);
+                                 else
+                                 A_Aug_Matrix(1,3) := to_sfixed(-0.000146000000000,d_left,d_right);
+                                 end if; 
+                                                   
+                                                       
+                                 else
+                                 A_Aug_Matrix(0,0) := to_sfixed( 0.999850339050000,d_left,d_right);
+                                 A_Aug_Matrix(0,1) := to_sfixed(-0.000100000000000 ,d_left,d_right); 
+                                 A_Aug_Matrix(0,2) := to_sfixed( 0.000100000000000 ,d_left,d_right); 
+                                 A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
+                              
+                                 A_Aug_Matrix(1,0) := to_sfixed(0.000175438600000,d_left,d_right);
+                                 A_Aug_Matrix(1,1) := to_sfixed(1,d_left,d_right);
+                                 A_Aug_Matrix(1,2) := to_sfixed(0,d_left,d_right);
+                                 A_Aug_Matrix(1,3) := to_sfixed(-0.000175438600000,d_left,d_right);
+                                   
+                                                  
+                               end if;
+                 
                   else
                      State := S0;
                   end if;
              
              else
              C_residual <= to_sfixed(0, n_left, n_right);
-             C_zval <=  (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+             C_zval <=    (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
              end if;
   
          -------------------------------------------
@@ -264,8 +301,8 @@ mult: process(Clk, load, plt_x)
           
          when S9 =>
          -- Error cal
-          errval(0) <= resize(State_inp_Matrix(4) - zval(0), n_left, n_right);
-          errval(1) <= resize(State_inp_Matrix(5) - zval(1), n_left, n_right);
+          errval(0) <= resize(plt_x(0) - zval(0), n_left, n_right);
+          errval(1) <= resize(plt_x(1) - zval(1), n_left, n_right);
          -- Sigh cal
          if Mode_top = 0 then
           sigh <= resize(zval(0) - State_inp_Matrix(3), n_left, n_right); 
@@ -290,17 +327,23 @@ mult: process(Clk, load, plt_x)
          when S12 =>
          Sum <= P;
          P <= resize(errval(1) * Psigh(1), n_left, n_right); 
+         -- Norm cal
+         An <= errval(0);
+         B <= errval(0);         
          State := S13;
          
          when S13 =>
+         -- ePsigh cal
          ePsigh <=  resize(Sum + P, n_left, n_right);
          -- Residual Cal
-         P <= resize(errval(0) * errval(0), n_left, n_right);
+         An <= errval(1);
+         B <= errval(1);
+         P <= resize(An * B, n_left, n_right);
          State := S14;
          
          when S14 =>
          Sum <= P;
-         P <= resize(errval(1) * errval(1), n_left, n_right);
+         P <= resize(An * B, n_left, n_right);
          State := S15;
          
          when S15 =>
@@ -322,5 +365,22 @@ mult: process(Clk, load, plt_x)
          end case;
      end if;
   end process;
-  
+
+--      -- Debug core
+            
+--      ila_inst_0: ila_0
+--      PORT MAP (
+--          clk => clk,
+      
+      
+      
+--          probe0 => probe0_pil, 
+--          probe1 => probe1_zil, 
+--          probe2 => probe2_pvc,  
+--          probe3 => probe3_zvc, 
+--          probe4 => probe4_eil, 
+--          probe5 => probe5_evc,
+--          probe6 => probe6,
+--          probe7 => probe7_resd
+--      );  
 end Behavioral;

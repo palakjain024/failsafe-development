@@ -277,22 +277,22 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
+              dac_max => to_sfixed(8,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => z_val(0),  -- For capacitor
+              dac_in => FD_residual,  -- For capacitor
               dac_val => dac_c);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(660,15,-16),
+            dac_max => to_sfixed(8,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => z_val(1),  -- For inductor
+            dac_in => C_residual,  -- For inductor
             dac_val => dac_l);
 scaler_theta_sw: scaler generic map (
             dac_left => n_left,
