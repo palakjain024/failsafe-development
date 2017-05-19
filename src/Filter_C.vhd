@@ -88,13 +88,13 @@ mult: process(Clk, load, plt_x)
       
    
   -- Debug core
-    probe0_pil <= result_type(plt_x(0));
-    probe1_zil <= result_type(zval(0)); 
-    probe2_pvc <= result_type(plt_x(1));  
-    probe3_zvc <= result_type(zval(1)); 
-    probe4_eil <= result_type(errval(0));
-    probe5_evc <= result_type(errval(1));
-    probe7_resd <= result_type(residual_eval);  
+--    probe0_pil <= result_type(plt_x(0));
+--    probe1_zil <= result_type(zval(0)); 
+--    probe2_pvc <= result_type(plt_x(1));  
+--    probe3_zvc <= result_type(zval(1)); 
+--    probe4_eil <= result_type(errval(0));
+--    probe5_evc <= result_type(errval(1));
+--    probe7_resd <= result_type(residual_eval);  
     
  case State is
          ------------------------------------------
@@ -183,6 +183,9 @@ mult: process(Clk, load, plt_x)
                   end if;
              
              else
+             ePsigh <= to_sfixed(0, n_left, n_right);
+             State_inp_Matrix(0) := il0;
+             State_inp_Matrix(1) := vc0;
              C_residual <= to_sfixed(0, n_left, n_right);
              C_zval <=    (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
              end if;

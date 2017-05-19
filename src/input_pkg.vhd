@@ -59,13 +59,16 @@ package input_pkg is
      subtype dac_type is std_logic_vector (11 downto 0);
        
  -- Precision
-     --constant res_left: integer := 23;
-     --constant res_right: integer := -8;
+     constant eps_left: integer := 25;
+     constant eps_right: integer := -6;
      constant n_left: integer := 15;
      constant n_right: integer := -16;
      constant d_left: integer := 1;
      constant d_right:integer := -30;
-    
+ 
+ -- offset to ADCs
+     constant offset_adc : sfixed(15 downto -16) := to_sfixed(0, 15, -16); 
+        
  -- ADC Descaler constants
      constant vmax : sfixed(15 downto -16):= to_sfixed(3.3,15,-16);
      constant vmin : sfixed(15 downto -16):= to_sfixed(0, 15, -16);
