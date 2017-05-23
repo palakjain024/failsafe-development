@@ -67,7 +67,7 @@ package input_pkg is
      constant d_right:integer := -30;
  
  -- offset to ADCs
-     constant offset_adc : sfixed(15 downto -16) := to_sfixed(0, 15, -16); 
+     constant offset_adc : sfixed(15 downto -16) := to_sfixed(200, 15, -16); 
         
  -- ADC Descaler constants
      constant vmax : sfixed(15 downto -16):= to_sfixed(3.3,15,-16);

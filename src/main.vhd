@@ -270,7 +270,7 @@ de_inst_il: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             start => AD_sync_2,
             adc_in => adc_il,
             done => de_done_il,
-            adc_val => il_offset);
+            adc_val => plt_x(0));
 de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
             port map (
             clk => clk,
@@ -283,24 +283,34 @@ de_inst_vc: descaler generic map (adc_factor => to_sfixed(200,15,-16) )
 scaler_theta_l: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
+              dac_max => to_sfixed(1000,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => plt_x(0),  -- For capacitor
+              dac_in => C_residual,  -- For capacitor
               dac_val => dac_1);                  
 scaler_theta_c: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(660,15,-16),
+            dac_max => to_sfixed(1000,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => SW_zval(1),  -- For inductor
+            dac_in => L_residual,  -- For inductor
             dac_val => dac_2);
 scaler_theta_sw: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(1000,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => SW_residual,  -- For switch
+            dac_val => dac_3);
+scaler_theta_fd: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
             dac_max => to_sfixed(10,15,-16),
@@ -308,17 +318,7 @@ scaler_theta_sw: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => FD_residual,  -- For switch
-            dac_val => dac_3);
-scaler_theta_fd: scaler generic map (
-            dac_left => n_left,
-            dac_right => n_right,
-            dac_max => to_sfixed(10000,15,-16),
-            dac_min => to_sfixed(0,15,-16)
-            )
-            port map (
-            clk => clk,
-            dac_in => SW_residual,  -- For FD observer
+            dac_in => FD_residual,  -- For FD observer
             dac_val => dac_4);
             
 -- Processor_core
@@ -346,7 +346,7 @@ main_loop: process (clk)
      if (clk = '1' and clk'event) then
               
               -- ADC value (Switch fault causes current to go negative)
-                plt_x(0) <= resize(il_offset - offset_adc, n_left, n_right);
+              -- plt_x(0) <= resize(il_offset - offset_adc, n_left, n_right);
              if pwm_f = '0' then
                pwm_out_t(0) <= p_pwm1_out;
                pwm_n_out_t(0)  <= p_pwm2_out;

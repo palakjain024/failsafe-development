@@ -111,7 +111,7 @@ architecture Behavioral of processor_core is
   END COMPONENT  ;
   
  -- ila core signals
-     signal probe0_pil, probe1_pvc, probe2_sw, probe3_c, probe4_l, probe5_fd : STD_LOGIC_VECTOR(31 downto 0);
+     signal probe0_pil, probe1_pvc, probe2_sw, probe3_swil, probe4_swvc, probe5_fd : STD_LOGIC_VECTOR(31 downto 0);
      signal probe7_load : STD_LOGIC_VECTOR(31 downto 0); 
      signal probe6 : STD_LOGIC_VECTOR(0 downto 0) := "0"; 
  
@@ -137,6 +137,7 @@ architecture Behavioral of processor_core is
  signal L_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
  signal SW_done : STD_LOGIC := '1';
  signal SW_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+ signal SW_zval_probe: vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
  --signal C_residual_avg : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
 
  
@@ -187,7 +188,7 @@ load => load,
 plt_x => pc_x,
 Done => SW_done,
 SW_residual => SW_residual,
-SW_zval => SW_zval
+SW_zval => SW_zval_probe
 );
 
  -- Processes
@@ -200,12 +201,13 @@ CoreLOOP: process(clk, pc_pwm)
               probe0_pil <= result_type(pc_x(0));
               probe1_pvc <= result_type(pc_x(1)); 
               probe2_sw  <= result_type(SW_residual);  
-              probe3_c   <= result_type(C_residual); 
-              probe4_l   <= result_type(L_residual);
+              probe3_swil   <= result_type(SW_zval_probe(0)); 
+              probe4_swvc   <= result_type(SW_zval_probe(1));
               probe5_fd  <= result_type(FD_residual);
               probe7_load<= result_type(load);  
               
                     -- Output to main
+                    SW_zval <= SW_zval_probe;
                     pc_z <= z_val;
                     FD_flag <= flag;
                     FD_residual_out <= FD_residual;
@@ -271,8 +273,8 @@ fault_detection: process(clk, reset_fd, FD_residual)
                     probe0 => probe0_pil, 
                     probe1 => probe1_pvc, 
                     probe2 => probe2_sw,  
-                    probe3 => probe3_c, 
-                    probe4 => probe4_l, 
+                    probe3 => probe3_swil, 
+                    probe4 => probe4_swvc, 
                     probe5 => probe5_fd,
                     probe6(0) => flag,
                     probe7 => probe7_load
