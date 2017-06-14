@@ -11,53 +11,99 @@ use work.input_pkg.all;
 
 ENTITY pwm IS
   PORT(
-      clk       : IN  STD_LOGIC;                                    --system clock
-      reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
-      ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
-      duty      : IN  sfixed(n_left downto n_right);                       --duty cycle (range given by bit resolution)
-      pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
-      pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));         --pwm inverse outputs
+      clk       : IN  STD_LOGIC;                                    -- system clock
+      reset_n   : IN  STD_LOGIC;                                    -- asynchronous reset
+      pwm_out_t   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');    --pwm outputs
+      pwm_n_out_t : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'));   --pwm inverse outputs
 END pwm;
 
-ARCHITECTURE logic OF pwm IS
+architecture Behavioral of pwm is
+-- Component definition
 
-  -- PWM Generator
-  CONSTANT  period     :  INTEGER := sys_clk/pwm_freq;                      --number of clocks in one pwm period
-  TYPE counters IS ARRAY (0 TO phases-1) OF INTEGER RANGE 0 TO period - 1;  --data type for array of period counters
-  SIGNAL  count        :  counters := (OTHERS => 0);                        --array of period counters
-  SIGNAL   half_duty_new  :  INTEGER RANGE 0 TO period/2 := 0;              --number of clocks in 1/2 duty cycle
-  TYPE half_duties IS ARRAY (0 TO phases-1) OF INTEGER RANGE 0 TO period/2; --data type for array of half duty values
-  SIGNAL  half_duty    :  half_duties := (OTHERS => 0);                     --array of half duty values (for each phase)
+-- Sine and Triangular waveform generation
+Component waveform_synthesis is
+ port(
+      clk       : IN  STD_LOGIC;   
+      sine_ref  : OUT sine_3p;
+      ctrl_freq : OUT INTEGER range 0 to 200 := 0
+      );
+end component waveform_synthesis;
 
-BEGIN
+-- Dead Time Module
+component deadtime_test
+         Port ( clk : in STD_LOGIC;
+               p_Pwm_In : in STD_LOGIC;
+               p_Pwm1_Out : out STD_LOGIC := '0';
+               p_Pwm2_Out : out STD_LOGIC := '0');
+end component deadtime_test;
 
-  PROCESS(clk, reset_n)
-  BEGIN
-    IF(reset_n = '0') THEN                                                   --asynchronous reset
-      count <= (OTHERS => 0);                                                --clear counter
-      pwm_out <= (OTHERS => '0');                                            --clear pwm outputs
-      pwm_n_out <= (OTHERS => '0');                                          --clear pwm inverse outputs
-    ELSIF(clk'EVENT AND clk = '1') THEN                                      --rising system clock edge
-      IF(ena = '1') THEN                                                     --latch in new duty cycle
-        half_duty_new <= to_integer(duty*to_sfixed(period, 31, 0))/2;                                      --determine clocks in 1/2 duty cycle
-      END IF;
-      FOR i IN 0 to phases-1 LOOP                                            --create a counter for each phase
-        IF(count(0) = period - 1 - i*period/phases) THEN                       --end of period reached
-          count(i) <= 0;                                                         --reset counter
-          half_duty(i) <= half_duty_new;                                         --set most recent duty cycle value
-        ELSE                                                                   --end of period not reached
-          count(i) <= count(i) + 1;                                              --increment counter
-        END IF;
-      END LOOP;
-      FOR i IN 0 to phases-1 LOOP                                            --control outputs for each phase
-        IF(count(i) = half_duty(i)) THEN                                       --phase's falling edge reached
-          pwm_out(i) <= '0';                                                     --deassert the pwm output
-          pwm_n_out(i) <= '1';                                                   --assert the pwm inverse output
-        ELSIF(count(i) = period - half_duty(i)) THEN                           --phase's rising edge reached
-          pwm_out(i) <= '1';                                                     --assert the pwm output
-          pwm_n_out(i) <= '0';                                                   --deassert the pwm inverse output
-        END IF;
-      END LOOP;
-    END IF;
-  END PROCESS;
-END logic;
+-- signal definition
+signal sine_ref : sine_3p;
+signal ctrl_freq : INTEGER RANGE 0 to 200 := 0;
+signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');    --pwm outputs
+signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');   --pwm inverse outputs
+      
+      
+begin
+
+deadtime_inst_0: deadtime_test  
+port map(
+    p_pwm_in => pwm_out(0), 
+    clk => clk, 
+    p_pwm1_out => pwm_out_t(0), 
+    p_pwm2_out => pwm_n_out_t(0));
+    
+
+deadtime_inst_1: deadtime_test  
+port map(
+    p_pwm_in => pwm_out(1), 
+    clk => clk, 
+    p_pwm1_out => pwm_out_t(1), 
+    p_pwm2_out => pwm_n_out_t(1));
+    
+deadtime_inst_2: deadtime_test  
+    port map(
+        p_pwm_in => pwm_out(2), 
+        clk => clk, 
+        p_pwm1_out => pwm_out_t(2), 
+        p_pwm2_out => pwm_n_out_t(2));
+
+ws_inst: waveform_synthesis
+            PORT MAP (
+                  clk => clk,   
+                  sine_ref => sine_ref,
+                  ctrl_freq => ctrl_freq
+                    );
+                    
+pwm_gen_process: PROCESS(clk, reset_n)
+ begin
+    if (clk'EVENT AND clk = '1') THEN   
+       
+       -- synchronous reset 
+        IF(reset_n = '0') THEN                                                   
+          pwm_out <= (OTHERS => '1');                                            -- clear pwm outputs
+          pwm_n_out <= (OTHERS => '1');  
+       
+       -- PWM generation   
+        ELSE
+   
+         
+                 FOR i IN 0 to phases-1 LOOP    
+                    
+                    IF sine_ref(i) >= ctrl_freq THEN
+                    
+                    pwm_out(i) <= '0';                                                     --assert the pwm output
+                    pwm_n_out(i) <= '1';                                                   --deassert the pwm inverse output
+                    
+                    ELSE
+                    
+                    pwm_out(i) <= '1';                                                     --deassert the pwm output
+                    pwm_n_out(i) <= '0';                                                   --assert the pwm inverse output
+                    
+                    END IF;
+                   
+                 END LOOP; 
+         END IF;
+    end if;
+ end process;
+end Behavioral;
