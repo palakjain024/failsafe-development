@@ -114,8 +114,21 @@ Generic(
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
 
+-- Processor core
+component processor_core
+Port ( -- General
+       Clk : in STD_LOGIC;
+       -- Converter fault flag;
+       FD_flag : out STD_LOGIC := '0';
+       -- Converter state estimator
+       pc_pwm : in STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');
+       pc_x : in vect3;
+       pc_z : out vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right))
+          );   
+end component processor_core;
+
 -------------- Signal Definition -------------
--- pwm
+-- PWM
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');   -- pwm outputs
 signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');   -- pwm inverse outputs
 
@@ -131,12 +144,16 @@ signal dac_4: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
 signal plt_x : vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+signal plt_x_raw : vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 signal de_done_1, de_done_2, de_done_3, de_done_4 : STD_LOGIC;
 
 -- ADC signals
 signal AD_sync_1, AD_sync_2: STD_LOGIC;
 signal adc_1, adc_2 : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => '0');
+
+-- Processor core
+signal z_val : vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 
 begin
 
@@ -180,8 +197,8 @@ adc_1_inst: pmodAD1_ctrl port map (
         SDATA2 => AD_D1_1, 
         SCLK   => AD_SCK_1,
         nCS    => AD_CS_1,
-        DATA1  => adc_1,    
-        DATA2  => adc_2, 
+        DATA1  => adc_1, -- Ia3    
+        DATA2  => adc_2, -- no use
         START  => AD_sync_1, 
         DONE   => AD_sync_1
 );
@@ -192,8 +209,8 @@ adc_2_inst: pmodAD1_ctrl port map (
         SDATA2 => AD_D1_2, 
         SCLK   => AD_SCK_2,
         nCS    => AD_CS_2,
-        DATA1  => adc_3, 
-        DATA2  => adc_4, 
+        DATA1  => adc_3, -- Ia1
+        DATA2  => adc_4, -- Ia2
         START  => AD_sync_2, 
         DONE   => AD_sync_2
         );  
@@ -203,64 +220,64 @@ de_inst_1: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_1,
-            adc_in => adc_1,
+            adc_in => adc_3,
             done => de_done_1,
-            adc_val => plt_x(0));
+            adc_val => plt_x_raw(0));
 de_inst_2: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
-            adc_in => adc_2,
+            adc_in => adc_4,
             done => de_done_2,
-            adc_val => plt_x(1));
+            adc_val => plt_x_raw(1));
 de_inst_3: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
             port map (
             clk => clk,
             start => AD_sync_2,
-            adc_in => adc_3,
+            adc_in => adc_1,
             done => de_done_3,
-            adc_val => plt_x(2));   
+            adc_val => plt_x_raw(2));   
             
 -- DAC Scaler       
 scaler_theta_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
-              dac_min => to_Sfixed(0,15,-16)
+              dac_max => to_sfixed(16.5,15,-16),
+              dac_min => to_Sfixed(-16.5,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => plt_x(0), 
+              dac_in => z_val(0), 
               dac_val => dac_1);                  
 scaler_theta_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(16.5,15,-16),
+            dac_min => to_sfixed(-16.5,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => plt_x(1),  
+            dac_in => z_val(1),  
             dac_val => dac_2);
 scaler_theta_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(16.5,15,-16),
+            dac_min => to_sfixed(-16.5,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => plt_x(2), 
+            dac_in => z_val(2), 
             dac_val => dac_3);
 scaler_theta_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(330,15,-16),
-            dac_min => to_sfixed(0,15,-16)
+            dac_max => to_sfixed(16.5,15,-16),
+            dac_min => to_sfixed(-16.5,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => v_in, 
+            dac_in => plt_x(0), 
             dac_val => dac_4);
                 
               
@@ -268,21 +285,36 @@ scaler_theta_4: scaler generic map (
 main_loop: process (clk)
  begin
      if (clk = '1' and clk'event) then
+     
+           
+             -- ADC offsets
+              plt_x(0) <= resize(plt_x_raw(0) - offset, n_left, n_right);
+              plt_x(1) <= resize(plt_x_raw(1) - offset, n_left, n_right);
+              plt_x(2) <= resize(plt_x_raw(2) - offset, n_left, n_right);
               
              -- PWM output
              if pwm_f = '0' then
                pwm_out_t <= pwm_out;
                pwm_n_out_t  <= pwm_n_out;
              else
-               pwm_out_t(0) <= '0';
+               pwm_out_t(0) <= '1';
                pwm_n_out_t(0)  <= '1';
-               pwm_out_t(1) <= pwm_out(1);
-               pwm_n_out_t(1)  <= pwm_n_out(1);
-               pwm_out_t(2) <= pwm_out(2);
-               pwm_n_out_t(2)  <= pwm_n_out(2);
+               pwm_out_t(1) <= '1';
+               pwm_n_out_t(1)  <= '1';
+               pwm_out_t(2) <= '1';
+               pwm_n_out_t(2)  <= '1';
              end if;                                 
  
       end if;
  end process main_loop;
+ 
+ -- Processor core
+pc_instance: processor_core port map (
+                Clk => clk,
+                FD_flag => FD_flag,
+                pc_pwm => pwm_out,
+                pc_x => plt_x,
+                pc_z => z_val);
+                
     
 end Behavioral;

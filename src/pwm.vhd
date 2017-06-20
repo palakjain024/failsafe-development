@@ -90,15 +90,15 @@ pwm_gen_process: PROCESS(clk, reset_n)
          
                  FOR i IN 0 to phases-1 LOOP    
                     
-                    IF sine_ref(i) >= ctrl_freq THEN
+                    IF ctrl_freq <= sine_ref(i) THEN
                     
-                    pwm_out(i) <= '1';                                                     --assert the pwm output
-                    pwm_n_out(i) <= '0';                                                   --deassert the pwm inverse output
+                    pwm_out(i) <= '0';                                                     --assert the pwm output
+                    pwm_n_out(i) <= '1';                                                   --deassert the pwm inverse output
                     
                     ELSE
                     
-                    pwm_out(i) <= '0';                                                     --deassert the pwm output
-                    pwm_n_out(i) <= '1';                                                   --assert the pwm inverse output
+                    pwm_out(i) <= '1';                                                     --deassert the pwm output
+                    pwm_n_out(i) <= '0';                                                   --assert the pwm inverse output
                     
                     END IF;
                    
