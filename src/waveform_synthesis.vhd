@@ -10,7 +10,8 @@ use work.input_pkg.all;
 
 entity waveform_synthesis is
  PORT(
-      clk       : IN  STD_LOGIC;   
+      clk       : IN  STD_LOGIC; 
+      Done      : OUT STD_LOGIC;  
       sine_ref  : OUT sine_3p;
       ctrl_freq : OUT INTEGER range 0 to 200 := 0
       );
@@ -93,6 +94,7 @@ main_loop: process(clk)
      if (clk'event and clk = '1') then
         
         -- Waveform outputs for PWM
+        Done <= data_tvalid_0;
         sine_ref(0) <= sine_0;
         sine_ref(1) <= sine_120;
         sine_ref(2) <= sine_240;
@@ -100,6 +102,14 @@ main_loop: process(clk)
         
         if data_tvalid_0 = '1' then
         sine_0 <= to_integer(signed(m_axis_data_tdata_0)) + 64;
+        
+        -- Reference wave form generation
+               if counter = pwm_freq then
+               counter <= 0;
+               else
+               counter <= counter + 1;
+               end if; 
+               
         else
         sine_0 <= 0;
         end if;
@@ -116,13 +126,10 @@ main_loop: process(clk)
         sine_240 <= 0;
         end if;
        
-       if counter = pwm_freq then
-       counter <= 0;
-       else
-       counter <= counter + 1;
-       ctrl_waveform <= counter/62;  -- 62 depends upon modulation value (m) since sine amplitude = 128
-       end if;                       -- m = 0.8 where m = sine_amplitude/tri_amplitude
-        
+       -- 62 depends upon modulation value (m) since sine amplitude = 128
+       -- m = 0.8 where m = sine_amplitude/tri_amplitude                     
+       ctrl_waveform <= counter/62;  
+       
        
      end if;
  end process;   

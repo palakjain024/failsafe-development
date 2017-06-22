@@ -52,6 +52,7 @@ COMPONENT pwm IS
  PORT(
      clk       : IN  STD_LOGIC;                                                -- system clock
      reset_n   : IN  STD_LOGIC;                                                -- synchronous reset
+     Done      : OUT STD_LOGIC;                                    -- PWM starts
      pwm_out_t   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'); -- pwm outputs
      pwm_n_out_t : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1')  -- pwm inverse outputs
      );   
@@ -118,11 +119,12 @@ end component;
 component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
+       pwm_start : in STD_LOGIC;
+       pc_pwm : in STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');
+       u_inp : in vect7;
        -- Converter fault flag;
        FD_flag : out STD_LOGIC := '0';
        -- Converter state estimator
-       pc_pwm : in STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');
-       pc_x : in vect3;
        pc_z : out vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right))
           );   
 end component processor_core;
@@ -131,6 +133,7 @@ end component processor_core;
 -- PWM
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');   -- pwm outputs
 signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');   -- pwm inverse outputs
+signal pwm_start : STD_LOGIC;                                    -- PWM starts
 
 -- DAC signals         
 signal DA_sync1: STD_LOGIC;
@@ -153,7 +156,9 @@ signal adc_1, adc_2 : std_logic_vector(11 downto 0) := (others => '0');
 signal adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
-signal z_val : vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal z_val : vect3 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal u_inp : vect7 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right),
+                         to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 
 begin
 
@@ -162,6 +167,7 @@ pwm_instance: pwm
   PORT MAP(
         clk => clk,
         reset_n => '1',
+        Done => pwm_start,
         pwm_out_t => pwm_out,
         pwm_n_out_t => pwm_n_out);
       
@@ -286,7 +292,15 @@ main_loop: process (clk)
  begin
      if (clk = '1' and clk'event) then
      
-           
+             -- Input vector to inverter model
+              u_inp(0) <= v_in;
+              u_inp(1) <= resize(plt_x(0) * r_load, n_left, n_right);
+              u_inp(2) <= resize(plt_x(1) * r_load, n_left, n_right);
+              u_inp(3) <= resize(plt_x(2) * r_load, n_left, n_right);
+              u_inp(4) <= plt_x(0);
+              u_inp(5) <= plt_x(1);
+              u_inp(6) <= plt_x(2);
+              
              -- ADC offsets
               plt_x(0) <= resize(plt_x_raw(0) - offset, n_left, n_right);
               plt_x(1) <= resize(plt_x_raw(1) - offset, n_left, n_right);
@@ -311,9 +325,10 @@ main_loop: process (clk)
  -- Processor core
 pc_instance: processor_core port map (
                 Clk => clk,
-                FD_flag => FD_flag,
+                pwm_start => pwm_start,
                 pc_pwm => pwm_out,
-                pc_x => plt_x,
+                u_inp => u_inp,
+                FD_flag => FD_flag,
                 pc_z => z_val);
                 
     

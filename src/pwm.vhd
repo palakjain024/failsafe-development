@@ -13,6 +13,7 @@ ENTITY pwm IS
   PORT(
       clk       : IN  STD_LOGIC;                                    -- system clock
       reset_n   : IN  STD_LOGIC;                                    -- asynchronous reset
+      Done      : OUT STD_LOGIC;                                    -- PWM starts
       pwm_out_t   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');    --pwm outputs
       pwm_n_out_t : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'));   --pwm inverse outputs
 END pwm;
@@ -23,7 +24,8 @@ architecture Behavioral of pwm is
 -- Sine and Triangular waveform generation
 Component waveform_synthesis is
  port(
-      clk       : IN  STD_LOGIC;   
+      clk       : IN  STD_LOGIC; 
+      Done      : OUT STD_LOGIC;  
       sine_ref  : OUT sine_3p;
       ctrl_freq : OUT INTEGER range 0 to 200 := 0
       );
@@ -70,7 +72,8 @@ deadtime_inst_2: deadtime_test
 
 ws_inst: waveform_synthesis
             PORT MAP (
-                  clk => clk,   
+                  clk => clk,
+                  Done => Done,  
                   sine_ref => sine_ref,
                   ctrl_freq => ctrl_freq
                     );

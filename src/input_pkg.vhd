@@ -18,24 +18,26 @@ package input_pkg is
     
   -- constant inputs
   constant h : sfixed(0 downto -35) := to_sfixed(0.0000005, 0, -35); -- Fixed time step
-  constant r : sfixed(1 downto -30) := to_sfixed(-0.82, 1,-30);       -- inductor resistance
-  
+    
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(100,15,-16);
-  constant r_load : sfixed(15 downto -16) := to_sfixed(3,15,-16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(230,15,-16);
+  constant r_load : sfixed(15 downto -16) := to_sfixed(50,15,-16);
     
   -- Initial values of il and vc (Initial state input)
   constant il : sfixed(15 downto -16) := to_sfixed(3, 15,-16);
   
-  -- Healthy value of Inductor
-  constant L_ind :  sfixed(0 downto -35) := to_sfixed(0.005, 0, -35);
+  -- Healthy value of Inductor and capacitors for A and B
+    constant a1 : sfixed(1 downto -30) := to_sfixed(0.999980000000000,1, -30);
+    constant a2 : sfixed(1 downto -30) := to_sfixed(0.000010000000000, 1,-30);
+    constant b1 : sfixed(1 downto -30) := to_sfixed(0.000066666666667,1, -30);
+    constant b2 : sfixed(1 downto -30) := to_sfixed(-0.000033333333333, 1,-30);    
     
   -- Fault limits
   
   
   -- vectors
   type vect3 is array (0 to 2) of sfixed(15 downto -16); -- for z, x
-  type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for u
+  type vect7 is array (0 to 6) of sfixed(15 downto -16); -- for u
   type vect10 is array (0 to 9) of sfixed(15 downto -16); -- for augumented [z;u;x]
   type sine_3p is array (0 to 2) of INTEGER range 0 to 128;
   
@@ -52,6 +54,10 @@ package input_pkg is
   constant vmax : sfixed(15 downto -16):= to_sfixed(3.3,15,-16);
   constant vmin : sfixed(15 downto -16):= to_sfixed(0, 15, -16);
   constant adc_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
+  
+  -- ADC offset
+  constant offset : sfixed(15 downto -16):= to_sfixed(10,15,-16);
+  subtype result_type is std_logic_vector (31 downto 0);
   
   -- DAC scaler constants
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
