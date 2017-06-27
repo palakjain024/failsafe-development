@@ -75,28 +75,28 @@ if clk'event and clk = '1' then
             if counter = 0 then
             
             -- Mode selection
-               if (pc_pwm = "111") then
+               if (pc_pwm(0) = '1' and pc_pwm(1) = '1' and pc_pwm(2) = '1') then
                 -- Mode 1
                    mode <= 1;
-                elsif(pc_pwm = "011") then
+                elsif (pc_pwm(0) = '1' and pc_pwm(1) = '1' and pc_pwm(2) = '0') then
                 -- Mode 2
                    mode <= 2;
-                elsif(pc_pwm = "101") then
+                elsif (pc_pwm(0) = '1' and pc_pwm(1) = '0' and pc_pwm(2) = '1') then
                 -- Mode 3
                    mode <= 3;
-                elsif(pc_pwm = "001") then
+                elsif (pc_pwm(0) = '1' and pc_pwm(1) = '0' and pc_pwm(2) = '0') then
                 -- Mode 4
                    mode <= 4;
-                elsif(pc_pwm = "110") then
+                elsif (pc_pwm(0) = '0' and pc_pwm(1) = '1' and pc_pwm(2) = '1') then
                 -- Mode 5
                    mode <= 5;
-                elsif(pc_pwm = "010") then
+                elsif (pc_pwm(0) = '0' and pc_pwm(1) = '1' and pc_pwm(2) = '0') then
                 -- Mode 6
                    mode <= 6;
-                elsif(pc_pwm = "100") then
+                elsif (pc_pwm(0) = '0' and pc_pwm(1) = '0' and pc_pwm(2) = '1') then
                 -- Mode 7
                    mode <= 7;   
-                elsif(pc_pwm = "000") then
+                elsif (pc_pwm(0) = '0' and pc_pwm(1) = '0' and pc_pwm(2) = '0') then
                 -- Mode 8
                    mode <= 8; 
                 else null;

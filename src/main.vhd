@@ -248,8 +248,8 @@ de_inst_3: descaler generic map (adc_factor => to_sfixed(10,15,-16) )
 scaler_theta_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(16.5,15,-16),
-              dac_min => to_Sfixed(-16.5,15,-16)
+              dac_max => to_sfixed(10,15,-16),
+              dac_min => to_sfixed(-10,15,-16)
               )
               port map (
               clk => clk,
@@ -258,8 +258,8 @@ scaler_theta_1: scaler generic map (
 scaler_theta_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(16.5,15,-16),
-            dac_min => to_sfixed(-16.5,15,-16)
+            dac_max => to_sfixed(10,15,-16),
+            dac_min => to_sfixed(-10,15,-16)
             )
             port map (
             clk => clk,
@@ -268,8 +268,8 @@ scaler_theta_2: scaler generic map (
 scaler_theta_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(16.5,15,-16),
-            dac_min => to_sfixed(-16.5,15,-16)
+            dac_max => to_sfixed(10,15,-16),
+            dac_min => to_sfixed(-10,15,-16)
             )
             port map (
             clk => clk,
@@ -278,12 +278,12 @@ scaler_theta_3: scaler generic map (
 scaler_theta_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(16.5,15,-16),
-            dac_min => to_sfixed(-16.5,15,-16)
+            dac_max => to_sfixed(120,15,-16),
+            dac_min => to_sfixed(-120,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => plt_x(0), 
+            dac_in => u_inp(3),
             dac_val => dac_4);
                 
               
