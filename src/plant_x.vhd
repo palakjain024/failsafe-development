@@ -29,11 +29,7 @@ architecture Behavioral of plant_x is
 	  signal	B       : sfixed(n_left downto n_right);
 	  signal	P       : sfixed(n_left downto n_right);
 	  signal	Sum	    : sfixed(n_left downto n_right);
-      signal 	j0, k0, k1, k2 : INTEGER := 0;
-
-   -- For Norm calculation
-      signal  z_val : vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-     
+      signal 	j0, k0, k1, k2 : INTEGER := 0;   
     
 begin
 
@@ -44,14 +40,13 @@ mult: process(Clk, u_inp)
   variable     State         : STATE_VALUE := S0;
 
   -- Matrix values depends on type of mode
-  variable A_Aug_Matrix         : mat37;
-  variable State_inp_Matrix     : vect7:= (il, il, il, il, il, il, il);
+  variable A_Aug_Matrix         : mat310;
+  variable State_inp_Matrix     : vect10:= (il, il, il, v_in, il, vb0, vc0, il, vb0, vc0);
   variable C_Matrix             : vect3;
 
    begin  
    
    if (Clk'event and Clk = '1') then 
-   
 
      
       -- A matrix
@@ -64,51 +59,7 @@ mult: process(Clk, u_inp)
        A_Aug_Matrix(2,0) := a2;
        A_Aug_Matrix(2,1) := a2;
        A_Aug_Matrix(2,2) := a1;
-       
-        -- Mode selection
-         if Mode = 1 then
-            A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed(0,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed(0,d_left,d_right);
-                    
-         elsif Mode = 2 then
-            A_Aug_Matrix(0,3) := to_sfixed( 0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed( 0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed(-0.000066666666667,d_left,d_right);
-      
-         elsif Mode = 3 then
-            A_Aug_Matrix(0,3) := to_sfixed( 0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed(-0.000066666666667,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed( 0.000033333333333,d_left,d_right);
-      
-         elsif Mode = 4 then
-            A_Aug_Matrix(0,3) := to_sfixed( 0.000066666666667,d_left,d_right); 
-            A_Aug_Matrix(1,3) := to_sfixed(-0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed(-0.000033333333333,d_left,d_right);
-         
-         elsif Mode = 5 then
-            A_Aug_Matrix(0,3) := to_sfixed(-0.000066666666667,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed( 0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed( 0.000033333333333,d_left,d_right);       
-      
-         elsif Mode = 6 then
-            A_Aug_Matrix(0,3) := to_sfixed(-0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed( 0.000066666666667,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed(-0.000033333333333,d_left,d_right);
-      
-         elsif Mode = 7 then
-            A_Aug_Matrix(0,3) := to_sfixed(-0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed(-0.000033333333333,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed( 0.000066666666667,d_left,d_right);
-      
-         elsif Mode = 8 then
-            A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
-            A_Aug_Matrix(1,3) := to_sfixed(0,d_left,d_right);
-            A_Aug_Matrix(2,3) := to_sfixed(0,d_left,d_right);
-      
-         else null;
-         end if;
-         
+
        -- B matrix
       A_Aug_Matrix(0,4) := b1;
       A_Aug_Matrix(0,5) := b2;
@@ -119,6 +70,17 @@ mult: process(Clk, u_inp)
       A_Aug_Matrix(2,4) := b2;
       A_Aug_Matrix(2,5) := b2;
       A_Aug_Matrix(2,6) := b1;
+      
+       -- L matrix
+       A_Aug_Matrix(0,7) := l1;
+       A_Aug_Matrix(0,8) := l2;
+       A_Aug_Matrix(0,9) := l2;
+       A_Aug_Matrix(1,7) := l2;
+       A_Aug_Matrix(1,8) := l1;
+       A_Aug_Matrix(1,9) := l2;
+       A_Aug_Matrix(2,7) := l2;
+       A_Aug_Matrix(2,8) := l2;
+       A_Aug_Matrix(2,9) := l1;
       
       
              case State is
@@ -131,16 +93,62 @@ mult: process(Clk, u_inp)
                  Count0 <= 0;
       
                  if( Start = '1' ) then
-                 
-                     -- Inputs
-                  State_inp_Matrix(3) := u_inp(0);
-                  State_inp_Matrix(4) := u_inp(1);
-                  State_inp_Matrix(5) := u_inp(2);
-                  State_inp_Matrix(6) := u_inp(3);
+                 -- Inputs
+                 State_inp_Matrix(3) := u_inp(0);
+                 State_inp_Matrix(4) := u_inp(1);
+                 State_inp_Matrix(5) := u_inp(2);
+                 State_inp_Matrix(6) := u_inp(3);
+                 State_inp_Matrix(7) := u_inp(4);
+                 State_inp_Matrix(8) := u_inp(5);
+                 State_inp_Matrix(9) := u_inp(6);
+                
+                -- Mode selection
+                  if Mode = 1 then
+                     A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed(0,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed(0,d_left,d_right);
+                             
+                  elsif Mode = 2 then
+                     A_Aug_Matrix(0,3) := to_sfixed( 0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed( 0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed(-0.000066666666667,d_left,d_right);
+               
+                  elsif Mode = 3 then
+                     A_Aug_Matrix(0,3) := to_sfixed( 0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed(-0.000066666666667,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed( 0.000033333333333,d_left,d_right);
+               
+                  elsif Mode = 4 then
+                     A_Aug_Matrix(0,3) := to_sfixed( 0.000066666666667,d_left,d_right); 
+                     A_Aug_Matrix(1,3) := to_sfixed(-0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed(-0.000033333333333,d_left,d_right);
                   
-                     State := S1;
+                  elsif Mode = 5 then
+                     A_Aug_Matrix(0,3) := to_sfixed(-0.000066666666667,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed( 0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed( 0.000033333333333,d_left,d_right);       
+               
+                  elsif Mode = 6 then
+                     A_Aug_Matrix(0,3) := to_sfixed(-0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed( 0.000066666666667,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed(-0.000033333333333,d_left,d_right);
+               
+                  elsif Mode = 7 then
+                     A_Aug_Matrix(0,3) := to_sfixed(-0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed(-0.000033333333333,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed( 0.000066666666667,d_left,d_right);
+               
+                  elsif Mode = 8 then
+                     A_Aug_Matrix(0,3) := to_sfixed(0,d_left,d_right);
+                     A_Aug_Matrix(1,3) := to_sfixed(0,d_left,d_right);
+                     A_Aug_Matrix(2,3) := to_sfixed(0,d_left,d_right);
+               
+                  else null;
+                  end if;
+                  
+                 State := S1;
                  else
-                     State := S0;
+                 State := S0;
                  end if;
       
               -------------------------------------------
@@ -197,7 +205,7 @@ mult: process(Clk, u_inp)
                     Sum <= resize(Sum + P, Sum'high, Sum'low);
                  end if;
       
-                if (k1 = 6) then
+                if (k1 = 9) then
                     k1 <= 0;
                 else
                     k1 <= k1 + 1;
@@ -207,12 +215,12 @@ mult: process(Clk, u_inp)
                        ----------------------------------
                        -- check if all initiations done
                        ----------------------------------
-                       if (Count0 = 20) then  -- value = total mult operation - 1 (30 - 1, 3x10 and 10x1)
+                       if (Count0 = 29) then  -- value = total mult operation - 1 (30 - 1, 3x10 and 10x1)
                            State := S5;
                        else
                            State := S4;                
                            Count0 <= Count0 + 1;
-                          if (k0 = 6) then
+                          if (k0 = 9) then
                            j0 <= j0 +1;
                            k0 <= 0;
                            else 
