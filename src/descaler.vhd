@@ -21,13 +21,14 @@ end descaler;
 architecture Behavioral of descaler is   
 
    signal sfixed_adc_val : sfixed(n_left downto n_right);
+   signal adc_val_offset : sfixed(n_left downto n_right);
    signal inlevel : sfixed(n_left downto n_right):= to_sfixed(0, n_left, n_right);
    
 begin
 conv: process (clk)
                    
                    
-                           type adc_conv is (V0, V1, V2);
+                           type adc_conv is (V0, V1, V2, V3);
                            variable conv_step : adc_conv := V0;
                           
   begin
@@ -51,8 +52,13 @@ conv: process (clk)
                conv_step := V2;
                
                when V2 =>
+               adc_val_offset <= resize(sfixed_adc_val * inlevel, n_left, n_right);
+               conv_step := V3;
+               
+               
+               when V3 =>
                done <= '1';
-               adc_val <= resize(sfixed_adc_val * inlevel, n_left, n_right);
+               adc_val <= resize(adc_val_offset - offset, n_left, n_right);
                conv_step := V0;                                                                          
                end case;
          end if;

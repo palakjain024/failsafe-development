@@ -54,10 +54,16 @@ package input_pkg is
   constant d_left: integer := 0;
   constant d_right:integer := -35;
   
+  -- ILA
+  subtype result_type is std_logic_vector (31 downto 0);
+  
   -- ADC Descaler constants
   constant vmax : sfixed(15 downto -16):= to_sfixed(3.3,15,-16);
   constant vmin : sfixed(15 downto -16):= to_sfixed(0, 15, -16);
   constant adc_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
+  constant offset : sfixed(15 downto -16) := to_sfixed(1.66, 15, -16);
+  constant i_factor : sfixed(15 downto -16) := to_sfixed(1, 15, -16);
+  constant v_factor : sfixed(15 downto -16) := to_sfixed(1, 15, -16);
   
   -- DAC scaler constants
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
