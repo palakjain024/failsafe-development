@@ -16,11 +16,16 @@ entity main is
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
-           -- DAC ports
-           DA_DATA1 : out STD_LOGIC;
-           DA_DATA2 : out STD_LOGIC;
-           DA_CLK_OUT : out STD_LOGIC;
-           DA_nSYNC : out STD_LOGIC;
+           -- DAC ports 1
+           DA_DATA1_1 : out STD_LOGIC;
+           DA_DATA2_1 : out STD_LOGIC;
+           DA_CLK_OUT_1 : out STD_LOGIC;
+           DA_nSYNC_1 : out STD_LOGIC;
+           -- DAC ports 2
+           DA_DATA1_2 : out STD_LOGIC;
+           DA_DATA2_2 : out STD_LOGIC;
+           DA_CLK_OUT_2 : out STD_LOGIC;
+           DA_nSYNC_2 : out STD_LOGIC;
            -- ADC ports 1
            AD_CS_1 : out STD_LOGIC;
            AD_D0_1 : in STD_LOGIC;
@@ -30,7 +35,12 @@ entity main is
            AD_CS_2 : out STD_LOGIC;
            AD_D0_2 : in STD_LOGIC;
            AD_D1_2 : in STD_LOGIC;
-           AD_SCK_2 : out STD_LOGIC
+           AD_SCK_2 : out STD_LOGIC;
+          -- ADC ports 3
+           AD_CS_3 : out STD_LOGIC;
+           AD_D0_3 : in STD_LOGIC;
+           AD_D1_3 : in STD_LOGIC;
+           AD_SCK_3 : out STD_LOGIC
          );
 end main;
 
