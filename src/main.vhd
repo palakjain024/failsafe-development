@@ -43,6 +43,7 @@ end main;
 architecture Behavioral of main is
 
 -- Component definitions
+
 -- DAC Module
 component pmodDA2_ctrl
      Port ( 
@@ -97,19 +98,8 @@ Generic(
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
 
--- ILA core
-COMPONENT ila_0
-
-PORT (
-	clk : IN STD_LOGIC;
-    probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)	
-);
-END COMPONENT  ;
 
 -- Signal Definition
-
--- ILA core
-signal p_adc1: STD_LOGIC_VECTOR(31 DOWNTO 0);  
 
 -- DAC signals         
 signal DA_sync_1, DA_sync_2: STD_LOGIC;
@@ -128,11 +118,7 @@ begin
 
 -- ILA
 
-p_ila: ila_0
-PORT MAP (
-	clk => clk,
-    probe0 => p_adc1
-);
+
 -- Clk
 
 -- ADC and DAC
@@ -246,8 +232,8 @@ de_inst_6: descaler generic map (adc_factor => v_factor)
 scaler_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(3.3,15,-16),
-              dac_min => to_Sfixed(-3.3,15,-16)
+              dac_max => to_sfixed(1.66,15,-16),
+              dac_min => to_Sfixed(-1.66,15,-16)
               )
               port map (
               clk => clk,
@@ -256,8 +242,8 @@ scaler_1: scaler generic map (
 scaler_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3.3,15,-16),
-            dac_min => to_sfixed(-3.3,15,-16)
+            dac_max => to_sfixed(1.66,15,-16),
+            dac_min => to_sfixed(-1.66,15,-16)
             )
             port map (
             clk => clk,
@@ -266,28 +252,29 @@ scaler_2: scaler generic map (
 scaler_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3.3,15,-16),
-            dac_min => to_sfixed(-3.3,15,-16)
+            dac_max => to_sfixed(1.66,15,-16),
+            dac_min => to_sfixed(-1.66,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_2(0),  
+            dac_in => adc_out_3(0),  
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3.3,15,-16),
-            dac_min => to_sfixed(-3.3,15,-16)
+            dac_max => to_sfixed(1.66,15,-16),
+            dac_min => to_sfixed(-1.66,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_2(1),  
+            dac_in => adc_out_3(1),  
             dac_val => dac_4); 
             
-main_loop: process (clk)
-begin
-if (clk = '1' and clk'event) then
-p_adc1 <= result_type(adc_out_1(0)); 
-end if;
-end process; 
+--main_loop: process (clk)
+--begin
+--if (clk = '1' and clk'event) then
+--p_adc1 <= result_type(adc_out_1(0)); 
+--end if;
+--end process; 
+
 end Behavioral;
