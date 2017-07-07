@@ -2,7 +2,32 @@
 set_property PACKAGE_PIN Y9 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 
-# Digilent PMOD AD1 _1 DAC to PMOD JA1 to JA4 (For adc_1 and adc_2)
+# For injecting switch faults (PWM for phase a change: switch SW0)
+set_property PACKAGE_PIN F22 [get_ports pwm_f]
+set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
+
+# Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6) 
+set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
+
+set_property PACKAGE_PIN R6 [get_ports {pwm_n_out_t[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
+
+# Mapping PWM module phase b to PMOD JC1_n (AB6) and JC3_n (T6) 
+set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[1]}]
+
+set_property PACKAGE_PIN T6 [get_ports {pwm_n_out_t[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[1]}]
+
+# Mapping PWM module phase c to PMOD JC2_p (Y4) and JC4_p (T4) 
+#set_property PACKAGE_PIN Y4 [get_ports {pwm_out_t[2]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[2]}]
+
+#set_property PACKAGE_PIN T4 [get_ports {pwm_n_out_t[2]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[2]}]
+
+# Digilent PMOD AD1 _1 ADC to PMOD JA1 to JA4 (For adc_1 and adc_2)
 set_property PACKAGE_PIN Y11 [get_ports AD_CS_1]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_1]
 

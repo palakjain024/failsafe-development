@@ -12,15 +12,15 @@ package input_pkg is
     constant sys_clk         : INTEGER := 100_000_000;  --system clock frequency in Hz
     constant pwm_freq        : INTEGER := 10_000;       --PWM switching frequency in Hz
     constant bits_resolution : INTEGER := 8;            --bits of resolution setting the duty cycle
-    constant phases          : INTEGER := 1;            --number of output pwms and phases
+    constant phases          : INTEGER := 2;            --number of output pwms and phases
   -- Deadtime
-    constant c_Dead_t : integer :=  0;
+    constant c_Dead_t : integer :=  100;
   -- constant inputs
   constant h : sfixed(0 downto -35) := to_sfixed(0.0000005, 0, -35); -- Fixed time step
   constant r : sfixed(1 downto -30) := to_sfixed(-0.82, 1,-30);       -- inductor resistance
   
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(80,15,-16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(50,15,-16);
   constant v_out : sfixed(15 downto -16)  := to_sfixed(100, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(3,15,-16);
   constant f_load : integer := 3141592*2; 

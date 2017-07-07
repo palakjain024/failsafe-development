@@ -12,6 +12,10 @@ use work.input_pkg.all;
 entity main is
     Port ( -- General
            clk : in STD_LOGIC;
+           pwm_f: in STD_LOGIC;
+           -- PWM ports
+           pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
+           pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            -- DAC ports 1
            DA_DATA1_1 : out STD_LOGIC;
            DA_DATA2_1 : out STD_LOGIC;
@@ -43,7 +47,23 @@ end main;
 architecture Behavioral of main is
 
 -- Component definitions
-
+-- PWM Module
+component pwm_dc
+    PORT(
+        clk       : IN  STD_LOGIC;                                    --system clock
+        reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
+        ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
+        duty      : IN  sfixed(n_left downto n_right);                       --duty cycle
+        pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
+        pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));          --pwm inverse outputs
+end component pwm_dc;
+-- Dead Time Module
+component deadtime
+         Port ( clk : in STD_LOGIC;
+               p_Pwm_In : in STD_LOGIC;
+               p_Pwm1_Out : out STD_LOGIC := '0';
+               p_Pwm2_Out : out STD_LOGIC := '0');
+end component deadtime;
 -- DAC Module
 component pmodDA2_ctrl
      Port ( 
@@ -100,6 +120,17 @@ end component;
 
 
 -- Signal Definition
+-- pwm
+signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
+signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);         --pwm inverse outputs
+signal ena : STD_LOGIC := '0';
+signal duty_ratio : sfixed(n_left downto n_right);
+signal duty : sfixed(n_left downto n_right);
+signal pc_pwm : STD_LOGIC;
+
+-- Deadtime
+signal a_pwm1_out, b_pwm1_out: std_logic;  --pwm outputs with dead band
+signal a_pwm2_out, b_pwm2_out: std_logic;  --pwm inverse outputs with dead band  
 
 -- DAC signals         
 signal DA_sync_1, DA_sync_2: STD_LOGIC;
@@ -117,10 +148,31 @@ signal adc_1, adc_2, adc_3, adc_4, adc_5, adc_6: std_logic_vector(11 downto 0) :
 begin
 
 -- ILA
-
-
 -- Clk
+-- PWM and Deadtime module
+pwm_inst: pwm_dc 
+ port map(
+    clk => clk, 
+    reset_n => '1', 
+    ena => ena, 
+    duty => duty, 
+    pwm_out => pwm_out, 
+    pwm_n_out => pwm_n_out);
 
+deadtime_a_inst: deadtime  
+port map(
+    p_pwm_in => pwm_out(0), 
+    clk => clk, 
+    p_pwm1_out => a_pwm1_out, 
+    p_pwm2_out => a_pwm2_out);
+    
+deadtime_b_inst: deadtime  
+    port map(
+        p_pwm_in => pwm_out(1), 
+        clk => clk, 
+        p_pwm1_out => b_pwm1_out, 
+        p_pwm2_out => b_pwm2_out);
+    
 -- ADC and DAC
 dac_1_inst: pmodDA2_ctrl port map (
     CLK => CLK,
@@ -270,11 +322,37 @@ scaler_4: scaler generic map (
             dac_in => adc_out_3(1),  
             dac_val => dac_4); 
             
---main_loop: process (clk)
---begin
---if (clk = '1' and clk'event) then
---p_adc1 <= result_type(adc_out_1(0)); 
---end if;
---end process; 
+main_loop: process (clk)
+begin
+if (clk = '1' and clk'event) then
+pwm_out_t(0) <= a_pwm1_out;
+pwm_n_out_t(0)  <= a_pwm2_out;
+pwm_out_t(1) <= b_pwm1_out;
+pwm_n_out_t(1)  <= b_pwm2_out;
+end if;
+end process; 
+
+-- duty cycle cal
+duty_cycle_uut: process (clk)
+
+type state_variable is (S0, S1);
+variable state: state_variable := S0;
+
+begin
+   if (clk = '1' and clk'event) then
+      case state is
+
+       when S0 =>
+       ena <= '0';
+       duty_ratio <= resize(v_in/v_out, n_left, n_right);
+       state := S1;
+       
+       when S1 =>
+       ena <= '1';
+       duty <= resize(to_sfixed(1, n_left, n_right) - duty_ratio, n_left, n_right);
+       state := S0;  
+       end case;  
+     end if;
+end process;
 
 end Behavioral;
