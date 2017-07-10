@@ -117,7 +117,20 @@ Generic(
            dac_in : in sfixed(dac_left downto dac_right);
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
+-- Processor core
 
+component processor_core
+Port ( -- General
+       Clk : in STD_LOGIC;
+       -- Observer inputs
+       pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
+       load : in sfixed(n_left downto n_right);
+       pc_y : in vect2;
+       -- FD logic
+       FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       );
+end component processor_core;
 
 -- Signal Definition
 -- pwm
@@ -126,7 +139,7 @@ signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);         --pwm inverse ou
 signal ena : STD_LOGIC := '0';
 signal duty_ratio : sfixed(n_left downto n_right);
 signal duty : sfixed(n_left downto n_right);
-signal pc_pwm : STD_LOGIC;
+
 
 -- Deadtime
 signal a_pwm1_out, b_pwm1_out: std_logic;  --pwm outputs with dead band
@@ -144,9 +157,13 @@ signal de_done_1, de_done_2, de_done_3, de_done_4, de_done_5, de_done_6 : STD_LO
 -- ADC signals
 signal AD_sync_1, AD_sync_2, AD_sync_3: STD_LOGIC;
 signal adc_1, adc_2, adc_3, adc_4, adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
+-- Processor core
+signal pc_pwm : STD_LOGIC_VECTOR(phases-1 downto 0);
+signal FD_residual:  sfixed(n_left downto n_right);
+signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 
 begin
-
 -- ILA
 -- Clk
 -- PWM and Deadtime module
@@ -244,21 +261,21 @@ de_inst_1: descaler generic map (adc_factor => i_factor )
             start => AD_sync_1,
             adc_in => adc_1,
             done => de_done_1,
-            adc_val => adc_out_1(0));
+            adc_val => adc_out_1(0)); -- Inductor current
 de_inst_2: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
             start => AD_sync_1,
             adc_in => adc_2,
             done => de_done_2,
-            adc_val => adc_out_1(1)); 
+            adc_val => adc_out_1(1));  --capacitor voltage
 de_inst_3: descaler generic map (adc_factor => i_factor)
             port map (
             clk => clk,
             start => AD_sync_2,
             adc_in => adc_3,
             done => de_done_3,
-            adc_val => adc_out_2(0));
+            adc_val => adc_out_2(0)); -- load
 de_inst_4: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
@@ -284,51 +301,69 @@ de_inst_6: descaler generic map (adc_factor => v_factor)
 scaler_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(1.66,15,-16),
-              dac_min => to_Sfixed(-1.66,15,-16)
+              dac_max => to_sfixed(33,15,-16),
+              dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => adc_out_1(0),  
+              dac_in => z_val(0),  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(1.66,15,-16),
-            dac_min => to_sfixed(-1.66,15,-16)
+            dac_max => to_sfixed(660,15,-16),
+            dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_1(1),  
+            dac_in => z_val(1),  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(1.66,15,-16),
-            dac_min => to_sfixed(-1.66,15,-16)
+            dac_max => to_sfixed(660,15,-16),
+            dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_3(0),  
+            dac_in => adc_out_1(1),  
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(1.66,15,-16),
-            dac_min => to_sfixed(-1.66,15,-16)
+            dac_max => to_sfixed(33,15,-16),
+            dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_3(1),  
+            dac_in => adc_out_2(0),  
             dac_val => dac_4); 
+
+
+-- Processor_core
+pc_inst: processor_core port map (
+            Clk => clk,
+            pc_pwm => pc_pwm,
+            load => adc_out_2(0),
+            pc_y => plt_y,
+            FD_residual_out => FD_residual,
+            pc_z => z_val);
             
 main_loop: process (clk)
 begin
 if (clk = '1' and clk'event) then
+-- Output
 pwm_out_t(0) <= a_pwm1_out;
 pwm_n_out_t(0)  <= a_pwm2_out;
 pwm_out_t(1) <= b_pwm1_out;
 pwm_n_out_t(1)  <= b_pwm2_out;
+
+-- Processor core
+pc_pwm(0) <= a_pwm1_out;
+pc_pwm(1) <= b_pwm1_out;
+plt_y(0) <= adc_out_1(0);
+plt_y(1) <= adc_out_1(1);
+
 end if;
 end process; 
 
