@@ -6,6 +6,14 @@ set_property IOSTANDARD LVCMOS33 [get_ports clk]
 set_property PACKAGE_PIN F22 [get_ports pwm_f]
 set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
 
+# For reseting faults
+set_property PACKAGE_PIN G22 [get_ports reset_fd]
+set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+
+#JC4_p (T4)
+set_property PACKAGE_PIN T4 [get_ports FD_flag]
+set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
+
 # Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6) 
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]

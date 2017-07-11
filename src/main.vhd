@@ -16,6 +16,9 @@ entity main is
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
+           -- Flags
+           FD_flag : out STD_LOGIC;
+           reset_fd : in STD_LOGIC;
            -- DAC ports 1
            DA_DATA1_1 : out STD_LOGIC;
            DA_DATA2_1 : out STD_LOGIC;
@@ -122,6 +125,9 @@ end component;
 component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
+       reset_fd : in STD_LOGIC;
+       -- Converter fault flag;
+       FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
        pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
        load : in sfixed(n_left downto n_right);
@@ -321,12 +327,12 @@ scaler_2: scaler generic map (
 scaler_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(660,15,-16),
+            dac_max => to_sfixed(3.3,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_1(1),  
+            dac_in => FD_residual,  
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
@@ -343,6 +349,8 @@ scaler_4: scaler generic map (
 -- Processor_core
 pc_inst: processor_core port map (
             Clk => clk,
+            reset_fd => reset_fd,
+            FD_flag => FD_flag,
             pc_pwm => pc_pwm,
             load => adc_out_2(0),
             pc_y => plt_y,

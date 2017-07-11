@@ -19,7 +19,8 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant esr: sfixed(1 downto -30) := to_sfixed(0.038,1,-30);
- 
+  constant fd_th : sfixed(15 downto -16) := to_sfixed(1.2, 15, -16);
+  
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(190,15,-16);
   constant v_out : sfixed(15 downto -16)  := to_sfixed(380, 15, -16);
@@ -28,6 +29,7 @@ package input_pkg is
   -- Initial values of il and vc (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(4, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(380,15,-16);
+  constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   
   -- theta_star parameters
   constant Ltheta_star :  sfixed(15 downto -16) := to_sfixed(200, 15, -16);
@@ -38,10 +40,10 @@ package input_pkg is
   -- vectors
   type vect3 is array (0 to 2) of sfixed(15 downto -16); -- for z
   type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for y, u
-  type vect5 is array (0 to 4) of sfixed(15 downto -16); -- for augumented [z;u]
+  type vect7 is array (0 to 6) of sfixed(15 downto -16); -- for augumented [z;u;y]
   
   -- Matrices
-  type mat35 is array (0 to 2, 0 to 4) of sfixed(1 downto -30);  -- for augumented [A:B]
+  type mat37 is array (0 to 2, 0 to 6) of sfixed(1 downto -30);  -- for augumented [A:B:L]
   
   -- Precision
   constant n_left: integer := 15;
