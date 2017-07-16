@@ -11,13 +11,19 @@ use work.input_pkg.all;
 entity processor_core is
 Port ( -- General
        Clk : in STD_LOGIC;
+       reset_fd : in STD_LOGIC;
+       -- Converter fault flag;
+       FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
        pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
        load : in sfixed(n_left downto n_right);
        pc_y : in vect2;
+       -- C adaptive observer
+       c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        -- FD logic
        FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       pc_z : out vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );
 end processor_core;
 
@@ -32,10 +38,29 @@ architecture Behavioral of processor_core is
           plt_y : in vect2;
           done : out STD_LOGIC := '0';
           FD_residual : out sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
-          plt_z : out vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+          plt_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
          );
  end component plant_x;
  
+ -- Adaptive observer for C
+ component C_adaptive_observer
+ port (    Clk   : in STD_LOGIC;
+           Start : in STD_LOGIC;
+           Mode  : in INTEGER range 1 to 4;
+           load  : in sfixed(n_left downto n_right);
+           y_plant : in vect2;
+           done  : out STD_LOGIC := '0';
+           y_est_out     : out vect2 := (zer0, zer0);
+           norm_out  : out sfixed(n_left downto n_right) := zer0); 
+ end component C_adaptive_observer;
+ 
+-- COMPONENT ila_1
+ 
+-- PORT (
+--     clk : IN STD_LOGIC;
+--     probe0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0)
+-- );
+-- END COMPONENT  ;
   -- Signal definition for components
  
  -- General
@@ -47,11 +72,29 @@ architecture Behavioral of processor_core is
  
  -- Plant outputs and Fault detection logic
  signal done: STD_LOGIC := '1';
- signal z_val: vect3 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+ signal z_val: vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
  signal FD_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
--- signal flag : STD_LOGIC := '0';
+ signal flag : STD_LOGIC := '0';
  
+ -- Adaptive observer for C
+ signal y_est_c     : vect2 := (zer0, zer0);
+ signal norm_c  : sfixed(n_left downto n_right) := zer0;
+ signal c_done : STD_LOGIC := '0';
 begin
+--ila1_name: ila_1
+--PORT MAP (
+--	clk => clk,
+--    probe0(0) => flag
+--);
+c_adaptive_observer_inst: C_adaptive_observer port map (
+Clk => clk,
+Start => Start,
+Mode => mode,
+load => load,
+y_plant => pc_y,
+done => c_done,
+y_est_out => y_est_c,
+norm_out => norm_c);
 
 Plant_inst: plant_x port map (
 Clk => clk,
@@ -73,7 +116,10 @@ CoreLOOP: process(clk, pc_pwm)
           -- Output to main
            pc_z <= z_val;
            FD_residual_out <= FD_residual;
-           
+           FD_flag <= flag;
+           -- C
+           c_y_est_out <= y_est_c;
+           c_norm_out <= norm_c;
           -- To determine Mode PWM for bot switch
                if counter = 0 then
                        if (pc_pwm(0) = '1' and pc_pwm(1) = '0' ) then
@@ -106,4 +152,25 @@ CoreLOOP: process(clk, pc_pwm)
                            
     end if;
  end process; 
+ 
+ ---------- Fault detection logic -------------------------
+ fault_detection: process(clk, reset_fd, FD_residual)
+               begin
+                   if (clk = '1' and clk'event) then
+                    -- Fault detection
+                      --flag <= '0';
+                      if FD_residual > fd_th or flag = '1' then
+                      
+                      flag <= '1';
+                          if (reset_fd = '1') then
+                          flag <= '0';
+                          else
+                          flag <= '1';
+                          end if;
+                      else
+                      flag <= '0';
+                      end if;
+                 end if;
+             end process;
+
 end Behavioral;
