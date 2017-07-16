@@ -132,6 +132,9 @@ Port ( -- General
        pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
        load : in sfixed(n_left downto n_right);
        pc_y : in vect2;
+       -- C adaptive observer
+       c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        -- FD logic
        FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
@@ -169,6 +172,10 @@ signal FD_residual:  sfixed(n_left downto n_right);
 signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 
+-- Adaptive observer for C
+ signal c_y_est     : vect2 := (zer0, zer0);
+ signal c_norm  : sfixed(n_left downto n_right) := zer0;
+ 
 begin
 -- ILA
 -- Clk
@@ -337,12 +344,12 @@ scaler_3: scaler generic map (
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
+            dac_max => to_sfixed(3300,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_2(0),  
+            dac_in => c_norm,  
             dac_val => dac_4); 
 
 
@@ -354,6 +361,9 @@ pc_inst: processor_core port map (
             pc_pwm => pc_pwm,
             load => adc_out_2(0),
             pc_y => plt_y,
+            -- C adaptive observer
+            c_y_est_out => c_y_est,
+            c_norm_out => c_norm,
             FD_residual_out => FD_residual,
             pc_z => z_val);
             
