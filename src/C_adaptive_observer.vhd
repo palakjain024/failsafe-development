@@ -16,6 +16,7 @@ port (    Clk   : in STD_LOGIC;
           Mode  : in INTEGER range 1 to 4;
           load  : in sfixed(n_left downto n_right);
           y_plant : in vect2;
+          FD_flag : in STD_LOGIC;
           done  : out STD_LOGIC := '0';
           y_est_out     : out vect2 := (zer0, zer0);
           norm_out  : out sfixed(n_left downto n_right) := zer0);
@@ -198,8 +199,10 @@ mult: process(Clk, load, y_plant, err)
         case State is
          --  State S0 (wait for start signal)
                when S0 =>
+                  done <= '0';
+                 if FD_flag = '1' then  
+                 
                    
-                   done <= '0';
                    if( start = '1' ) then   
                    trig_in <= '1'; 
                    err(0) <= resize(y_plant(0) - y_est(0), n_left, n_right);
@@ -209,6 +212,11 @@ mult: process(Clk, load, y_plant, err)
                        State := S0;
                    end if;
                    
+                 else  
+                 norm <= zer0;
+                 y_est <= (yil0 ,vc0);
+                                
+                 end if;    
         -- Sigh Calculation
                when S1 =>
                 -- Error intialization

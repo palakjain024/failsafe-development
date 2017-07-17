@@ -144,11 +144,16 @@ Port ( -- General
        -- Observer inputs
        pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
        load : in sfixed(n_left downto n_right);
-       --pc_x : in vect3;
        pc_y : in vect2;
        -- C adaptive observer
        c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       -- L1 adaptive observer
+       l1_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       l1_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       -- L2 adaptive observer
+       --l2_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       --l2_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        -- FD logic
        FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
@@ -195,11 +200,18 @@ signal pc_pwm : STD_LOGIC_VECTOR(phases-1 downto 0);
 signal FD_residual:  sfixed(n_left downto n_right);
 signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
---signal plt_x : vect3 := (zer0, zer0, zer0);
 
 -- Adaptive observer for C
- signal c_y_est     : vect2 := (zer0, zer0);
- signal c_norm  : sfixed(n_left downto n_right) := zer0;
+  signal c_y_est     : vect2 := (zer0, zer0);
+  signal c_norm  : sfixed(n_left downto n_right) := zer0;
+ 
+-- Adaptive observer for L1
+  signal l1_y_est     : vect2 := (zer0, zer0);
+  signal l1_norm  : sfixed(n_left downto n_right) := zer0;
+  
+-- Adaptive observer for L2
+  --signal l2_y_est     : vect2 := (zer0, zer0);
+  --signal l2_norm  : sfixed(n_left downto n_right) := zer0;
  
 begin
 -- Clk
@@ -349,12 +361,12 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
 scaler_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(330,15,-16),
+              dac_max => to_sfixed(50,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => FD_residual,  
+              dac_in => c_norm,  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -364,7 +376,7 @@ scaler_2: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => c_norm,  
+            dac_in => l1_norm,  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
@@ -374,17 +386,17 @@ scaler_3: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => c_y_est(0),  
+            dac_in => z_val(0),  
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(660,15,-16),
+            dac_max => to_sfixed(330,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => c_y_est(1),  
+            dac_in => FD_residual,  
             dac_val => dac_4); 
 
 
@@ -397,11 +409,16 @@ pc_inst: processor_core port map (
             FD_flag => FD_flag,
             pc_pwm => pc_pwm,
             load => adc_out_2(0),
-            --pc_x => plt_x,
             pc_y => plt_y,
             -- C adaptive observer
             c_y_est_out => c_y_est,
             c_norm_out => c_norm,
+            -- L1 adaptive observer
+            l1_y_est_out => l1_y_est,
+            l1_norm_out => l1_norm,
+            -- L2 adaptive observer
+            --l2_y_est_out => l2_y_est,
+            --l2_norm_out => l2_norm,
             -- FD observer
             FD_residual_out => FD_residual,
             pc_z => z_val

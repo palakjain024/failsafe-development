@@ -20,7 +20,7 @@ package input_pkg is
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant esr: sfixed(1 downto -30) := to_sfixed(0.038,1,-30);      -- Capacitor resistance
   constant rL : sfixed(1 downto -30) := to_sfixed(0.082,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(15 downto -16) := to_sfixed(400, 15, -16);  -- Threshold
+  constant fd_th : sfixed(15 downto -16) := to_sfixed(305, 15, -16);  -- Threshold
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(188,15,-16);
