@@ -23,7 +23,7 @@ package input_pkg is
   constant fd_th : sfixed(15 downto -16) := to_sfixed(1.2, 15, -16);  -- Threshold
   
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(190,15,-16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(188,15,-16);
   constant v_out : sfixed(15 downto -16)  := to_sfixed(380, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(3,15,-16);
   

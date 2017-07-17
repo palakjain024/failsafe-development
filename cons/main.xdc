@@ -1,10 +1,12 @@
+create_clock -period 10.0 [get_ports sysclk]
+
 # Mapping system clock
-set_property PACKAGE_PIN Y9 [get_ports clk]
-set_property IOSTANDARD LVCMOS33 [get_ports clk]
+set_property PACKAGE_PIN Y9 [get_ports sysclk]
+set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 
 # For injecting switch faults (PWM for phase a change: switch SW0)
-set_property PACKAGE_PIN F22 [get_ports pwm_f]
-set_property IOSTANDARD LVCMOS33 [get_ports pwm_f]
+set_property PACKAGE_PIN F22 [get_ports enable_ao]
+set_property IOSTANDARD LVCMOS33 [get_ports enable_ao]
 
 # For reseting faults
 set_property PACKAGE_PIN G22 [get_ports reset_fd]
@@ -62,17 +64,17 @@ set_property PACKAGE_PIN W8 [get_ports AD_SCK_2]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_2]
 
 # Digilent PMOD AD1_3 ADC to PMOD JB7 to JB10 (For adc_5 and adc_6)
-set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
+#set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
 
-set_property PACKAGE_PIN W10 [get_ports AD_D0_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_D0_3]
+#set_property PACKAGE_PIN W10 [get_ports AD_D0_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_D0_3]
 
-set_property PACKAGE_PIN V9 [get_ports AD_D1_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
+#set_property PACKAGE_PIN V9 [get_ports AD_D1_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
 
-set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
+#set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
 
 # Digilent PMOD DA1_1 DAC to PMOD JD1_P to JD2_N (For adc_5 and adc_6)
 set_property PACKAGE_PIN V7 [get_ports DA_nSYNC_1]

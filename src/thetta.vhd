@@ -15,6 +15,7 @@ port (    Clk   : in STD_LOGIC;
           err   : in vect2;
           sigh  : in vecth3;
           done  : out STD_LOGIC := '0';
+          lambda_out : out vect3 := (zer0, zer0, zer0);
           thetadot_out : out sfixed(n_left downto n_right):= zer0;
           lambda_thetadot_out : out vect3 := (zer0, zer0, zer0)
       );
@@ -72,15 +73,17 @@ mult: process(Clk, err)
    begin
               
    if (Clk'event and Clk = '1') then
+   
+      lambda_out <= lambda;
       -- T*h*C matrix
-       A_Aug_Matrix(0,0) := to_sfixed( 0.500000000000000,d_left,d_right);
-       A_Aug_Matrix(0,1) := to_sfixed( 0.500000000000000,d_left,d_right);
+       A_Aug_Matrix(0,0) := to_sfixed( 0.00000500000000,d_left,d_right);
+       A_Aug_Matrix(0,1) := to_sfixed( 0.00000500000000,d_left,d_right);
        A_Aug_Matrix(1,0) := to_sfixed( 0,d_left,d_right);
-       A_Aug_Matrix(2,1) := to_sfixed( 0.5,d_left,d_right);
+       A_Aug_Matrix(2,1) := to_sfixed( 0.000005,d_left,d_right);
    
       if Mode = 1 then
       -- T*h*C matrix
-      A_Aug_Matrix(1,1) := to_sfixed( 0.019000000000000,d_left,d_right);
+      A_Aug_Matrix(1,1) := to_sfixed( 0.00000019000000000000,d_left,d_right);
       A_Aug_Matrix(2,0) := to_sfixed( 0,d_left,d_right);
      
                  
@@ -92,12 +95,12 @@ mult: process(Clk, err)
       elsif Mode = 3 then
       -- T*h*C matrix
       A_Aug_Matrix(1,1) := to_sfixed( 0,d_left,d_right);
-      A_Aug_Matrix(2,0) := to_sfixed( 0.019000000000000,d_left,d_right);
+      A_Aug_Matrix(2,0) := to_sfixed( 0.00000019000000000000,d_left,d_right);
          
       elsif Mode = 4 then
       -- T*h*C matrix
-      A_Aug_Matrix(1,1) := to_sfixed( 0.019000000000000,d_left,d_right);
-      A_Aug_Matrix(2,0) := to_sfixed( 0.019000000000000,d_left,d_right);
+      A_Aug_Matrix(1,1) := to_sfixed( 0.00000019000000000000,d_left,d_right);
+      A_Aug_Matrix(2,0) := to_sfixed( 0.00000019000000000000,d_left,d_right);
      else null;
      end if;
 ---- Step 2:  Multiplication -----

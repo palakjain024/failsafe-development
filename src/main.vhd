@@ -11,8 +11,8 @@ use work.input_pkg.all;
   
 entity main is
     Port ( -- General
-           clk : in STD_LOGIC;
-           pwm_f: in STD_LOGIC;
+           sysclk : in STD_LOGIC;
+           enable_ao: in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -38,18 +38,29 @@ entity main is
            AD_CS_2 : out STD_LOGIC;
            AD_D0_2 : in STD_LOGIC;
            AD_D1_2 : in STD_LOGIC;
-           AD_SCK_2 : out STD_LOGIC;
+           AD_SCK_2 : out STD_LOGIC
           -- ADC ports 3
-           AD_CS_3 : out STD_LOGIC;
-           AD_D0_3 : in STD_LOGIC;
-           AD_D1_3 : in STD_LOGIC;
-           AD_SCK_3 : out STD_LOGIC
+--           AD_CS_3 : out STD_LOGIC;
+--           AD_D0_3 : in STD_LOGIC;
+--           AD_D1_3 : in STD_LOGIC;
+--           AD_SCK_3 : out STD_LOGIC
          );
 end main;
 
 architecture Behavioral of main is
 
 -- Component definitions
+-- clk wizard
+component clk_wiz_0
+port
+ (-- Clock in ports
+  clk_in1           : in     std_logic;
+  -- Clock out ports
+  clk          : out    std_logic;
+  clk_ila          : out    std_logic
+ );
+end component;
+
 -- PWM Module
 component pwm_dc
     PORT(
@@ -125,23 +136,30 @@ end component;
 component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
+       clk_ila : in STD_LOGIC;
+       pc_en : in STD_LOGIC;
        reset_fd : in STD_LOGIC;
        -- Converter fault flag;
        FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
        pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
        load : in sfixed(n_left downto n_right);
+       --pc_x : in vect3;
        pc_y : in vect2;
        -- C adaptive observer
        c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right)
        -- FD logic
-       FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       --FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       --pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );
 end component processor_core;
 
 -- Signal Definition
+-- clk wizard
+signal clk :STD_LOGIC;
+signal clk_ila : STD_LOGIC;
+
 -- pwm
 signal pwm_out   : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);        --pwm outputs
 signal pwm_n_out : STD_LOGIC_VECTOR(phases-1 DOWNTO 0);         --pwm inverse outputs
@@ -161,24 +179,40 @@ signal dac_1, dac_2, dac_3, dac_4: std_logic_vector(11 downto 0);
 
 
 -- ADC Descaler inputs
-signal adc_out_1, adc_out_2, adc_out_3: vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
-signal de_done_1, de_done_2, de_done_3, de_done_4, de_done_5, de_done_6 : STD_LOGIC;
+signal adc_out_1, adc_out_2 : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+--signal adc_out_3: vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+signal de_done_1, de_done_2, de_done_3, de_done_4 : STD_LOGIC;
+--signal de_done_5, de_done_6 : STD_LOGIC;
+
 -- ADC signals
-signal AD_sync_1, AD_sync_2, AD_sync_3: STD_LOGIC;
-signal adc_1, adc_2, adc_3, adc_4, adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
+signal AD_sync_1, AD_sync_2 : STD_LOGIC;
+-- signal AD_sync_3: STD_LOGIC;
+signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => '0');
+--signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
+
 -- Processor core
 signal pc_pwm : STD_LOGIC_VECTOR(phases-1 downto 0);
-signal FD_residual:  sfixed(n_left downto n_right);
-signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+--signal FD_residual:  sfixed(n_left downto n_right);
+--signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+--signal plt_x : vect3 := (zer0, zer0, zer0);
 
 -- Adaptive observer for C
  signal c_y_est     : vect2 := (zer0, zer0);
  signal c_norm  : sfixed(n_left downto n_right) := zer0;
  
 begin
--- ILA
 -- Clk
+clk_wizard_inst: clk_wiz_0
+   port map ( 
+
+   -- Clock in ports
+   clk_in1 => sysclk,
+  -- Clock out ports  
+   clk => clk,
+   clk_ila => clk_ila              
+ );
+ 
 -- PWM and Deadtime module
 pwm_inst: pwm_dc 
  port map(
@@ -254,18 +288,18 @@ adc_2_inst: pmodAD1_ctrl port map (
         DONE   => AD_sync_2
         );  
 
-adc_3_inst: pmodAD1_ctrl port map (
-        CLK => CLK,       
-        RST => '0',
-        SDATA1 => AD_D0_3,
-        SDATA2 => AD_D1_3, 
-        SCLK   => AD_SCK_3,
-        nCS    => AD_CS_3,
-        DATA1  => adc_5,  
-        DATA2  => adc_6, 
-        START  => AD_sync_3, 
-        DONE   => AD_sync_3
-        ); 
+--adc_3_inst: pmodAD1_ctrl port map (
+--        CLK => CLK,       
+--        RST => '0',
+--        SDATA1 => AD_D0_3,
+--        SDATA2 => AD_D1_3, 
+--        SCLK   => AD_SCK_3,
+--        nCS    => AD_CS_3,
+--        DATA1  => adc_5,  
+--        DATA2  => adc_6, 
+--        START  => AD_sync_3, 
+--        DONE   => AD_sync_3
+--        ); 
                
 -- ADC Retrieval   
 de_inst_1: descaler generic map (adc_factor => i_factor )
@@ -295,21 +329,22 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             start => AD_sync_2,
             adc_in => adc_4,
             done => de_done_4,
-            adc_val => adc_out_2(1)); 
-de_inst_5: descaler generic map (adc_factor => i_factor)
-            port map (
-            clk => clk,
-            start => AD_sync_3,
-            adc_in => adc_5,
-            done => de_done_5,
-            adc_val => adc_out_3(0));
-de_inst_6: descaler generic map (adc_factor => v_factor)
-            port map (
-            clk => clk,
-            start => AD_sync_3,
-            adc_in => adc_6,
-            done => de_done_6,
-            adc_val => adc_out_3(1));           
+            adc_val => adc_out_2(1));
+--de_inst_5: descaler generic map (adc_factor => i_factor)
+--            port map (
+--            clk => clk,
+--            start => AD_sync_3,
+--            adc_in => adc_5,
+--            done => de_done_5,
+--            adc_val => adc_out_3(0));
+--de_inst_6: descaler generic map (adc_factor => v_factor)
+--            port map (
+--            clk => clk,
+--            start => AD_sync_3,
+--            adc_in => adc_6,
+--            done => de_done_6,
+--            adc_val => adc_out_3(1));      
+     
 -- DAC Scaler       
 scaler_1: scaler generic map (
               dac_left => n_left,
@@ -319,7 +354,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => z_val(0),  
+              dac_in => adc_out_1(0),  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -329,43 +364,47 @@ scaler_2: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => z_val(1),  
+            dac_in => adc_out_1(1),  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3.3,15,-16),
+            dac_max => to_sfixed(33,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => FD_residual,  
+            dac_in => c_y_est(0),  
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3300,15,-16),
+            dac_max => to_sfixed(660,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => c_norm,  
+            dac_in => c_y_est(1),  
             dac_val => dac_4); 
 
 
 -- Processor_core
 pc_inst: processor_core port map (
             Clk => clk,
+            clk_ila => clk_ila,
+            pc_en => enable_ao,
             reset_fd => reset_fd,
             FD_flag => FD_flag,
             pc_pwm => pc_pwm,
             load => adc_out_2(0),
+            --pc_x => plt_x,
             pc_y => plt_y,
             -- C adaptive observer
             c_y_est_out => c_y_est,
-            c_norm_out => c_norm,
-            FD_residual_out => FD_residual,
-            pc_z => z_val);
+            c_norm_out => c_norm
+            --FD_residual_out => FD_residual,
+            --pc_z => z_val
+            );
             
 main_loop: process (clk)
 begin
@@ -379,8 +418,13 @@ pwm_n_out_t(1)  <= b_pwm2_out;
 -- Processor core
 pc_pwm(0) <= a_pwm1_out;
 pc_pwm(1) <= b_pwm1_out;
+
 plt_y(0) <= adc_out_1(0);
 plt_y(1) <= adc_out_1(1);
+
+--plt_x(0) <= adc_out_1(0);
+--plt_x(1) <= adc_out_2(1);
+--plt_x(2) <= adc_out_1(1);
 
 end if;
 end process; 
@@ -397,7 +441,7 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= resize(v_in/v_out, n_left, n_right);
+       duty_ratio <= to_sfixed(0.5, n_left, n_right);
        state := S1;
        
        when S1 =>

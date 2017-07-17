@@ -11,6 +11,7 @@ use work.input_pkg.all;
 
 entity C_adaptive_observer is
 port (    Clk   : in STD_LOGIC;
+          clk_ila : in STD_LOGIC;
           Start : in STD_LOGIC;
           Mode  : in INTEGER range 1 to 4;
           load  : in sfixed(n_left downto n_right);
@@ -29,18 +30,26 @@ PORT (
 	clk : IN STD_LOGIC;
 
 
-
+	trig_in : IN STD_LOGIC;
+	trig_in_ack : OUT STD_LOGIC;
 	probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
 	probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
 	probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-	probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+	probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+	probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+	probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+	probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+	probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
 );
 END COMPONENT  ;
 
+
   -- ila core signals
-      signal probe_il, probe_fd, probe_vc, probe_y1p, probe_y2p : STD_LOGIC_VECTOR(31 downto 0);
--- Component def
+      signal trig_in_ack, trig_in : STD_LOGIC := '0';
+      signal probe_il1, probe_il2, probe_vc, probe_y1p, probe_y2p : STD_LOGIC_VECTOR(31 downto 0);
+      signal probe_y1est, probe_y2est, probe_sigh : STD_LOGIC_VECTOR(31 downto 0);
+      
+  -- Component def
    Component thetta is
     port (   Clk   : in STD_LOGIC;
              Start : in STD_LOGIC;
@@ -89,7 +98,7 @@ END COMPONENT  ;
    signal sigh3_noh: vect4;
 
 begin
-mult: process(Clk, load, y_plant)
+mult: process(Clk, load, y_plant, err)
 
    -- General Variables for multiplication and addition
    type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17,
@@ -110,32 +119,42 @@ mult: process(Clk, load, y_plant)
    if (Clk'event and Clk = '1') then
    
    -- ILA
-      probe_il <= result_type(y_est(0));
-      probe_fd <= result_type(norm); 
-      probe_vc  <= result_type(y_est(1));
+      probe_il1 <= result_type(z_est(0));
+      probe_il2 <= result_type(z_est(1)); 
+      probe_vc  <= result_type(z_est(2));
       probe_y1p <= result_type(y_plant(0)) ; 
       probe_y2p <= result_type(y_plant(1));
-
+      probe_y1est <= result_type(y_est(0));
+      probe_y2est <= result_type(y_est(1));
+      probe_sigh <= result_type(sigh1_out(0));
     -- output 
    y_est_out <= y_est;
    norm_out <= norm;
    
-      -- A matrix
-       A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
-       A_Aug_Matrix(0,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
-       A_Aug_Matrix(1,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
-       A_Aug_Matrix(1,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
-       A_Aug_Matrix(2,0) := to_sfixed( 0.000175197200000000 ,d_left,d_right);
-       A_Aug_Matrix(2,1) := to_sfixed( 0.000007515600000000,d_left,d_right);
+      -- A matrix: Gain Matrix
+--       A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
+--       A_Aug_Matrix(0,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
+--       A_Aug_Matrix(1,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
+--       A_Aug_Matrix(1,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
+--       A_Aug_Matrix(2,0) := to_sfixed( 0.000175197200000000 ,d_left,d_right);
+--       A_Aug_Matrix(2,1) := to_sfixed( 0.000007515600000000,d_left,d_right);
    
-      
+     -- A matrix: Gain Matrix
+     A_Aug_Matrix(0,0) := to_sfixed(0.0000136582158669738,d_left,d_right);
+     A_Aug_Matrix(0,1) := to_sfixed(0.0000002904306734273,d_left,d_right);
+     A_Aug_Matrix(1,0) := to_sfixed(0.0000136582158669738,d_left,d_right);
+     A_Aug_Matrix(1,1) := to_sfixed(0.0000002904306734273,d_left,d_right);
+     A_Aug_Matrix(2,0) := to_sfixed(0.0000026067759666226,d_left,d_right);
+     A_Aug_Matrix(2,1) := to_sfixed(0.0000297142965034594,d_left,d_right);  
+     
 ---- Step 2:  Multiplication -----
         case State is
          --  State S0 (wait for start signal)
                when S0 =>
                    
                    done <= '0';
-                   if( start = '1' ) then    
+                   if( start = '1' ) then   
+                   trig_in <= '1'; 
                    err(0) <= resize(y_plant(0) - y_est(0), n_left, n_right);
                    err(1) <= resize(y_plant(1) - y_est(1), n_left, n_right);               
                        State := S1;
@@ -408,15 +427,18 @@ thetta2_inst: thetta port map (
                           
                     ila_inst_1: ila_0
                     PORT MAP (
-                        clk => clk,
-                    
-                    
-                    
-                        probe0 => probe_fd, 
-                        probe1 => probe_il, 
+                        clk => clk_ila,
+                        
+                        trig_in => trig_in,
+                        trig_in_ack => trig_in_ack,
+                        probe0 => probe_il1, 
+                        probe1 => probe_il2, 
                         probe2 => probe_vc,  
                         probe3 => probe_y1p, 
-                        probe4 => probe_y2p
+                        probe4 => probe_y2p,
+                        probe5 => probe_y1est,
+                        probe6 => probe_y2est,
+                        probe7 => probe_sigh
                         
                     );         
 end Behavioral;
