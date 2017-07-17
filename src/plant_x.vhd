@@ -55,7 +55,7 @@ architecture Behavioral of plant_x is
     
 begin
                 
-mult: process(Clk, load, plt_y)
+mult: process(Clk, load, plt_y, err)
 
    -- General Variables for multiplication and addition
    type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17,
@@ -80,7 +80,6 @@ mult: process(Clk, load, plt_y)
    
    -- output 
       plt_z <= y_est;
-      FD_residual <= norm;
  
     -- L matrix
     A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);

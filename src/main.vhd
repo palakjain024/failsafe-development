@@ -349,22 +349,22 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
 scaler_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(33,15,-16),
+              dac_max => to_sfixed(330,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => z_val(0),  
+              dac_in => FD_residual,  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(660,15,-16),
+            dac_max => to_sfixed(50,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => z_val(1),  
+            dac_in => c_norm,  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
