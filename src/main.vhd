@@ -148,10 +148,10 @@ Port ( -- General
        pc_y : in vect2;
        -- C adaptive observer
        c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right)
+       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        -- FD logic
-       --FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       --pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );
 end component processor_core;
 
@@ -192,8 +192,8 @@ signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => 
 
 -- Processor core
 signal pc_pwm : STD_LOGIC_VECTOR(phases-1 downto 0);
---signal FD_residual:  sfixed(n_left downto n_right);
---signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+signal FD_residual:  sfixed(n_left downto n_right);
+signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 --signal plt_x : vect3 := (zer0, zer0, zer0);
 
@@ -354,7 +354,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => adc_out_1(0),  
+              dac_in => z_val(0),  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -364,7 +364,7 @@ scaler_2: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => adc_out_1(1),  
+            dac_in => z_val(1),  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
@@ -401,11 +401,13 @@ pc_inst: processor_core port map (
             pc_y => plt_y,
             -- C adaptive observer
             c_y_est_out => c_y_est,
-            c_norm_out => c_norm
-            --FD_residual_out => FD_residual,
-            --pc_z => z_val
+            c_norm_out => c_norm,
+            -- FD observer
+            FD_residual_out => FD_residual,
+            pc_z => z_val
             );
-            
+ 
+---- Process ----           
 main_loop: process (clk)
 begin
 if (clk = '1' and clk'event) then

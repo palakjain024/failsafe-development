@@ -23,33 +23,28 @@ end C_adaptive_observer;
 
 architecture Behavioral of C_adaptive_observer is
 
--- ILA core
-COMPONENT ila_0
+---- Component def ----
+ -- ILA core
+    COMPONENT ila_0
 
-PORT (
-	clk : IN STD_LOGIC;
+    PORT (
+        clk : IN STD_LOGIC;
+    
+    
+        trig_in : IN STD_LOGIC;
+        trig_in_ack : OUT STD_LOGIC;
+        probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+    );
+    END COMPONENT  ;
 
-
-	trig_in : IN STD_LOGIC;
-	trig_in_ack : OUT STD_LOGIC;
-	probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-	probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-	probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
-);
-END COMPONENT  ;
-
-
-  -- ila core signals
-      signal trig_in_ack, trig_in : STD_LOGIC := '0';
-      signal probe_il1, probe_il2, probe_vc, probe_y1p, probe_y2p : STD_LOGIC_VECTOR(31 downto 0);
-      signal probe_y1est, probe_y2est, probe_sigh : STD_LOGIC_VECTOR(31 downto 0);
-      
-  -- Component def
+  -- theta estimation
    Component thetta is
     port (   Clk   : in STD_LOGIC;
              Start : in STD_LOGIC;
@@ -57,13 +52,19 @@ END COMPONENT  ;
              err   : in vect2;
              sigh  : in vecth3;
              done  : out STD_LOGIC := '0';
+             lambda_out : out vect3 := (zer0, zer0, zer0);
              thetadot_out : out sfixed(n_left downto n_right):= zer0;
              lambda_thetadot_out : out vect3 := (zer0, zer0, zer0)
          );
     end component thetta;
-
-
--- Matrix and sigh cal L*h*e
+    
+---- Signals ----
+  -- ila core signals
+      signal trig_in_ack, trig_in : STD_LOGIC := '0';
+      signal probe_err1, probe_err2, probe_norm, probe_theta1, probe_theta2 : STD_LOGIC_VECTOR(31 downto 0);
+      signal probe_thetadot1, probe_y1p, probe_y2p : STD_LOGIC_VECTOR(31 downto 0);
+  
+ -- Matrix and sigh cal L*h*e
    signal	A       : sfixed(d_left downto d_right);
    
   
@@ -77,27 +78,76 @@ END COMPONENT  ;
    signal	P       : sfixed(n_left downto n_right);
    signal	Sum	    : sfixed(n_left downto n_right); 
    
+ -- Error correction
    signal le : vect3 := (zer0, zer0, zer0);
-   signal z_est : vect3 := (il0, il0, vc0);
    signal err : vect2 := (zer0, zer0);
+          
+ -- z estimate
+   signal z_est : vect3 := (il0, il0, vc0);
    signal y_est: vect2 := (yil0 ,vc0);
-   signal norm: sfixed(n_left downto n_right) := zer0;
+   signal norm: sfixed(n_left downto n_right) := zer0;   
    
--- Theta cal
+ -- Theta cal
    signal theta_est : vect2 := (Ltheta_star, Ltheta_star);
    signal theta_dot : vect2 := (zer0, zer0);
    signal start_theta : STD_LOGIC := '0';
    signal done_theta1, done_theta2 : STD_LOGIC;
    
--- Lambda theta cal
+ -- Lambda theta cal
    signal lambda_theta_est1, lambda_theta_est2 : vect3 := (zer0, zer0, zer0);
-
--- Sigh cal
+   signal lambda1, lambda2 : vect3 := (zer0, zer0, zer0);
+   
+ -- Sigh cal
    signal sigh1_out, sigh2_out, sigh3_out : vecth3;
    signal sigh1_noh, sigh2_noh : vect3;
    signal sigh3_noh: vect4;
 
 begin
+
+---- Instances ----
+-- Debug core
+                          
+ila_inst_1: ila_0
+PORT MAP (
+    clk => clk_ila,
+    
+    trig_in => trig_in,
+    trig_in_ack => trig_in_ack,
+    probe0 => probe_err1, 
+    probe1 => probe_err2, 
+    probe2 => probe_theta1,  
+    probe3 => probe_theta2, 
+    probe4 => probe_thetadot1,
+    probe5 => probe_norm,
+    probe6 => probe_y1p,
+    probe7 => probe_y2p
+    
+); 
+
+-- Theta
+thetta1_inst: thetta port map (
+    clk => clk,
+    Start => Start_theta,
+    Mode => Mode,
+    err => err,
+    sigh => sigh1_out,
+    done => done_theta1,
+    lambda_out => lambda1,
+    thetadot_out => theta_dot(0),
+    lambda_thetadot_out => lambda_theta_est1);
+
+thetta2_inst: thetta port map (
+        clk => clk,
+        Start => Start_theta,
+        Mode => Mode,
+        err => err,
+        sigh => sigh2_out,
+        done => done_theta2,
+        lambda_out => lambda2,
+        thetadot_out => theta_dot(1),
+        lambda_thetadot_out => lambda_theta_est2);   
+
+---- Proceses ----   
 mult: process(Clk, load, y_plant, err)
 
    -- General Variables for multiplication and addition
@@ -105,13 +155,16 @@ mult: process(Clk, load, y_plant, err)
    S18, S19, S20, S21, S22);
    variable     State         : STATE_VALUE := S0;
 
-   -- Matrix values depends on type of mode
+   -- LE cal
    variable A_Aug_Matrix         : mat32 := ((zer0, zer0),
                                             (zer0, zer0),
                                             (zer0, zer0));
    variable err_Matrix           : vect2 := (err(0), err(1));
-   variable State_inp_Matrix     : vect3 := (il0, il0, vc0);
+  
    variable C_Matrix             : vect3;
+  
+   -- Sigh cal
+   variable State_inp_Matrix     : vect3 := (il0, il0, vc0);
   
    
    begin
@@ -119,33 +172,27 @@ mult: process(Clk, load, y_plant, err)
    if (Clk'event and Clk = '1') then
    
    -- ILA
-      probe_il1 <= result_type(z_est(0));
-      probe_il2 <= result_type(z_est(1)); 
-      probe_vc  <= result_type(z_est(2));
+      probe_err1 <= result_type(err(0));
+      probe_err2 <= result_type(err(1)); 
+      probe_norm  <= result_type(norm);
       probe_y1p <= result_type(y_plant(0)) ; 
       probe_y2p <= result_type(y_plant(1));
-      probe_y1est <= result_type(y_est(0));
-      probe_y2est <= result_type(y_est(1));
-      probe_sigh <= result_type(sigh1_out(0));
-    -- output 
-   y_est_out <= y_est;
-   norm_out <= norm;
+      probe_theta1 <= result_type(theta_est(0));
+      probe_theta2 <= result_type(theta_est(1));
+      probe_thetadot1 <= result_type(theta_dot(0));
+      
+    -- Output 
+    y_est_out <= y_est;
+    norm_out <= norm;
    
-      -- A matrix: Gain Matrix
---       A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
---       A_Aug_Matrix(0,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
---       A_Aug_Matrix(1,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
---       A_Aug_Matrix(1,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
---       A_Aug_Matrix(2,0) := to_sfixed( 0.000175197200000000 ,d_left,d_right);
---       A_Aug_Matrix(2,1) := to_sfixed( 0.000007515600000000,d_left,d_right);
+   -- L matrix: Gain Matrix
+   A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
+   A_Aug_Matrix(0,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
+   A_Aug_Matrix(1,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
+   A_Aug_Matrix(1,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
+   A_Aug_Matrix(2,0) := to_sfixed( 0.000175197200000000 ,d_left,d_right);
+   A_Aug_Matrix(2,1) := to_sfixed( 0.000007515600000000,d_left,d_right);
    
-     -- A matrix: Gain Matrix
-     A_Aug_Matrix(0,0) := to_sfixed(0.0000136582158669738,d_left,d_right);
-     A_Aug_Matrix(0,1) := to_sfixed(0.0000002904306734273,d_left,d_right);
-     A_Aug_Matrix(1,0) := to_sfixed(0.0000136582158669738,d_left,d_right);
-     A_Aug_Matrix(1,1) := to_sfixed(0.0000002904306734273,d_left,d_right);
-     A_Aug_Matrix(2,0) := to_sfixed(0.0000026067759666226,d_left,d_right);
-     A_Aug_Matrix(2,1) := to_sfixed(0.0000297142965034594,d_left,d_right);  
      
 ---- Step 2:  Multiplication -----
         case State is
@@ -319,7 +366,7 @@ mult: process(Clk, load, y_plant, err)
                 Start_theta <= '0';
                 
                 State := S11;
-        -- T*h*C*e calculation
+           -- L*e calculation
                when S11 =>
                     A <= A_Aug_Matrix(0,0);  
                     B <= err_Matrix(0);
@@ -401,44 +448,5 @@ mult: process(Clk, load, y_plant, err)
             end case;
         end if;
     end process;
-    
-    
-thetta1_inst: thetta port map (
-    clk => clk,
-    Start => Start_theta,
-    Mode => Mode,
-    err => err,
-    sigh => sigh1_out,
-    done => done_theta1,
-    thetadot_out => theta_dot(0),
-    lambda_thetadot_out => lambda_theta_est1);
-    
-thetta2_inst: thetta port map (
-        clk => clk,
-        Start => Start_theta,
-        Mode => Mode,
-        err => err,
-        sigh => sigh2_out,
-        done => done_theta2,
-        thetadot_out => theta_dot(1),
-        lambda_thetadot_out => lambda_theta_est2);
-
--- Debug core
-                          
-                    ila_inst_1: ila_0
-                    PORT MAP (
-                        clk => clk_ila,
-                        
-                        trig_in => trig_in,
-                        trig_in_ack => trig_in_ack,
-                        probe0 => probe_il1, 
-                        probe1 => probe_il2, 
-                        probe2 => probe_vc,  
-                        probe3 => probe_y1p, 
-                        probe4 => probe_y2p,
-                        probe5 => probe_y1est,
-                        probe6 => probe_y2est,
-                        probe7 => probe_sigh
-                        
-                    );         
+           
 end Behavioral;

@@ -1,5 +1,4 @@
--- With C = 2.85e-3 and L = 5 mH
--- Luneberger Observer
+-- Sigh calculation using theta_star
 library IEEE;
 library IEEE_PROPOSED;
 library work;
@@ -7,59 +6,152 @@ library work;
 use IEEE_PROPOSED.FIXED_PKG.ALL;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 use work.input_pkg.all;
 
-entity plant_x is
- port (  Clk : in STD_LOGIC;
-         Start : in STD_LOGIC;
-         Mode : in INTEGER range 1 to 4;
-         load : in sfixed(n_left downto n_right);
-         plt_y : in vect2;
-         done : out STD_LOGIC := '0';
-         FD_residual : out sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
-         plt_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-        );
-end plant_x;
+entity sigh_plant is
+port (    Clk   : in STD_LOGIC;
+          clk_ila : in STD_LOGIC;
+          Start : in STD_LOGIC;
+          Mode  : in INTEGER range 1 to 4;
+          load  : in sfixed(n_left downto n_right);
+          y_plant : in vect2;
+          done  : out STD_LOGIC := '0';
+          y_est_out     : out vect2 := (zer0, zer0);
+          norm_out  : out sfixed(n_left downto n_right) := zer0);
+end sigh_plant;
 
-architecture Behavioral of plant_x is
+architecture Behavioral of sigh_plant is
 
----- Components ----
----- Signals ----     
- -- Matrix and sigh cal L*h*e
-    signal    A       : sfixed(d_left downto d_right);
+---- Component def ----
+    -- ILA core
+    COMPONENT ila_0
+    
+    PORT (
+    clk : IN STD_LOGIC;
     
     
-    signal    P_sigh1       : sfixed(n_left downto n_right);
-    signal    P_sigh2       : sfixed(n_left downto n_right);
-    signal    P_load        : sfixed(n_left downto n_right);
-    signal    B       : sfixed(n_left downto n_right);
-    signal    C       : sfixed(n_left downto n_right);
-    signal    D       : sfixed(n_left downto n_right);
+    trig_in : IN STD_LOGIC;
+    trig_in_ack : OUT STD_LOGIC;
+    probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+    probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+    );
+    END COMPONENT  ;
     
-    signal    P       : sfixed(n_left downto n_right);
-    signal    Sum        : sfixed(n_left downto n_right); 
+    -- theta 
+     Component thetta is
+      port (   Clk   : in STD_LOGIC;
+               Start : in STD_LOGIC;
+               Mode  : in INTEGER range 1 to 4;
+               err   : in vect2;
+               sigh  : in vecth3;
+               done  : out STD_LOGIC := '0';
+               lambda_out : out vect3 := (zer0, zer0, zer0);
+               thetadot_out : out sfixed(n_left downto n_right):= zer0;
+               lambda_thetadot_out : out vect3 := (zer0, zer0, zer0)
+           );
+      end component thetta;
 
- -- Error correction
-    signal le : vect3 := (zer0, zer0, zer0);
-    signal err : vect2 := (zer0, zer0);
-
- -- z estimate
-    signal z_est : vect3 := (il0, il0, vc0);
-    signal y_est: vect2 := (yil0 ,vc0);
-    signal norm: sfixed(n_left downto n_right) := zer0;
- 
-  -- Sigh cal
-    signal sigh1_out, sigh2_out, sigh3_out : vecth3;
-    signal sigh1_noh, sigh2_noh : vect3;
-    signal sigh3_noh: vect4;
+---- Signals ----
+    -- ila core signals
+    signal trig_in_ack, trig_in : STD_LOGIC := '0';
+    signal probe_theta1, probe_thetadot1, probe_l1, probe_l2, probe_l3 : STD_LOGIC_VECTOR(31 downto 0);
+    signal probe_err1, probe_err2, probe_lt1 : STD_LOGIC_VECTOR(31 downto 0);
     
+       -- Matrix and sigh cal L*h*e
+       signal    A       : sfixed(d_left downto d_right);
+       
+      
+       signal    P_sigh1       : sfixed(n_left downto n_right);
+       signal    P_sigh2       : sfixed(n_left downto n_right);
+       signal    P_load        : sfixed(n_left downto n_right);
+       signal    B       : sfixed(n_left downto n_right);
+       signal    C       : sfixed(n_left downto n_right);
+       signal    D       : sfixed(n_left downto n_right);
+       
+       signal    P       : sfixed(n_left downto n_right);
+       signal    Sum        : sfixed(n_left downto n_right); 
+       
+       -- Error correction
+       signal le : vect3 := (zer0, zer0, zer0);
+       signal err : vect2 := (zer0, zer0);
+       
+       -- z estimate
+       signal z_est : vect3 := (il0, il0, vc0);
+       signal y_est: vect2 := (yil0 ,vc0);
+       signal norm: sfixed(n_left downto n_right) := zer0;
+       
+       -- Theta cal
+       signal theta_est : vect2 := (Ltheta_star, Ltheta_star);
+       signal theta_dot : vect2 := (zer0, zer0);
+       signal start_theta : STD_LOGIC := '0';
+       signal done_theta1, done_theta2 : STD_LOGIC;
+       
+       -- Lambda theta cal
+       signal lambda_theta_est1, lambda_theta_est2 : vect3 := (zer0, zer0, zer0);
+       signal lambda1, lambda2 : vect3 := (zer0, zer0, zer0);
+             
+       -- Sigh cal
+       signal sigh1_out, sigh2_out, sigh3_out : vecth3;
+       signal sigh1_noh, sigh2_noh : vect3;
+       signal sigh3_noh: vect4;
+
 begin
-                
-mult: process(Clk, load, plt_y)
+
+---- Instances ----
+-- Debug core
+                          
+ila_inst_1: ila_0
+PORT MAP (
+    clk => clk_ila,
+    
+    trig_in => trig_in,
+    trig_in_ack => trig_in_ack,
+    probe0 => probe_err1, 
+    probe1 => probe_err2, 
+    probe2 => probe_theta1,  
+    probe3 => probe_thetadot1, 
+    probe4 => probe_l1,
+    probe5 => probe_l2,
+    probe6 => probe_l3,
+    probe7 => probe_lt1
+    
+); 
+
+-- Theta
+thetta1_inst: thetta port map (
+    clk => clk,
+    Start => Start_theta,
+    Mode => Mode,
+    err => err,
+    sigh => sigh1_out,
+    done => done_theta1,
+    lambda_out => lambda1,
+    thetadot_out => theta_dot(0),
+    lambda_thetadot_out => lambda_theta_est1);
+
+thetta2_inst: thetta port map (
+        clk => clk,
+        Start => Start_theta,
+        Mode => Mode,
+        err => err,
+        sigh => sigh2_out,
+        done => done_theta2,
+        lambda_out => lambda2,
+        thetadot_out => theta_dot(1),
+        lambda_thetadot_out => lambda_theta_est2);                        
+---- Proceses ----                    
+mult: process(Clk, load, y_plant)
 
    -- General Variables for multiplication and addition
    type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17,
-   S18, S19, S20);
+   S18, S19, S20, S21, S22);
    variable     State         : STATE_VALUE := S0;
     
    -- LE cal
@@ -78,9 +170,20 @@ mult: process(Clk, load, plt_y)
               
    if (Clk'event and Clk = '1') then
    
-   -- output 
-      plt_z <= y_est;
-      FD_residual <= norm;
+   -- ILA
+      
+      probe_lt1 <= result_type(lambda_theta_est1(0));
+      probe_theta1 <= result_type(theta_est(0));
+      probe_thetadot1 <= result_type(theta_dot(0)); 
+      probe_l1 <= result_type(lambda1(0));
+      probe_l2 <= result_type(lambda1(1));
+      probe_l3 <= result_type(lambda1(2));
+      probe_err1 <= result_type(err(0)) ; 
+      probe_err2 <= result_type(err(1));
+   
+    -- output 
+      y_est_out <= y_est;
+      norm_out <= norm;
  
     -- L matrix
     A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
@@ -89,7 +192,15 @@ mult: process(Clk, load, plt_y)
     A_Aug_Matrix(1,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
     A_Aug_Matrix(2,0) := to_sfixed( 0.000175197200000000 ,d_left,d_right);
     A_Aug_Matrix(2,1) := to_sfixed( 0.000007515600000000,d_left,d_right);
-           
+    
+    -- L matrix
+--    A_Aug_Matrix(0,0) := to_sfixed( 0.0000136582158669738,d_left,d_right);
+--    A_Aug_Matrix(0,1) := to_sfixed( 0.0000002904306734273,d_left,d_right);
+--    A_Aug_Matrix(1,0) := to_sfixed( 0.0000136582158669738,d_left,d_right);
+--    A_Aug_Matrix(1,1) := to_sfixed( 0.0000002904306734273,d_left,d_right);
+--    A_Aug_Matrix(2,0) := to_sfixed( 0.0000026067759666226,d_left,d_right);
+--    A_Aug_Matrix(2,1) := to_sfixed( 0.0000297142965034594,d_left,d_right);    
+       
 ---- Step 2:  Multiplication -----
         case State is
          --  State S0 (wait for start signal)
@@ -97,21 +208,26 @@ mult: process(Clk, load, plt_y)
                    
                    done <= '0';
                    if( start = '1' ) then   
-                        State := S1;
+                   trig_in <= '1'; 
+                       State := S1;
                        -- Error cal
-                       err(0) <= resize(plt_y(0) - y_est(0), n_left, n_right);
-                       err(1) <= resize(plt_y(1) - y_est(1), n_left, n_right); 
+                       err(0) <= resize(y_plant(0) - y_est(0), n_left, n_right);
+                       err(1) <= resize(y_plant(1) - y_est(1), n_left, n_right); 
                    else
                        State := S0;
                    end if;
                    
         -- Sigh Calculation
                when S1 =>
-               -- Error intialization
+                -- Error intialization
                 err_Matrix(0) := err(0);
                 err_Matrix(1) := err(1);  
-              
-               -- Sigh calculation
+                
+                -- theta calculation
+                theta_est(0) <= resize(theta_est(0) + theta_dot(0), n_left, n_right);
+                theta_est(1) <= resize(theta_est(1) + theta_dot(1), n_left, n_right);             
+                
+                -- Sigh calculation
                 A <= rL;
                 B <= State_inp_Matrix(0);
                 C <= State_inp_Matrix(1);
@@ -140,11 +256,7 @@ mult: process(Clk, load, plt_y)
                 State := S3;
                 
                when S3 =>
-               
-               -- Norm calculation
-               C <= err(0);
-               D <= err(0);
-                                                      
+                                        
                -- Sigh calculation
                P_sigh1 <= resize(A * B, n_left, n_right);
                P_sigh2 <= resize(A * C, n_left, n_right);
@@ -162,11 +274,6 @@ mult: process(Clk, load, plt_y)
                State := S4;
                
                when S4 =>
-               -- Norm calculation
-               C <= err(1);
-               D <= err(1); 
-               P <= resize(C * D, n_left, n_right);
-                               
                -- Sigh calculation
                B <= State_inp_Matrix(2);
                -- sigh1 for L1
@@ -180,10 +287,6 @@ mult: process(Clk, load, plt_y)
                State := S5;
                
                when S5 =>
-               -- Norm calculation
-               Sum <= P;
-               P <= resize(C * D, n_left, n_right);
-                              
                -- sigh1 for L1
                sigh1_noh(0) <= resize(sigh1_noh(0) - B, n_left, n_right); -- Mode 1
                sigh1_noh(2) <= resize(sigh1_noh(2) - B, n_left, n_right); -- Mode 4
@@ -195,9 +298,7 @@ mult: process(Clk, load, plt_y)
                State := S6;
                
                when S6 =>
-               -- Norm calculation
-               FD_residual <= resize(Sum + P, n_left, n_right);
-                               
+   
                 -- Sigh calculation                           
                sigh1_out(1) <= zer0h;
                sigh1_out(2) <= zer0h;  
@@ -233,9 +334,9 @@ mult: process(Clk, load, plt_y)
                State := S7;
                
                when S7 =>
-                z_est(0) <= resize(Ltheta_star * sigh1_out(0), n_left, n_right);
-                z_est(1) <= resize(Ltheta_star * sigh2_out(1), n_left, n_right);
-                z_est(2) <= resize(Ctheta_star * sigh3_out(2), n_left, n_right);
+                z_est(0) <= resize(theta_est(0) * sigh1_out(0), n_left, n_right);
+                z_est(1) <= resize(theta_est(1) * sigh2_out(1), n_left, n_right);
+                z_est(2) <= resize(Ctheta_star  * sigh3_out(2), n_left, n_right);
                State :=  S8;
                 
                 when S8 =>
@@ -246,7 +347,7 @@ mult: process(Clk, load, plt_y)
                 
                 -- L*E calculation
                 when S9 =>
-
+                    Start_theta <= '1';
                     A <= A_Aug_Matrix(0,0);  
                     B <= err_Matrix(0);
                     State := S10;
@@ -258,7 +359,7 @@ mult: process(Clk, load, plt_y)
                     State := S11;
 
                 when S11 =>
-
+                    Start_theta <= '0';
                     A <= A_Aug_Matrix(1,0);  
                     B <= err_Matrix(0);
                     P <= resize(A * B, P'high, P'low);
@@ -316,7 +417,19 @@ mult: process(Clk, load, plt_y)
                 z_est(2) <= resize(z_est(2) + le(2), n_left, n_right);
                 State := S20;
                 
-               when S20 =>
+                when S20 =>
+                z_est(0) <= resize(z_est(0) + lambda_theta_est1(0), n_left, n_right);
+                z_est(1) <= resize(z_est(1) + lambda_theta_est1(1), n_left, n_right);
+                z_est(2) <= resize(z_est(2) + lambda_theta_est1(2), n_left, n_right);
+                State := S21;
+                
+                when S21 =>
+                z_est(0) <= resize(z_est(0) + lambda_theta_est2(0), n_left, n_right);
+                z_est(1) <= resize(z_est(1) + lambda_theta_est2(1), n_left, n_right);
+                z_est(2) <= resize(z_est(2) + lambda_theta_est2(2), n_left, n_right);   
+                State := S22;
+                             
+                when S22 =>
                 State_inp_Matrix(0) := z_est(0);
                 State_inp_Matrix(1) := z_est(1);
                 State_inp_Matrix(2) := z_est(2);
@@ -329,5 +442,5 @@ mult: process(Clk, load, plt_y)
                 
                 end case;
         end if; -- clk
-    end process;            
+    end process;
 end Behavioral;
