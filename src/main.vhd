@@ -149,8 +149,8 @@ Port ( -- General
        c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        -- L1 adaptive observer
-       l1_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       l1_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+       --l1_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+       --l1_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
        -- L2 adaptive observer
        --l2_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
        --l2_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
@@ -206,8 +206,8 @@ signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right)
   signal c_norm  : sfixed(n_left downto n_right) := zer0;
  
 -- Adaptive observer for L1
-  signal l1_y_est     : vect2 := (zer0, zer0);
-  signal l1_norm  : sfixed(n_left downto n_right) := zer0;
+  --signal l1_y_est     : vect2 := (zer0, zer0);
+  --signal l1_norm  : sfixed(n_left downto n_right) := zer0;
   
 -- Adaptive observer for L2
   --signal l2_y_est     : vect2 := (zer0, zer0);
@@ -361,34 +361,24 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
 scaler_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
-              dac_max => to_sfixed(50,15,-16),
+              dac_max => to_sfixed(33,15,-16),
               dac_min => to_Sfixed(0,15,-16)
               )
               port map (
               clk => clk,
-              dac_in => c_norm,  
+              dac_in => c_y_est(0),  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(50,15,-16),
+            dac_max => to_sfixed(660,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => l1_norm,  
+            dac_in => c_y_est(1),  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
-            dac_left => n_left,
-            dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
-            dac_min => to_sfixed(0,15,-16)
-            )
-            port map (
-            clk => clk,
-            dac_in => z_val(0),  
-            dac_val => dac_3); 
-scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
             dac_max => to_sfixed(330,15,-16),
@@ -397,6 +387,16 @@ scaler_4: scaler generic map (
             port map (
             clk => clk,
             dac_in => FD_residual,  
+            dac_val => dac_3); 
+scaler_4: scaler generic map (
+            dac_left => n_left,
+            dac_right => n_right,
+            dac_max => to_sfixed(100,15,-16),
+            dac_min => to_sfixed(0,15,-16)
+            )
+            port map (
+            clk => clk,
+            dac_in => c_norm,  
             dac_val => dac_4); 
 
 
@@ -414,8 +414,8 @@ pc_inst: processor_core port map (
             c_y_est_out => c_y_est,
             c_norm_out => c_norm,
             -- L1 adaptive observer
-            l1_y_est_out => l1_y_est,
-            l1_norm_out => l1_norm,
+            --l1_y_est_out => l1_y_est,
+            --l1_norm_out => l1_norm,
             -- L2 adaptive observer
             --l2_y_est_out => l2_y_est,
             --l2_norm_out => l2_norm,

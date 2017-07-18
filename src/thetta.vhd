@@ -79,7 +79,7 @@ mult: process(Clk, err)
        A_Aug_Matrix(0,0) := to_sfixed( 0.00000500000000,d_left,d_right);
        A_Aug_Matrix(0,1) := to_sfixed( 0.00000500000000,d_left,d_right);
        A_Aug_Matrix(1,0) := to_sfixed( 0,d_left,d_right);
-       A_Aug_Matrix(2,1) := to_sfixed( 0.000005,d_left,d_right);
+       A_Aug_Matrix(2,1) := to_sfixed( 0.00000500000000,d_left,d_right);
    
       if Mode = 1 then
       -- T*h*C matrix
