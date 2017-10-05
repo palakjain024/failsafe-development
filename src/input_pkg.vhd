@@ -29,14 +29,9 @@ package input_pkg is
   
   -- Initial values of il and vc (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(4, 15,-16);
-  constant yil0 : sfixed(15 downto -16) := to_sfixed(8, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(380,15,-16);
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant zer0h : sfixed(1 downto -30) := to_sfixed(0, 1,-30);
-  
-  -- theta_star parameters
-  constant Ltheta_star :  sfixed(15 downto -16) := to_sfixed(200, 15, -16);
-  constant Ctheta_star :  sfixed(15 downto -16) := to_sfixed(350.87, 15, -16);
   
   -- vectors
   type vect3 is array (0 to 2) of sfixed(15 downto -16); -- for z

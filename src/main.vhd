@@ -12,7 +12,7 @@ use work.input_pkg.all;
 entity main is
     Port ( -- General
            sysclk : in STD_LOGIC;
-           enable_ao: in STD_LOGIC;
+           enable_fdi: in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -62,7 +62,7 @@ port
 end component;
 
 -- PWM Module
-component pwm_dc
+component pwm
     PORT(
         clk       : IN  STD_LOGIC;                                    --system clock
         reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
@@ -70,7 +70,7 @@ component pwm_dc
         duty      : IN  sfixed(n_left downto n_right);                       --duty cycle
         pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
         pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));          --pwm inverse outputs
-end component pwm_dc;
+end component pwm;
 -- Dead Time Module
 component deadtime
          Port ( clk : in STD_LOGIC;
@@ -133,32 +133,7 @@ Generic(
 end component;
 -- Processor core
 
-component processor_core
-Port ( -- General
-       Clk : in STD_LOGIC;
-       clk_ila : in STD_LOGIC;
-       pc_en : in STD_LOGIC;
-       reset_fd : in STD_LOGIC;
-       -- Converter fault flag;
-       FD_flag : out STD_LOGIC := '0';
-       -- Observer inputs
-       pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
-       load : in sfixed(n_left downto n_right);
-       pc_y : in vect2;
-       -- C adaptive observer
-       c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       -- L1 adaptive observer
-       --l1_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       --l1_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       -- L2 adaptive observer
-       --l2_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       --l2_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       -- FD logic
-       FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-       );
-end component processor_core;
+
 
 -- Signal Definition
 -- clk wizard
@@ -172,16 +147,13 @@ signal ena : STD_LOGIC := '0';
 signal duty_ratio : sfixed(n_left downto n_right);
 signal duty : sfixed(n_left downto n_right);
 
-
 -- Deadtime
-signal a_pwm1_out, b_pwm1_out: std_logic;  --pwm outputs with dead band
-signal a_pwm2_out, b_pwm2_out: std_logic;  --pwm inverse outputs with dead band  
+signal pwm1_out, pwm2_out: std_logic;  --pwm outputs with dead band
 
 -- DAC signals         
 signal DA_sync_1, DA_sync_2: STD_LOGIC;
 -- DAC scaler output
 signal dac_1, dac_2, dac_3, dac_4: std_logic_vector(11 downto 0);
-
 
 -- ADC Descaler inputs
 signal adc_out_1, adc_out_2 : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
@@ -196,22 +168,11 @@ signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => 
 --signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
-signal pc_pwm : STD_LOGIC_VECTOR(phases-1 downto 0);
+signal pc_pwm : STD_LOGIC;
 signal FD_residual:  sfixed(n_left downto n_right);
 signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-signal plt_y : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+signal plt_x : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 
--- Adaptive observer for C
-  signal c_y_est     : vect2 := (zer0, zer0);
-  signal c_norm  : sfixed(n_left downto n_right) := zer0;
- 
--- Adaptive observer for L1
-  --signal l1_y_est     : vect2 := (zer0, zer0);
-  --signal l1_norm  : sfixed(n_left downto n_right) := zer0;
-  
--- Adaptive observer for L2
-  --signal l2_y_est     : vect2 := (zer0, zer0);
-  --signal l2_norm  : sfixed(n_left downto n_right) := zer0;
  
 begin
 -- Clk
@@ -226,7 +187,7 @@ clk_wizard_inst: clk_wiz_0
  );
  
 -- PWM and Deadtime module
-pwm_inst: pwm_dc 
+pwm_inst: pwm 
  port map(
     clk => clk, 
     reset_n => '1', 
@@ -235,19 +196,12 @@ pwm_inst: pwm_dc
     pwm_out => pwm_out, 
     pwm_n_out => pwm_n_out);
 
-deadtime_a_inst: deadtime  
+deadtime_inst: deadtime  
 port map(
     p_pwm_in => pwm_out(0), 
     clk => clk, 
     p_pwm1_out => a_pwm1_out, 
     p_pwm2_out => a_pwm2_out);
-    
-deadtime_b_inst: deadtime  
-    port map(
-        p_pwm_in => pwm_out(1), 
-        clk => clk, 
-        p_pwm1_out => b_pwm1_out, 
-        p_pwm2_out => b_pwm2_out);
     
 -- ADC and DAC
 dac_1_inst: pmodDA2_ctrl port map (
@@ -401,49 +355,17 @@ scaler_4: scaler generic map (
 
 
 -- Processor_core
-pc_inst: processor_core port map (
-            Clk => clk,
-            clk_ila => clk_ila,
-            pc_en => enable_ao,
-            reset_fd => reset_fd,
-            FD_flag => FD_flag,
-            pc_pwm => pc_pwm,
-            load => adc_out_2(0),
-            pc_y => plt_y,
-            -- C adaptive observer
-            c_y_est_out => c_y_est,
-            c_norm_out => c_norm,
-            -- L1 adaptive observer
-            --l1_y_est_out => l1_y_est,
-            --l1_norm_out => l1_norm,
-            -- L2 adaptive observer
-            --l2_y_est_out => l2_y_est,
-            --l2_norm_out => l2_norm,
-            -- FD observer
-            FD_residual_out => FD_residual,
-            pc_z => z_val
-            );
+
  
 ---- Process ----           
 main_loop: process (clk)
 begin
 if (clk = '1' and clk'event) then
--- Output
-pwm_out_t(0) <= a_pwm1_out;
-pwm_n_out_t(0)  <= a_pwm2_out;
-pwm_out_t(1) <= b_pwm1_out;
-pwm_n_out_t(1)  <= b_pwm2_out;
-
--- Processor core
-pc_pwm(0) <= a_pwm1_out;
-pc_pwm(1) <= b_pwm1_out;
-
-plt_y(0) <= adc_out_1(0);
-plt_y(1) <= adc_out_1(1);
-
---plt_x(0) <= adc_out_1(0);
---plt_x(1) <= adc_out_2(1);
---plt_x(2) <= adc_out_1(1);
+-- Output (no fault) ---
+pwm_out_t(0) <= pwm1_out;
+pwm_n_out_t(0)  <= pwm2_out;
+pwm_out_t(1) <= '1';
+pwm_n_out_t(1)  <= '0';
 
 end if;
 end process; 
@@ -460,13 +382,14 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.5, n_left, n_right);
+       duty_ratio <= to_sfixed(0.8, n_left, n_right);
        state := S1;
        
        when S1 =>
        ena <= '1';
-       duty <= resize(to_sfixed(1, n_left, n_right) - duty_ratio, n_left, n_right);
+       duty <= duty_ratio;
        state := S0;  
+       
        end case;  
      end if;
 end process;

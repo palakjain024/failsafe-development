@@ -1,26 +1,27 @@
+-- PWM Module
 library IEEE;
 library IEEE_PROPOSED;
-library work;
-
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use ieee.std_logic_unsigned.all;
 use IEEE_PROPOSED.FIXED_PKG.ALL;
+library work;
 use work.input_pkg.all;
 
-entity pwm_dc is
- PORT(
-     clk       : IN  STD_LOGIC;                                    --system clock
-     reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
-     ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
-     duty      : IN  sfixed(n_left downto n_right);                       --duty cycle (range given by bit resolution)
-     pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
-     pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));         --pwm inverse outputs
-end pwm_dc;
 
-architecture Behavioral of pwm_dc is
+ENTITY pwm IS
+  PORT(
+      clk       : IN  STD_LOGIC;                                    --system clock
+      reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
+      ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
+      duty      : IN  sfixed(n_left downto n_right);                       --duty cycle (range given by bit resolution)
+      pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
+      pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));         --pwm inverse outputs
+END pwm;
 
--- PWM Generator
+ARCHITECTURE logic OF pwm IS
+
+  -- PWM Generator
   CONSTANT  period     :  INTEGER := sys_clk/pwm_freq;                      --number of clocks in one pwm period
   TYPE counters IS ARRAY (0 TO phases-1) OF INTEGER RANGE 0 TO period - 1;  --data type for array of period counters
   SIGNAL  count        :  counters := (OTHERS => 0);                        --array of period counters
@@ -59,5 +60,4 @@ BEGIN
       END LOOP;
     END IF;
   END PROCESS;
-
-end Behavioral;
+END logic;
