@@ -1,5 +1,5 @@
--- With C = 2.85e-3 and L = 5 mH
--- Luneberger Observer
+-- With C = 500e-3 and L = 5 mH
+-- State estimator
 library IEEE;
 library IEEE_PROPOSED;
 library work;
@@ -10,11 +10,12 @@ use IEEE.numeric_std.all;
 use work.input_pkg.all;
 
 entity plant_x is
- port (  Clk : in STD_LOGIC;
+ port (  Clk   : in STD_LOGIC;
          Start : in STD_LOGIC;
-         Mode : in INTEGER range 1 to 4;
-         load : in sfixed(n_left downto n_right);
-         plt_y : in vect2;
+         Mode  : in INTEGER range 1 to 4;
+         ut    : in vect2;
+         plt_x : in vect2;
+         pv_x  : in vect2;
          done : out STD_LOGIC := '0';
          FD_residual : out sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
          plt_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
@@ -25,33 +26,22 @@ architecture Behavioral of plant_x is
 
 ---- Components ----
 ---- Signals ----     
- -- Matrix and sigh cal L*h*e
+ -- Matrix
     signal    A       : sfixed(d_left downto d_right);
-    
-    
-    signal    P_sigh1       : sfixed(n_left downto n_right);
-    signal    P_sigh2       : sfixed(n_left downto n_right);
-    signal    P_load        : sfixed(n_left downto n_right);
+
     signal    B       : sfixed(n_left downto n_right);
     signal    C       : sfixed(n_left downto n_right);
     signal    D       : sfixed(n_left downto n_right);
     
     signal    P       : sfixed(n_left downto n_right);
-    signal    Sum        : sfixed(n_left downto n_right); 
+    signal    Sum     : sfixed(n_left downto n_right); 
 
  -- Error correction
-    signal le : vect3 := (zer0, zer0, zer0);
-    signal err : vect2 := (zer0, zer0);
+    signal err : vect4 := (zer0, zer0, zer0, zer0);
 
  -- z estimate
     signal z_est : vect3 := (il0, il0, vc0);
-    signal y_est: vect2 := (yil0 ,vc0);
     signal norm: sfixed(n_left downto n_right) := zer0;
- 
-  -- Sigh cal
-    signal sigh1_out, sigh2_out, sigh3_out : vecth3;
-    signal sigh1_noh, sigh2_noh : vect3;
-    signal sigh3_noh: vect4;
     
 begin
                 
@@ -63,15 +53,14 @@ mult: process(Clk, load, plt_y, err)
    variable     State         : STATE_VALUE := S0;
     
    -- LE cal
-   variable A_Aug_Matrix         : mat32 := ((zer0, zer0),
-                                             (zer0, zer0),
-                                             (zer0, zer0));
-   variable err_Matrix           : vect2 := (err(0), err(1));
+   variable A_Aug_Matrix       : mat24 := ((zer0h, zer0h, zer0h, zer0h),
+                                           (zer0h, zer0h, zer0h, zer0h));
+   variable err_vect           : vect4 := (err(0), err(1), err(2), err(3));
    
-   variable C_Matrix             : vect3;
+   variable C_vect             : vect2;
    
-   -- Sigh cal
-   variable State_inp_Matrix     : vect3 := (il0, il0, vc0);
+   -- Estimation vector
+   variable State_inp_vect     : vect4 := (il0, vc0, ipv, vpv);
   
    
    begin

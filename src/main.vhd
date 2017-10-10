@@ -38,12 +38,12 @@ entity main is
            AD_CS_2 : out STD_LOGIC;
            AD_D0_2 : in STD_LOGIC;
            AD_D1_2 : in STD_LOGIC;
-           AD_SCK_2 : out STD_LOGIC
+           AD_SCK_2 : out STD_LOGIC;
           -- ADC ports 3
---           AD_CS_3 : out STD_LOGIC;
---           AD_D0_3 : in STD_LOGIC;
---           AD_D1_3 : in STD_LOGIC;
---           AD_SCK_3 : out STD_LOGIC
+           AD_CS_3 : out STD_LOGIC;
+           AD_D0_3 : in STD_LOGIC;
+           AD_D1_3 : in STD_LOGIC;
+           AD_SCK_3 : out STD_LOGIC
          );
 end main;
 
@@ -157,21 +157,21 @@ signal dac_1, dac_2, dac_3, dac_4: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
 signal adc_out_1, adc_out_2 : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
---signal adc_out_3: vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+signal adc_out_3: vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal de_done_1, de_done_2, de_done_3, de_done_4 : STD_LOGIC;
---signal de_done_5, de_done_6 : STD_LOGIC;
+signal de_done_5, de_done_6 : STD_LOGIC;
 
 -- ADC signals
 signal AD_sync_1, AD_sync_2 : STD_LOGIC;
--- signal AD_sync_3: STD_LOGIC;
+signal AD_sync_3: STD_LOGIC;
 signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => '0');
---signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
+signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
-signal pc_pwm : STD_LOGIC;
-signal FD_residual:  sfixed(n_left downto n_right);
-signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-signal plt_x : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+--signal pc_pwm : STD_LOGIC;
+--signal FD_residual:  sfixed(n_left downto n_right);
+--signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+--signal plt_x : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
 
  
 begin
@@ -254,18 +254,18 @@ adc_2_inst: pmodAD1_ctrl port map (
         DONE   => AD_sync_2
         );  
 
---adc_3_inst: pmodAD1_ctrl port map (
---        CLK => CLK,       
---        RST => '0',
---        SDATA1 => AD_D0_3,
---        SDATA2 => AD_D1_3, 
---        SCLK   => AD_SCK_3,
---        nCS    => AD_CS_3,
---        DATA1  => adc_5,  
---        DATA2  => adc_6, 
---        START  => AD_sync_3, 
---        DONE   => AD_sync_3
---        ); 
+adc_3_inst: pmodAD1_ctrl port map (
+        CLK => CLK,       
+        RST => '0',
+        SDATA1 => AD_D0_3,
+        SDATA2 => AD_D1_3, 
+        SCLK   => AD_SCK_3,
+        nCS    => AD_CS_3,
+        DATA1  => adc_5,  
+        DATA2  => adc_6, 
+        START  => AD_sync_3, 
+        DONE   => AD_sync_3
+        ); 
                
 -- ADC Retrieval   
 de_inst_1: descaler generic map (adc_factor => i_factor )
@@ -296,20 +296,20 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             adc_in => adc_4,
             done => de_done_4,
             adc_val => adc_out_2(1));
---de_inst_5: descaler generic map (adc_factor => i_factor)
---            port map (
---            clk => clk,
---            start => AD_sync_3,
---            adc_in => adc_5,
---            done => de_done_5,
---            adc_val => adc_out_3(0));
---de_inst_6: descaler generic map (adc_factor => v_factor)
---            port map (
---            clk => clk,
---            start => AD_sync_3,
---            adc_in => adc_6,
---            done => de_done_6,
---            adc_val => adc_out_3(1));      
+de_inst_5: descaler generic map (adc_factor => i_factor)
+            port map (
+            clk => clk,
+            start => AD_sync_3,
+            adc_in => adc_5,
+            done => de_done_5,
+            adc_val => adc_out_3(0));
+de_inst_6: descaler generic map (adc_factor => v_factor)
+            port map (
+            clk => clk,
+            start => AD_sync_3,
+            adc_in => adc_6,
+            done => de_done_6,
+            adc_val => adc_out_3(1));      
      
 -- DAC Scaler       
 scaler_1: scaler generic map (

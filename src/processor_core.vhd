@@ -19,19 +19,7 @@ Port ( -- General
        -- Observer inputs
        pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
        load : in sfixed(n_left downto n_right);
-       pc_y : in vect2;
-       -- C adaptive observer
-       c_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       c_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       -- L1 adaptive observer
-       --l1_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       --l1_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       -- L2 adaptive observer
-       --l2_y_est_out : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-       --l2_norm_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       -- FD logic
-       FD_residual_out : out sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
-       pc_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       pc_x : in vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
        );
 end processor_core;
 
@@ -70,47 +58,7 @@ END COMPONENT  ;
          );
  end component plant_x;
  
- -- Adaptive observer for C
- component C_adaptive_observer
- port (    Clk   : in STD_LOGIC;
-           clk_ila : in STD_LOGIC;
-           Start : in STD_LOGIC;
-           Mode  : in INTEGER range 1 to 4;
-           load  : in sfixed(n_left downto n_right);
-           y_plant : in vect2;
-           FD_flag : in STD_LOGIC;
-           done  : out STD_LOGIC := '0';
-           y_est_out     : out vect2 := (zer0, zer0);
-           norm_out  : out sfixed(n_left downto n_right) := zer0); 
- end component C_adaptive_observer;
-
- -- Adaptive observer for L1
--- component L1_adaptive_observer
--- port (    Clk   : in STD_LOGIC;
---           clk_ila : in STD_LOGIC;
---           Start : in STD_LOGIC;
---           Mode  : in INTEGER range 1 to 4;
---           load  : in sfixed(n_left downto n_right);
---           y_plant : in vect2;
---           FD_flag : in STD_LOGIC;
---           done  : out STD_LOGIC := '0';
---           y_est_out     : out vect2 := (zer0, zer0);
---           norm_out  : out sfixed(n_left downto n_right) := zer0);
--- end component L1_adaptive_observer;
  
- -- Adaptive observer for L2
--- component L2_adaptive_observer
--- port (    Clk   : in STD_LOGIC;
---           clk_ila : in STD_LOGIC;
---           Start : in STD_LOGIC;
---           Mode  : in INTEGER range 1 to 4;
---           load  : in sfixed(n_left downto n_right);
---           y_plant : in vect2;
---           done  : out STD_LOGIC := '0';
---           y_est_out     : out vect2 := (zer0, zer0);
---           norm_out  : out sfixed(n_left downto n_right) := zer0);
--- end component L2_adaptive_observer;
-
 ---- Signal definition for components ----
 
 -- ILA core
@@ -131,59 +79,9 @@ END COMPONENT  ;
  signal FD_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
  signal flag : STD_LOGIC := '0';
  
- -- Adaptive observer for C
- signal y_est_c     : vect2 := (zer0, zer0);
- signal norm_c  : sfixed(n_left downto n_right) := zer0;
- signal c_done : STD_LOGIC := '0';
-
- -- Adaptive observer for L1
--- signal y_est_l1     : vect2 := (zer0, zer0);
--- signal norm_l1  : sfixed(n_left downto n_right) := zer0;
--- signal l1_done : STD_LOGIC := '0';
- 
- -- Adaptive observer for L2
--- signal y_est_l2     : vect2 := (zer0, zer0);
--- signal norm_l2  : sfixed(n_left downto n_right) := zer0;
--- signal l2_done : STD_LOGIC := '0';  
- 
 begin
 
 ---- Instances ----
---l2_adaptive_observer_inst: L2_adaptive_observer port map (
---Clk => clk,
---clk_ila => clk_ila,
---Start => Start,
---Mode => mode,
---load => load,
---y_plant => pc_y,
---done => l2_done,
---y_est_out => y_est_l2,
---norm_out => norm_l2);
-
---l1_adaptive_observer_inst: L1_adaptive_observer port map (
---Clk => clk,
---clk_ila => clk_ila,
---Start => Start,
---Mode => mode,
---load => load,
---y_plant => pc_y,
---done => l1_done,
---FD_flag => flag,
---y_est_out => y_est_l1,
---norm_out => norm_l1);
-
-c_adaptive_observer_inst: C_adaptive_observer port map (
-Clk => clk,
-clk_ila => clk_ila,
-Start => Start,
-Mode => mode,
-load => load,
-y_plant => pc_y,
-done => c_done,
-FD_flag => flag,
-y_est_out => y_est_c,
-norm_out => norm_c);
-
 Plant_inst: plant_x port map (
 Clk => clk,
 Start => start,
@@ -241,18 +139,7 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
             FD_residual_out <= FD_residual;
             FD_flag <= flag;
             
-           -- C adaptive observer
-            c_y_est_out <= y_est_c;
-            c_norm_out <= norm_c;
-            
-           -- L1 adaptive observer
---            l1_y_est_out <= y_est_l1;
---            l1_norm_out <= norm_l1;
-            
-           -- L2 adaptive observer
-            --l2_y_est_out <= y_est_l2;
-            --l2_norm_out <= norm_l2;
-           
+                      
            ---- To determine Mode PWM for top switch ----
                if counter = 0 then
                        if (pc_pwm(0) = '1' and pc_pwm(1) = '0' ) then
