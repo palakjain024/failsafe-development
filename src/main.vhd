@@ -148,7 +148,7 @@ signal duty_ratio : sfixed(n_left downto n_right);
 signal duty : sfixed(n_left downto n_right);
 
 -- Deadtime
-signal pwm1_out, pwm2_out: std_logic;  --pwm outputs with dead band
+signal a_pwm1_out, a_pwm2_out: std_logic;  --pwm outputs with dead band
 
 -- DAC signals         
 signal DA_sync_1, DA_sync_2: STD_LOGIC;
@@ -320,37 +320,37 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => c_y_est(0),  
+              dac_in => adc_out_1(0),  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(660,15,-16),
+            dac_max => to_sfixed(33,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => c_y_est(1),  
+            dac_in => adc_out_1(1),  
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(330,15,-16),
+            dac_max => to_sfixed(33,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => FD_residual,  
+            dac_in => adc_out_2(0),  
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(100,15,-16),
+            dac_max => to_sfixed(33,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => c_norm,  
+            dac_in => adc_out_2(1),  
             dac_val => dac_4); 
 
 
@@ -362,10 +362,10 @@ main_loop: process (clk)
 begin
 if (clk = '1' and clk'event) then
 -- Output (no fault) ---
-pwm_out_t(0) <= pwm1_out;
-pwm_n_out_t(0)  <= pwm2_out;
-pwm_out_t(1) <= '1';
-pwm_n_out_t(1)  <= '0';
+pwm_out_t(0) <= a_pwm1_out;
+pwm_n_out_t(0)  <= a_pwm2_out;
+pwm_out_t(1) <= '0';
+pwm_n_out_t(1)  <= '1';
 
 end if;
 end process; 

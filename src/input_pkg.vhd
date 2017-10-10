@@ -39,7 +39,6 @@ package input_pkg is
   -- vectors
   type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z
   type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for gamma
-  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for x, u, pv states
     
   -- Matrices
   type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
