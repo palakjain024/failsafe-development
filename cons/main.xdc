@@ -4,6 +4,8 @@ create_clock -period 10.0 [get_ports sysclk]
 set_property PACKAGE_PIN Y9 [get_ports sysclk]
 set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 
+#----- For fault management -----
+
 # For injecting switch faults (PWM for phase a change: switch SW0)
 set_property PACKAGE_PIN F22 [get_ports enable_fdi]
 set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
@@ -12,11 +14,17 @@ set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 set_property PACKAGE_PIN G22 [get_ports reset_fd]
 set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
 
-#JC4_p (T4)
-set_property PACKAGE_PIN T4 [get_ports FD_flag]
+#JA7 AB11
+set_property PACKAGE_PIN AB11 [get_ports FD_flag]
 set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 
-# Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6) 
+#JA8 (AB10), JA9(AB9), JA10(AA8) for fault identification
+
+#-----------------------------------
+
+# ----- For Controller ------
+
+#PMOD JC1_p (AB7) and JC3_p (R6) 
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 
@@ -36,6 +44,11 @@ set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[1]}]
 
 #set_property PACKAGE_PIN T4 [get_ports {pwm_n_out_t[2]}]
 #set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[2]}]
+
+#--------------------------------
+
+
+# ----- For Inputs through ADCs ------
 
 # Digilent PMOD AD1 _1 ADC to PMOD JA1 to JA4 (For adc_1 and adc_2)
 set_property PACKAGE_PIN Y11 [get_ports AD_CS_1]
@@ -76,6 +89,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
 set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
 
+#--------------------------------
+
+# ----- For Outputs through DACs ------
+
 # Digilent PMOD DA1_1 DAC to PMOD JD1_P to JD2_N (For dac_1 and dac_2)
 set_property PACKAGE_PIN V7 [get_ports DA_nSYNC_1]
 set_property IOSTANDARD LVCMOS33 [get_ports DA_nSYNC_1]
@@ -101,3 +118,5 @@ set_property IOSTANDARD LVCMOS33 [get_ports DA_DATA2_2]
 
 set_property PACKAGE_PIN U5 [get_ports DA_CLK_OUT_2]
 set_property IOSTANDARD LVCMOS33 [get_ports DA_CLK_OUT_2]
+
+#---------------------------------

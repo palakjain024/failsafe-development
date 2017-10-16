@@ -29,7 +29,7 @@ package input_pkg is
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(20,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(8,15,-16);
+  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
   constant vpv : sfixed(15 downto -16) := v_in;
   
   -- Zero initial input
@@ -58,7 +58,7 @@ package input_pkg is
   constant adc_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
   constant offset : sfixed(15 downto -16) := to_sfixed(0, 15, -16);
   constant i_factor : sfixed(15 downto -16) := to_sfixed(10, 15, -16);
-  constant v_factor : sfixed(15 downto -16) := to_sfixed(200, 15, -16);
+  constant v_factor : sfixed(15 downto -16) := to_sfixed(100, 15, -16);
   
   -- DAC scaler constants
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);

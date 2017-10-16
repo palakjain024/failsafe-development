@@ -68,15 +68,15 @@ component pwm
         reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
         ena       : IN  STD_LOGIC;                                    --latches in new duty cycle
         duty      : IN  sfixed(n_left downto n_right);                       --duty cycle
-        pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0');          --pwm outputs
-        pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '0'));          --pwm inverse outputs
+        pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');          --pwm outputs
+        pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'));          --pwm inverse outputs
 end component pwm;
 -- Dead Time Module
 component deadtime
          Port ( clk : in STD_LOGIC;
                p_Pwm_In : in STD_LOGIC;
-               p_Pwm1_Out : out STD_LOGIC := '0';
-               p_Pwm2_Out : out STD_LOGIC := '0');
+               p_Pwm1_Out : out STD_LOGIC := '1';
+               p_Pwm2_Out : out STD_LOGIC := '1');
 end component deadtime;
 -- DAC Module
 component pmodDA2_ctrl
@@ -295,14 +295,14 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             start => AD_sync_2,
             adc_in => adc_4,
             done => de_done_4,
-            adc_val => adc_out_2(1));
+            adc_val => adc_out_2(1)); -- PV voltage
 de_inst_5: descaler generic map (adc_factor => i_factor)
             port map (
             clk => clk,
             start => AD_sync_3,
             adc_in => adc_5,
             done => de_done_5,
-            adc_val => adc_out_3(0));
+            adc_val => adc_out_3(0));-- PV current
 de_inst_6: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
@@ -364,9 +364,8 @@ if (clk = '1' and clk'event) then
 -- Output (no fault) ---
 pwm_out_t(0) <= a_pwm1_out;
 pwm_n_out_t(0)  <= a_pwm2_out;
-pwm_out_t(1) <= '0';
-pwm_n_out_t(1)  <= '1';
-
+pwm_out_t(1) <= '0';    -- Top switch --> Inverted signal for power trench
+pwm_n_out_t(1)  <= '1'; -- Bottom switch
 end if;
 end process; 
 
@@ -382,7 +381,7 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.8, n_left, n_right);
+       duty_ratio <= to_sfixed(0.75, n_left, n_right);
        state := S1;
        
        when S1 =>
