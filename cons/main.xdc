@@ -24,15 +24,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 
 # ----- For Controller ------
 
-#PMOD JC1_p (AB7) and JC3_p (R6) 
+#Mapping PWM module phase a to PMOD JC1_p (AB7) and JCI_n (AB6)
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 
-set_property PACKAGE_PIN R6 [get_ports {pwm_n_out_t[0]}]
+set_property PACKAGE_PIN AB6 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
-# Mapping PWM module phase b to PMOD JC1_n (AB6) and JC3_n (T6) 
-set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[1]}]
+# Mapping PWM module phase b to PMOD JC3_p (R6) and JC3_n (T6) 
+set_property PACKAGE_PIN R6 [get_ports {pwm_out_t[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[1]}]
 
 set_property PACKAGE_PIN T6 [get_ports {pwm_n_out_t[1]}]
