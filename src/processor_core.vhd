@@ -15,11 +15,11 @@ Port ( -- General
        Clk : in STD_LOGIC;
        clk_ila : in STD_LOGIC;
        pc_en : in STD_LOGIC;
-       reset_fd : in STD_LOGIC;
        -- Converter fault flag;
-       FD_flag : out STD_LOGIC := '0';
+       --reset_fd : in STD_LOGIC;
+       --FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
-       pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
+       pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2 ;
        -- Observer outputs
@@ -140,12 +140,12 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
                       
   ---- To determine Mode PWM for top switch ----
    if counter = 0 then
-           if (pc_pwm(0) = '0') then
-           -- SW2 Bottom switch conducting
-             mode <= 2;
+           if (pc_pwm = '0') then -- active low (pc_pwm(0) given to top switch)
+           -- SW1 Top switch conducting
+             mode <= 1;
            else
-           -- SW1 top Switch conducting
-             mode <= 1;  
+           -- SW2 Bottom Switch conducting
+             mode <= 2;  
            end if;
    end if;
   ---- For constant time step 500 ns Matrix Mutiplication to run ----

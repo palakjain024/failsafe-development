@@ -6,13 +6,13 @@ set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 
 #----- For fault management -----
 
-# For injecting switch faults (PWM for phase a change: switch SW0)
+# For enabling the parameter estimator
 set_property PACKAGE_PIN F22 [get_ports enable_fdi]
 set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 
-## For reseting faults
-#set_property PACKAGE_PIN G22 [get_ports reset_fd]
-#set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+## For reseting PWM
+set_property PACKAGE_PIN G22 [get_ports pwm_reset]
+set_property IOSTANDARD LVCMOS33 [get_ports pwm_reset]
 
 ##JA7 AB11
 #set_property PACKAGE_PIN AB11 [get_ports FD_flag]

@@ -12,7 +12,7 @@ package input_pkg is
   constant sys_clk         : INTEGER := 100_000_000;  --system clock frequency in Hz
   constant pwm_freq        : INTEGER := 10_000;       --PWM switching frequency in Hz
   constant bits_resolution : INTEGER := 8;            --bits of resolution setting the duty cycle
-  constant phases          : INTEGER := 2;            --number of output pwms and phases
+  constant phases          : INTEGER := 1;            --number of output pwms and phases
   -- Deadtime
   constant c_Dead_t        : INTEGER :=  200;         -- Dead time
     

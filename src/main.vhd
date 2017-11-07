@@ -18,8 +18,8 @@ entity main is
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            -- Flags
-           FD_flag : out STD_LOGIC;
-           reset_fd : in STD_LOGIC;
+           --FD_flag : out STD_LOGIC;
+           --reset_fd : in STD_LOGIC;
            -- DAC ports 1
            DA_DATA1_1 : out STD_LOGIC;
            DA_DATA2_1 : out STD_LOGIC;
@@ -133,11 +133,11 @@ Port ( -- General
        Clk : in STD_LOGIC;
        clk_ila : in STD_LOGIC;
        pc_en : in STD_LOGIC;
-       reset_fd : in STD_LOGIC;
        -- Converter fault flag;
-       FD_flag : out STD_LOGIC := '0';
+       --reset_fd : in STD_LOGIC;
+       --FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
-       pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
+       pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
        pc_x : in vect2 ;
        -- Observer outputs
@@ -341,9 +341,9 @@ pc_inst: processor_core port map (
    Clk => Clk,
    Clk_ila => Clk_ila,
    pc_en => enable_fdi,
-   reset_fd => reset_fd,
    -- Converter fault flag
-   FD_flag => FD_flag,
+        --reset_fd => reset_fd,
+        --FD_flag => FD_flag,
    -- Observer inputs
    pc_pwm => a_pwm1_out,
    load => adc_out_2(0), 
