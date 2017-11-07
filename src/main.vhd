@@ -307,7 +307,7 @@ scaler_1: scaler generic map (
 scaler_2: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
+            dac_max => to_sfixed(660,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
