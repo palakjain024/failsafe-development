@@ -14,11 +14,11 @@ package input_pkg is
   constant bits_resolution : INTEGER := 8;            --bits of resolution setting the duty cycle
   constant phases          : INTEGER := 2;            --number of output pwms and phases
   -- Deadtime
-  constant c_Dead_t        : INTEGER :=  100;         -- Dead time
+  constant c_Dead_t        : INTEGER :=  200;         -- Dead time
     
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
-  constant rL : sfixed(1 downto -30) := to_sfixed(0.082,1,-30);      -- Inductor resistance
+  constant rL : sfixed(1 downto -30) := to_sfixed(-0.082,1,-30);      -- Inductor resistance
   constant fd_th : sfixed(15 downto -16) := to_sfixed(0.4, 15, -16); -- Threshold
   
   -- inputs that could change (keep precison same for all)
@@ -28,26 +28,40 @@ package input_pkg is
   
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
-  constant vc0 : sfixed(15 downto -16) := to_sfixed(20,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
-  constant vpv : sfixed(15 downto -16) := v_in;
-  
+  constant vc0 : sfixed(15 downto -16) := to_sfixed(377,15,-16);
+
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant zer0h : sfixed(1 downto -30) := to_sfixed(0, 1,-30);
+  constant zer0_H_mat : sfixed(2 downto -35) := to_sfixed(0, 2,-35);  -- H_mat22 initial values
   
-  -- vectors
-  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z
-  type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for gamma
+ -- theta_star parameters
+  constant L_star :  sfixed(1 downto -30) := to_sfixed(0.0053, 1, -30);
+  constant C_star :  sfixed(1 downto -30) := to_sfixed(0.00285, 1, -30);
+  constant theta_L_star : sfixed(15 downto -16) := to_sfixed(188.68, 15, -16);
+  constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
     
-  -- Matrices
-  type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
+ -- Adaptive Gain for theta correction
+ constant e11 : sfixed(24 downto -10) := to_sfixed(-0.0001,24,-10);
+ constant e22 : sfixed(24 downto -10) := to_sfixed(-1e6,24,-10);
+ type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
     
-  -- Precision
-  constant n_left: integer := 15;
-  constant n_right: integer := -16;
-  constant d_left: integer := 1;
-  constant d_right:integer := -30;
+ -- vectors
+ type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
+ type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for augumented [z;u]
+ type discrete_vect2 is array (0 to 1) of sfixed(1 downto -30);
+    
+ -- Matrices
+ type mat22 is array (0 to 1, 0 to 1) of sfixed(15 downto -16); -- for A,B
+ type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
+ type discrete_mat22 is array (0 to 1, 0 to 1) of sfixed(1 downto -30); -- for w
+ type H_mat22 is array (0 to 1, 0 to 1) of sfixed(2 downto -35); -- for H
+    
+ -- Precision
+ constant n_left: integer := 15;
+ constant n_right: integer := -16;
+ constant d_left: integer := 1;
+ constant d_right:integer := -30;
   
   -- ILA
   subtype result_type is std_logic_vector (31 downto 0);

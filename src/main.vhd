@@ -12,6 +12,7 @@ use work.input_pkg.all;
 entity main is
     Port ( -- General
            sysclk : in STD_LOGIC;
+           pwm_reset : in STD_LOGIC;
            enable_fdi: in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -38,12 +39,7 @@ entity main is
            AD_CS_2 : out STD_LOGIC;
            AD_D0_2 : in STD_LOGIC;
            AD_D1_2 : in STD_LOGIC;
-           AD_SCK_2 : out STD_LOGIC;
-          -- ADC ports 3
-           AD_CS_3 : out STD_LOGIC;
-           AD_D0_3 : in STD_LOGIC;
-           AD_D1_3 : in STD_LOGIC;
-           AD_SCK_3 : out STD_LOGIC
+           AD_SCK_2 : out STD_LOGIC
          );
 end main;
 
@@ -132,8 +128,25 @@ Generic(
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
 -- Processor core
-
-
+component processor_core
+Port ( -- General
+       Clk : in STD_LOGIC;
+       clk_ila : in STD_LOGIC;
+       pc_en : in STD_LOGIC;
+       reset_fd : in STD_LOGIC;
+       -- Converter fault flag;
+       FD_flag : out STD_LOGIC := '0';
+       -- Observer inputs
+       pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
+       load : in sfixed(n_left downto n_right);
+       pc_x : in vect2 ;
+       -- Observer outputs
+       theta_done : out STD_LOGIC := '0';
+       pc_theta : out vect2 := (theta_L_star,theta_C_star);
+       pc_err : out vect2 := (zer0,zer0);
+       pc_z : out vect2 := (zer0,zer0)
+       );
+end component processor_core;
 
 -- Signal Definition
 -- clk wizard
@@ -157,22 +170,17 @@ signal dac_1, dac_2, dac_3, dac_4: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
 signal adc_out_1, adc_out_2 : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
-signal adc_out_3: vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal de_done_1, de_done_2, de_done_3, de_done_4 : STD_LOGIC;
-signal de_done_5, de_done_6 : STD_LOGIC;
 
 -- ADC signals
 signal AD_sync_1, AD_sync_2 : STD_LOGIC;
-signal AD_sync_3: STD_LOGIC;
 signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => '0');
-signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
---signal pc_pwm : STD_LOGIC;
---signal FD_residual:  sfixed(n_left downto n_right);
---signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
---signal plt_x : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
-
+signal z_val, err_val : vect2;
+signal plt_x : vect2;
+signal pc_theta: vect2;
+signal theta_done : STD_LOGIC;
  
 begin
 -- Clk
@@ -190,7 +198,7 @@ clk_wizard_inst: clk_wiz_0
 pwm_inst: pwm 
  port map(
     clk => clk, 
-    reset_n => '1', 
+    reset_n => pwm_reset, 
     ena => ena, 
     duty => duty, 
     pwm_out => pwm_out, 
@@ -235,8 +243,8 @@ adc_1_inst: pmodAD1_ctrl port map (
     SDATA2 => AD_D1_1, 
     SCLK   => AD_SCK_1,
     nCS    => AD_CS_1,
-    DATA1  => adc_1,    
-    DATA2  => adc_2,  
+    DATA1  => adc_1,    -- Inductor current
+    DATA2  => adc_2,    -- Capacitor voltage
     START  => AD_sync_1, 
     DONE   => AD_sync_1
 );
@@ -248,24 +256,12 @@ adc_2_inst: pmodAD1_ctrl port map (
         SDATA2 => AD_D1_2, 
         SCLK   => AD_SCK_2,
         nCS    => AD_CS_2,
-        DATA1  => adc_3,  
-        DATA2  => adc_4,   
+        DATA1  => adc_3, -- Load 
+        DATA2  => adc_4, -- No use  
         START  => AD_sync_2, 
         DONE   => AD_sync_2
         );  
 
-adc_3_inst: pmodAD1_ctrl port map (
-        CLK => CLK,       
-        RST => '0',
-        SDATA1 => AD_D0_3,
-        SDATA2 => AD_D1_3, 
-        SCLK   => AD_SCK_3,
-        nCS    => AD_CS_3,
-        DATA1  => adc_5,  
-        DATA2  => adc_6, 
-        START  => AD_sync_3, 
-        DONE   => AD_sync_3
-        ); 
                
 -- ADC Retrieval   
 de_inst_1: descaler generic map (adc_factor => i_factor )
@@ -295,22 +291,8 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             start => AD_sync_2,
             adc_in => adc_4,
             done => de_done_4,
-            adc_val => adc_out_2(1)); -- PV voltage
-de_inst_5: descaler generic map (adc_factor => i_factor)
-            port map (
-            clk => clk,
-            start => AD_sync_3,
-            adc_in => adc_5,
-            done => de_done_5,
-            adc_val => adc_out_3(0));-- PV current
-de_inst_6: descaler generic map (adc_factor => v_factor)
-            port map (
-            clk => clk,
-            start => AD_sync_3,
-            adc_in => adc_6,
-            done => de_done_6,
-            adc_val => adc_out_3(1));      
-     
+            adc_val => adc_out_2(1)); -- no use
+    
 -- DAC Scaler       
 scaler_1: scaler generic map (
               dac_left => n_left,
@@ -355,19 +337,36 @@ scaler_4: scaler generic map (
 
 
 -- Processor_core
-
+pc_inst: processor_core port map (
+   Clk => Clk,
+   Clk_ila => Clk_ila,
+   pc_en => enable_fdi,
+   reset_fd => reset_fd,
+   -- Converter fault flag
+   FD_flag => FD_flag,
+   -- Observer inputs
+   pc_pwm => a_pwm1_out,
+   load => adc_out_2(0), 
+   pc_x => plt_x,
+   -- Observer outputs
+   theta_done => theta_done,
+   pc_theta => pc_theta,
+   pc_err => err_val,
+   pc_z => z_val
+ );
  
 ---- Process ----           
 main_loop: process (clk)
 begin
-if (clk = '1' and clk'event) then
--- Output (no fault) ---
-pwm_out_t(0) <= a_pwm1_out;
-pwm_n_out_t(0)  <= a_pwm2_out;
-pwm_out_t(1) <= '0';    -- Top switch --> Inverted signal for power trench
-pwm_n_out_t(1)  <= '1'; -- Bottom switch
-end if;
-end process; 
+    if (clk = '1' and clk'event) then
+    -- Output (no fault) ---
+    pwm_out_t(0) <= a_pwm1_out;
+    pwm_n_out_t(0)  <= a_pwm2_out;
+    -- adc inputs
+    plt_x(0) <= adc_out_1(0);
+    plt_x(1) <= adc_out_1(1);
+    end if;
+end process main_loop; 
 
 -- duty cycle cal
 duty_cycle_uut: process (clk)
@@ -381,7 +380,7 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.75, n_left, n_right);
+       duty_ratio <= to_sfixed(0.5, n_left, n_right);
        state := S1;
        
        when S1 =>

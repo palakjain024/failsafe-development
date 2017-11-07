@@ -10,13 +10,13 @@ set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 set_property PACKAGE_PIN F22 [get_ports enable_fdi]
 set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 
-# For reseting faults
-set_property PACKAGE_PIN G22 [get_ports reset_fd]
-set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+## For reseting faults
+#set_property PACKAGE_PIN G22 [get_ports reset_fd]
+#set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
 
-#JA7 AB11
-set_property PACKAGE_PIN AB11 [get_ports FD_flag]
-set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
+##JA7 AB11
+#set_property PACKAGE_PIN AB11 [get_ports FD_flag]
+#set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 
 #JA8 (AB10), JA9(AB9), JA10(AA8) for fault identification
 
@@ -32,11 +32,11 @@ set_property PACKAGE_PIN R6 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
 # Mapping PWM module phase b to PMOD JC1_n (AB6) and JC3_n (T6) 
-set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[1]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[1]}]
+#set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[1]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[1]}]
 
-set_property PACKAGE_PIN T6 [get_ports {pwm_n_out_t[1]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[1]}]
+#set_property PACKAGE_PIN T6 [get_ports {pwm_n_out_t[1]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[1]}]
 
 # Mapping PWM module phase c to PMOD JC2_p (Y4) and JC4_p (T4) 
 #set_property PACKAGE_PIN Y4 [get_ports {pwm_out_t[2]}]
@@ -77,17 +77,17 @@ set_property PACKAGE_PIN W8 [get_ports AD_SCK_2]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_2]
 
  #Digilent PMOD AD1_3 ADC to PMOD JB7 to JB10 (For adc_5 and adc_6)
-set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
+#set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
 
-set_property PACKAGE_PIN W10 [get_ports AD_D0_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_D0_3]
+#set_property PACKAGE_PIN W10 [get_ports AD_D0_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_D0_3]
 
-set_property PACKAGE_PIN V9 [get_ports AD_D1_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
+#set_property PACKAGE_PIN V9 [get_ports AD_D1_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
 
-set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
-set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
+#set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
+#set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
 
 #--------------------------------
 
