@@ -22,9 +22,9 @@ package input_pkg is
   constant fd_th : sfixed(15 downto -16) := to_sfixed(0.4, 15, -16); -- Threshold
   
   -- inputs that could change (keep precison same for all)
-  constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
-  constant v_out : sfixed(15 downto -16)  := to_sfixed(20, 15, -16);
-  constant i_load : sfixed(15 downto -16) := to_sfixed(4,15,-16);
+  constant v_in : sfixed(15 downto -16)   := to_sfixed(190,15,-16);
+  constant v_out : sfixed(15 downto -16)  := to_sfixed(380, 15, -16);
+  constant i_load : sfixed(15 downto -16) := to_sfixed(2,15,-16);
   
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
@@ -43,7 +43,7 @@ package input_pkg is
     
  -- Adaptive Gain for theta correction
  constant e11 : sfixed(24 downto -10) := to_sfixed(-0.0001,24,-10);
- constant e22 : sfixed(24 downto -10) := to_sfixed(-1e6,24,-10);
+ constant e22 : sfixed(24 downto -10) := to_sfixed(-1e4,24,-10);
  type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
     
  -- vectors

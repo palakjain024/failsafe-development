@@ -5,9 +5,11 @@ set_property PACKAGE_PIN Y9 [get_ports sysclk]
 set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 
 #----- For fault management -----
+# SW F22 s not working at create zedboard
+# Also decrease the jtag speed when use ila core
 
 # For enabling the parameter estimator
-set_property PACKAGE_PIN F22 [get_ports enable_fdi]
+set_property PACKAGE_PIN H22 [get_ports enable_fdi]
 set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 
 ## For reseting PWM
