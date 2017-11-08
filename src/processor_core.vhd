@@ -50,7 +50,7 @@ COMPONENT ila_0
  );
  END COMPONENT  ;
  -- Converter estimator
- component plant_x
+ component plant_x_cl
  port (        Clk : in STD_LOGIC;
                ena : in STD_LOGIC;
                Start : in STD_LOGIC;
@@ -62,7 +62,7 @@ COMPONENT ila_0
                pc_err : out vect2 := (zer0,zer0);
                pc_z : out vect2 := (zer0,zer0)
             );
- end component plant_x;
+ end component plant_x_cl;
  
  
 ---- Signal definition for components ----
@@ -88,7 +88,7 @@ COMPONENT ila_0
 begin
 
 ---- Instances ----
-Plant_inst: plant_x port map (
+Plant_inst: plant_x_cl port map (
 Clk => clk,
 ena => pc_en,
 Start => Start,

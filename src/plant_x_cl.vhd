@@ -10,7 +10,7 @@ use IEEE_PROPOSED.FIXED_PKG.ALL;
 use IEEE.std_logic_1164.all;
 use work.input_pkg.all;
 
-entity plant_x is
+entity plant_x_cl is
      port (    Clk : in STD_LOGIC;
                ena : in STD_LOGIC;
                Start : in STD_LOGIC;
@@ -22,9 +22,9 @@ entity plant_x is
                pc_err : out vect2 := (zer0,zer0);
                pc_z : out vect2 := (zer0,zer0)
             );
-end plant_x;
+end plant_x_cl;
 
-architecture Behavioral of plant_x is
+architecture Behavioral of plant_x_cl is
     
    	signal	Count0 : UNSIGNED (2 downto 0):="000";
     signal	A      : sfixed(d_left downto d_right);
@@ -42,6 +42,7 @@ architecture Behavioral of plant_x is
     
     -- For Gain matrix
     signal G : gain_mat; -- Negative of G matrix
+    signal LO_err : discrete_vect2 := (zer0h, zer0h);
     
     -- For w discretized matrix
     signal w : discrete_mat22 := ((zer0h,zer0h),
@@ -51,9 +52,12 @@ architecture Behavioral of plant_x is
                               (zer0_H_mat, zer0_H_mat)); 
    signal H_mem : H_mat22 := ((zer0_H_mat, zer0_H_mat),
                               (zer0_H_mat, zer0_H_mat));
+                                
     -- gain * H_est transpose * discretixed error
     signal h_err : discrete_vect2;
     signal g_h_err : vect2;
+    signal h_g_h_err : discrete_vect2 := (zer0h, zer0h);
+    
     -- Theta
     signal theta_est : vect2 := (theta_L_star,theta_C_star);
     
@@ -150,7 +154,10 @@ mult: process(Clk, load)
         k0 <= k0 +1;
         Count0 <= Count0 + 1;
         State := S2;
-
+        
+        -- LO*err
+        LO_err(0) <= resize(l11 * err_val(0) + l12 * err_val(1), d_left, d_right);
+        LO_err(1) <= resize(l21 * err_val(0) + l22 * err_val(1), d_left, d_right);   
     ---------------------------------------
     --    State S2 (more of filling up)
     ---------------------------------------
@@ -193,7 +200,7 @@ mult: process(Clk, load)
 
         if (k2 = 0) then
             Sum <= resize(P, Sum'high, Sum'low);
-            C_Matrix(k3) := resize(Sum, n_left, n_right);
+            C_Matrix(k3) := resize(Sum - LO_err(k3) - h_g_h_err(k3), n_left, n_right);
             k3 <= k3 +1;
         else
             Sum <= resize(Sum + P, Sum'high, Sum'low);
@@ -243,7 +250,7 @@ mult: process(Clk, load)
        -------------------------------------------
        when S7 =>
                           
-                  C_Matrix(k3) := resize(Sum, n_left, n_right);                 
+                  C_Matrix(k3) := resize(Sum - LO_err(k3) - h_g_h_err(k3), n_left, n_right);                 
                   State := S8;
                   Count0 <= "000";
                   k0 <= 0;
@@ -294,10 +301,10 @@ mult: process(Clk, load)
        -- H matrix calculation 
        -----------------------------------------------
         when S14 =>
-        H_est(0,0) <= resize(A_Aug_Matrix(0,0) * H_mem(0,0) + A_Aug_Matrix(0,1) * H_mem(1,0) + w(0,0),2, -35);
-        H_est(0,1) <= resize(A_Aug_Matrix(0,0) * H_mem(0,1) + A_Aug_Matrix(0,1) * H_mem(1,1),2, -35);
-        H_est(1,0) <= resize(A_Aug_Matrix(1,0) * H_mem(0,0) + A_Aug_Matrix(1,1) * H_mem(1,0),2, -35);
-        H_est(1,1) <= resize(A_Aug_Matrix(1,0) * H_mem(0,1) + A_Aug_Matrix(1,1) * H_mem(1,1) + w(1,1),2, -35);
+        H_est(0,0) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,0) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,0) + w(0,0),2, -35);
+        H_est(0,1) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,1) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,1),2, -35);
+        H_est(1,0) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,0) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,0),2, -35);
+        H_est(1,1) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,1) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,1) + w(1,1),2, -35);
         State := S15;
        
        When S15 =>
@@ -326,8 +333,13 @@ mult: process(Clk, load)
         State := S19;
         
        when S19 =>
+        
+        h_g_h_err(0) <= resize((H_est(0,0) * g_h_err(0)) + (H_est(0,1) * g_h_err(1)), d_left, d_right);
+        h_g_h_err(1) <= resize((H_est(1,0) * g_h_err(0)) + (H_est(1,1) * g_h_err(1)), d_left, d_right);
+        
         theta_est(0) <= resize(theta_est(0) + g_h_err(0), n_left, n_right);
         theta_est(1) <= resize(theta_est(1) + g_h_err(1), n_left, n_right);
+        
         State := S20;
                  
        When S20 =>

@@ -29,7 +29,7 @@ package input_pkg is
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(377,15,-16);
-
+ 
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant zer0h : sfixed(1 downto -30) := to_sfixed(0, 1,-30);
@@ -45,7 +45,13 @@ package input_pkg is
  constant e11 : sfixed(24 downto -10) := to_sfixed(-0.0001,24,-10);
  constant e22 : sfixed(24 downto -10) := to_sfixed(-1e4,24,-10);
  type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
-    
+ 
+ -- Luneberger oberver gain
+  constant l11 : sfixed(1 downto -30) := to_sfixed(0.00001160310,1,-30);
+  constant l12 : sfixed(1 downto -30) := to_sfixed(0.00000093635,1,-30);
+  constant l21 : sfixed(1 downto -30) := to_sfixed(0.00000154145,1,-30);
+  constant l22 : sfixed(1 downto -30) := to_sfixed(0.00002495015,1,-30);
+      
  -- vectors
  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
  type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for augumented [z;u]
