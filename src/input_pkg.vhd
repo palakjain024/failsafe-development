@@ -42,8 +42,8 @@ package input_pkg is
   constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
     
  -- Adaptive Gain for theta correction (descretized gain)
- constant e11 : sfixed(1 downto -30) := to_sfixed(-0.01,1,-30);
- constant e22 : sfixed(1 downto -30) := to_sfixed(-0.01,1,-30);
+ constant e11 : sfixed(1 downto -30) := to_sfixed(-0.00001,1,-30);
+ constant e22 : sfixed(1 downto -30) := to_sfixed(-0.001,1,-30);
  type gain_mat is array (0 to 1, 0 to 1) of sfixed(1 downto -30);
  
  -- Luneberger oberver gain

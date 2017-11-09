@@ -171,6 +171,15 @@ mult: process(Clk, load)
              else
              G <= ((zer0, zer0),
                    (zer0, zer0));
+             theta_est(0) <= theta_L_star;
+             theta_est(1) <= theta_C_star;
+                   
+                   
+           end if;
+           
+           if theta_est(0) < to_sfixed(0,15,-16) or theta_est(1) < to_sfixed(0,15,-16) then
+           theta_est(0) <= theta_L_star;
+           theta_est(1) <= theta_C_star;
            end if;
            
         -- For starting the computation process
@@ -184,7 +193,7 @@ mult: process(Clk, load)
            end if;
            
          -- For State Matrix calculation
-         if Mode = 0 then
+         if Mode = 1 then
          ----------------------------------------
          -- Mode 0 - A:B matrix diode is conducting
          ----------------------------------------
@@ -197,7 +206,7 @@ mult: process(Clk, load)
          A_Aug_Matrix(1,2) := to_sfixed(0, d_left, d_right);
          A_Aug_Matrix(1,3) := resize(-h*theta_est(1), d_left, d_right);          
                      
-         elsif Mode = 1 then
+         elsif Mode = 2 then
          ----------------------------------------
          -- Mode 1 - A:B matrix Switch is conducting current building up
          ----------------------------------------
