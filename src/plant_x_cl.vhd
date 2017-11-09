@@ -11,7 +11,8 @@ use IEEE.std_logic_1164.all;
 use work.input_pkg.all;
 
 entity plant_x_cl is
-     port (    Clk : in STD_LOGIC;
+     port (    clk : in STD_LOGIC;
+               clk_ila : in STD_LOGIC;
                ena : in STD_LOGIC;
                Start : in STD_LOGIC;
                Mode : in INTEGER range 0 to 2;
@@ -26,7 +27,41 @@ entity plant_x_cl is
 end plant_x_cl;
 
 architecture Behavioral of plant_x_cl is
+     -- ILA core
+    COMPONENT ila_0
     
+    PORT (
+        clk : IN STD_LOGIC;
+    
+    
+    
+        probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe8 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe9 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe10 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+        probe11 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        probe12 : IN STD_LOGIC_VECTOR(0 DOWNTO 0)
+    );
+    END COMPONENT  ;
+
+    -- signal definitions --
+    
+    -- ILA core
+     signal probe_thetaL, probe_thetaC : STD_LOGIC_VECTOR(31 downto 0);
+     signal probe_x1, probe_x2 : STD_LOGIC_VECTOR(31 downto 0);
+     signal probe_z1, probe_z2 : STD_LOGIC_VECTOR(31 downto 0);
+     signal probe_e11, probe_e22 : STD_LOGIC_VECTOR(31 downto 0);
+     signal probe_h11, probe_h12, probe_h21, probe_h22 : STD_LOGIC_VECTOR(31 downto 0);
+     signal probe_ena : STD_LOGIC_VECTOR(0 downto 0);
+     
+    -- General purpose
    	signal	Count0 : UNSIGNED (2 downto 0):="000";
     signal	A      : sfixed(d_left downto d_right);
     signal	B      : sfixed(n_left downto n_right);
@@ -39,7 +74,7 @@ architecture Behavioral of plant_x_cl is
     -- For error calculation
     signal err_val : vect2 := (zer0,zer0);
     signal err_val_d : discrete_vect2 := (zer0h,zer0h);
-    signal   z_val : vect2 := (zer0,zer0);
+    signal   z_val : vect2 := (il0,vc0);
     
     -- For Gain matrix
     signal G : gain_mat := ((zer0, zer0),
@@ -65,6 +100,26 @@ architecture Behavioral of plant_x_cl is
     
 begin
 
+---- Instances -----
+ila_inst_1: ila_0
+PORT MAP (
+    clk => clk_ila,
+
+    probe0 => probe_thetaL, 
+    probe1 => probe_thetaC, 
+    probe2 => probe_x1, 
+    probe3 => probe_x2, 
+    probe4 => probe_z1,
+    probe5 => probe_z2,
+    probe6 => probe_e11,
+    probe7 => probe_e22,
+    probe8 => probe_h11,
+    probe9 => probe_h12,
+    probe10 => probe_h21,
+    probe11 => probe_h22,
+    probe12 => probe_ena
+    
+); 
 mult: process(Clk, load)
   
    -- General Variables for multiplication and addition
@@ -79,6 +134,23 @@ mult: process(Clk, load)
            
    if (Clk'event and Clk = '1') then
    
+   
+   ---- ILA ----
+   probe_thetaL  <= result_type(theta_est(0));
+   probe_thetaC <= result_type(theta_est(1)) ; 
+   probe_x1 <= result_type(pc_x(0));
+   probe_x2 <= result_type(pc_x(1));
+   probe_z1 <= result_type(z_val(0));
+   probe_z2 <= result_type(z_val(1));
+   probe_e11 <= result_type(G(0,0));
+   probe_e22 <= result_type(G(1,1));
+   probe_h11 <= result_type(H_est(0,0));
+   probe_h12 <= result_type(H_est(0,1));
+   probe_h21 <= result_type(H_est(1,0));
+   probe_h22 <= result_type(H_est(1,1));
+   probe_ena(0) <= ena;
+   
+   ---- Vector initialization ----
    State_inp_Matrix(2) := v_in;
    State_inp_Matrix(3) := load;
    

@@ -35,26 +35,11 @@ end processor_core;
 architecture Behavioral of processor_core is
 
 ---- Component definition ----
- -- ILA core
-COMPONENT ila_0
- 
- PORT (
-     clk : IN STD_LOGIC;
- 
- 
- 
-     probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-     probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-     probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-     probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-     probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-     probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-     probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
- );
- END COMPONENT  ;
+
  -- Converter estimator
  component plant_x_cl
- port (        Clk : in STD_LOGIC;
+ port (        clk : in STD_LOGIC;
+               clk_ila : in STD_LOGIC;
                ena : in STD_LOGIC;
                Start : in STD_LOGIC;
                Mode : in INTEGER range 0 to 2;
@@ -71,12 +56,6 @@ COMPONENT ila_0
  
 ---- Signal definition for components ----
 
--- ILA core
- signal probe_thetaL, probe_thetaC : STD_LOGIC_VECTOR(31 downto 0);
- signal probe_x1, probe_x2 : STD_LOGIC_VECTOR(31 downto 0);
- signal probe_z1, probe_z2 : STD_LOGIC_VECTOR(31 downto 0);
- signal probe_gain : STD_LOGIC_VECTOR(31 downto 0);
- 
   -- General
  signal counter : integer range 0 to 50000 := -1;
  
@@ -94,7 +73,8 @@ begin
 
 ---- Instances ----
 Plant_inst: plant_x_cl port map (
-Clk => clk,
+clk => clk,
+clk_ila => clk_ila,
 ena => pc_pe,
 Start => Start,
 Mode => Mode,
@@ -107,19 +87,6 @@ pc_err => err_ila,
 pc_z => z_ila
 );
 
-ila_inst_1: ila_0
-PORT MAP (
-    clk => clk_ila,
-
-    probe0 => probe_thetaL, 
-    probe1 => probe_thetaC, 
-    probe2 => probe_x1, 
-    probe3 => probe_x2, 
-    probe4 => probe_z1,
-    probe5 => probe_z2,
-    probe6 => probe_gain
-    
-); 
 ---- Processes ----
 
 -- Main loop
@@ -131,15 +98,6 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
   if clk'event and clk = '1' then
   
   if pc_en = '1' then
-           
-  ---- ILA ----
-  probe_thetaL  <= result_type(theta_ila(0));
-  probe_thetaC <= result_type(theta_ila(1)) ; 
-  probe_x1 <= result_type(pc_x(0));
-  probe_x2 <= result_type(pc_x(1));
-  probe_z1 <= result_type(z_ila(0));
-  probe_z2 <= result_type(z_ila(1));
-  probe_gain <= result_type(gain);
            
   ---- Output to main (Observer outputs) ----
    theta_done <= done;
