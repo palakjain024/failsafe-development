@@ -15,12 +15,14 @@ Port ( -- General
        Clk : in STD_LOGIC;
        clk_ila : in STD_LOGIC;
        pc_en : in STD_LOGIC;
+       pc_pe : in STD_LOGIC;
        -- Converter fault flag;
        --reset_fd : in STD_LOGIC;
        --FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
+       gain : in sfixed(n_left downto n_right);
        pc_x : in vect2 ;
        -- Observer outputs
        theta_done : out STD_LOGIC := '0';
@@ -46,7 +48,8 @@ COMPONENT ila_0
      probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
      probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
      probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-     probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
+     probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+     probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
  );
  END COMPONENT  ;
  -- Converter estimator
@@ -57,6 +60,7 @@ COMPONENT ila_0
                Mode : in INTEGER range 0 to 2;
                pc_x : in vect2;
                load : in sfixed(n_left downto n_right);
+               gain : in sfixed(n_left downto n_right);
                Done : out STD_LOGIC := '0';
                pc_theta : out vect2 := (theta_L_star,theta_C_star);
                pc_err : out vect2 := (zer0,zer0);
@@ -71,6 +75,7 @@ COMPONENT ila_0
  signal probe_thetaL, probe_thetaC : STD_LOGIC_VECTOR(31 downto 0);
  signal probe_x1, probe_x2 : STD_LOGIC_VECTOR(31 downto 0);
  signal probe_z1, probe_z2 : STD_LOGIC_VECTOR(31 downto 0);
+ signal probe_gain : STD_LOGIC_VECTOR(31 downto 0);
  
   -- General
  signal counter : integer range 0 to 50000 := -1;
@@ -90,11 +95,12 @@ begin
 ---- Instances ----
 Plant_inst: plant_x_cl port map (
 Clk => clk,
-ena => pc_en,
+ena => pc_pe,
 Start => Start,
 Mode => Mode,
 pc_x => pc_x,
 load => load,
+gain => gain,
 Done => done,
 pc_theta => theta_ila,
 pc_err => err_ila,
@@ -110,7 +116,8 @@ PORT MAP (
     probe2 => probe_x1, 
     probe3 => probe_x2, 
     probe4 => probe_z1,
-    probe5 => probe_z2
+    probe5 => probe_z2,
+    probe6 => probe_gain
     
 ); 
 ---- Processes ----
@@ -122,6 +129,8 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
  
 
   if clk'event and clk = '1' then
+  
+  if pc_en = '1' then
            
   ---- ILA ----
   probe_thetaL  <= result_type(theta_ila(0));
@@ -130,6 +139,7 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
   probe_x2 <= result_type(pc_x(1));
   probe_z1 <= result_type(z_ila(0));
   probe_z2 <= result_type(z_ila(1));
+  probe_gain <= result_type(gain);
            
   ---- Output to main (Observer outputs) ----
    theta_done <= done;
@@ -161,7 +171,8 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
     else
         counter <= counter + 1;
     end if;
-
+    
+    end if; -- pc_en
    end if; -- Clk
  end process; 
 

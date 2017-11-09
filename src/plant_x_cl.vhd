@@ -17,6 +17,7 @@ entity plant_x_cl is
                Mode : in INTEGER range 0 to 2;
                pc_x : in vect2;
                load : in sfixed(n_left downto n_right);
+               gain : in sfixed(n_left downto n_right);
                Done : out STD_LOGIC := '0';
                pc_theta : out vect2 := (theta_L_star,theta_C_star);
                pc_err : out vect2 := (zer0,zer0);
@@ -41,7 +42,8 @@ architecture Behavioral of plant_x_cl is
     signal   z_val : vect2 := (zer0,zer0);
     
     -- For Gain matrix
-    signal G : gain_mat; -- Negative of G matrix
+    signal G : gain_mat := ((zer0, zer0),
+                            (zer0, zer0));
     signal LO_err : discrete_vect2 := (zer0h, zer0h);
     
     -- For w discretized matrix
@@ -90,11 +92,14 @@ mult: process(Clk, load)
        
        -- To enable parameter estimator algorithm
            if ena = '1' then
-             G <= ((e11, to_sfixed(0,24,-10)),
-                   (to_sfixed(0,24,-10), e22));
+             G(0,0) <= resize(to_sfixed(-1,15,-16) * e11, n_left, n_right);
+             G(0,1) <= zer0;
+             G(1,0) <= zer0;
+             G(1,1) <= resize(to_sfixed(-1,15,-16) * e22, n_left, n_right);
+             
              else
-             G <= ((to_sfixed(0,24,-10), to_sfixed(0,24,-10)),
-                   (to_sfixed(0,24,-10), to_sfixed(0,24,-10)));
+             G <= ((zer0, zer0),
+                   (zer0, zer0));
            end if;
            
         -- For starting the computation process
@@ -158,6 +163,7 @@ mult: process(Clk, load)
         -- LO*err
         LO_err(0) <= resize(l11 * err_val(0) + l12 * err_val(1), d_left, d_right);
         LO_err(1) <= resize(l21 * err_val(0) + l22 * err_val(1), d_left, d_right);   
+        
     ---------------------------------------
     --    State S2 (more of filling up)
     ---------------------------------------
@@ -301,10 +307,10 @@ mult: process(Clk, load)
        -- H matrix calculation 
        -----------------------------------------------
         when S14 =>
-        H_est(0,0) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,0) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,0) + w(0,0),2, -35);
-        H_est(0,1) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,1) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,1),2, -35);
-        H_est(1,0) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,0) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,0),2, -35);
-        H_est(1,1) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,1) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,1) + w(1,1),2, -35);
+        H_est(0,0) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,0) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,0) + w(0,0),10, -30);
+        H_est(0,1) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,1) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,1),10, -30);
+        H_est(1,0) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,0) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,0),10, -30);
+        H_est(1,1) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,1) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,1) + w(1,1),10, -30);
         State := S15;
        
        When S15 =>

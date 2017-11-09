@@ -14,6 +14,7 @@ entity main is
            sysclk : in STD_LOGIC;
            pwm_reset : in STD_LOGIC;
            enable_fdi: in STD_LOGIC;
+           enable_pe : in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
@@ -133,12 +134,14 @@ Port ( -- General
        Clk : in STD_LOGIC;
        clk_ila : in STD_LOGIC;
        pc_en : in STD_LOGIC;
+       pc_pe : in STD_LOGIC;
        -- Converter fault flag;
        --reset_fd : in STD_LOGIC;
        --FD_flag : out STD_LOGIC := '0';
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
+       gain : in sfixed(n_left downto n_right);
        pc_x : in vect2 ;
        -- Observer outputs
        theta_done : out STD_LOGIC := '0';
@@ -181,6 +184,8 @@ signal z_val, err_val : vect2;
 signal plt_x : vect2;
 signal pc_theta: vect2;
 signal theta_done : STD_LOGIC;
+signal gain: sfixed(n_left downto n_right);
+-- Gain coming from hil, max value could be 3300
  
 begin
 -- Clk
@@ -257,7 +262,7 @@ adc_2_inst: pmodAD1_ctrl port map (
         SCLK   => AD_SCK_2,
         nCS    => AD_CS_2,
         DATA1  => adc_3, -- Load 
-        DATA2  => adc_4, -- No use  
+        DATA2  => adc_4, -- Gain 
         START  => AD_sync_2, 
         DONE   => AD_sync_2
         );  
@@ -291,7 +296,7 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             start => AD_sync_2,
             adc_in => adc_4,
             done => de_done_4,
-            adc_val => adc_out_2(1)); -- no use
+            adc_val => adc_out_2(1)); -- gain
     
 -- DAC Scaler       
 scaler_1: scaler generic map (
@@ -327,7 +332,7 @@ scaler_3: scaler generic map (
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(33,15,-16),
+            dac_max => to_sfixed(3300,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
@@ -341,12 +346,14 @@ pc_inst: processor_core port map (
    Clk => Clk,
    Clk_ila => Clk_ila,
    pc_en => enable_fdi,
+   pc_pe => enable_pe,
    -- Converter fault flag
         --reset_fd => reset_fd,
         --FD_flag => FD_flag,
    -- Observer inputs
    pc_pwm => a_pwm1_out,
    load => adc_out_2(0), 
+   gain => gain,
    pc_x => plt_x,
    -- Observer outputs
    theta_done => theta_done,
@@ -365,6 +372,8 @@ begin
     -- adc inputs
     plt_x(0) <= adc_out_1(0);
     plt_x(1) <= adc_out_1(1);
+    -- Gain
+    gain <= adc_out_2(1);
     end if;
 end process main_loop; 
 

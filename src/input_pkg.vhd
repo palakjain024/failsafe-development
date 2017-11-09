@@ -33,24 +33,24 @@ package input_pkg is
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant zer0h : sfixed(1 downto -30) := to_sfixed(0, 1,-30);
-  constant zer0_H_mat : sfixed(2 downto -35) := to_sfixed(0, 2,-35);  -- H_mat22 initial values
+  constant zer0_H_mat : sfixed(10 downto -30) := to_sfixed(0, 10,-30);  -- H_mat22 initial values
   
  -- theta_star parameters
-  constant L_star :  sfixed(1 downto -30) := to_sfixed(0.0053, 1, -30);
+  constant L_star :  sfixed(1 downto -30) := to_sfixed(0.005, 1, -30);
   constant C_star :  sfixed(1 downto -30) := to_sfixed(0.00285, 1, -30);
-  constant theta_L_star : sfixed(15 downto -16) := to_sfixed(188.68, 15, -16);
+  constant theta_L_star : sfixed(15 downto -16) := to_sfixed(200, 15, -16);
   constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
     
  -- Adaptive Gain for theta correction
- constant e11 : sfixed(24 downto -10) := to_sfixed(-0.0001,24,-10);
- constant e22 : sfixed(24 downto -10) := to_sfixed(-1e4,24,-10);
- type gain_mat is array (0 to 1, 0 to 1) of sfixed(24 downto -10);
+ constant e11 : sfixed(15 downto -16) := to_sfixed(0.01,15,-16);
+ constant e22 : sfixed(15 downto -16) := to_sfixed(0.01,15,-16);
+ type gain_mat is array (0 to 1, 0 to 1) of sfixed(15 downto -16);
  
  -- Luneberger oberver gain
-  constant l11 : sfixed(1 downto -30) := to_sfixed(0.00001160310,1,-30);
-  constant l12 : sfixed(1 downto -30) := to_sfixed(0.00000093635,1,-30);
-  constant l21 : sfixed(1 downto -30) := to_sfixed(0.00000154145,1,-30);
-  constant l22 : sfixed(1 downto -30) := to_sfixed(0.00002495015,1,-30);
+  constant l11 : sfixed(1 downto -30) := to_sfixed(0.00001160310000,1,-30);
+  constant l12 : sfixed(1 downto -30) := to_sfixed(0.00000093635000,1,-30);
+  constant l21 : sfixed(1 downto -30) := to_sfixed(0.00000154145000,1,-30);
+  constant l22 : sfixed(1 downto -30) := to_sfixed(0.00002495015000,1,-30);
       
  -- vectors
  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
@@ -61,7 +61,7 @@ package input_pkg is
  type mat22 is array (0 to 1, 0 to 1) of sfixed(15 downto -16); -- for A,B
  type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
  type discrete_mat22 is array (0 to 1, 0 to 1) of sfixed(1 downto -30); -- for w
- type H_mat22 is array (0 to 1, 0 to 1) of sfixed(2 downto -35); -- for H
+ type H_mat22 is array (0 to 1, 0 to 1) of sfixed(10 downto -30); -- for H
     
  -- Precision
  constant n_left: integer := 15;

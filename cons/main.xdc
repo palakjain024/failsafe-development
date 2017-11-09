@@ -8,13 +8,17 @@ set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 # SW F22 s not working at create zedboard
 # Also decrease the jtag speed when use ila core
 
-# For enabling the parameter estimator
-set_property PACKAGE_PIN H22 [get_ports enable_fdi]
-set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
-
 ## For reseting PWM
 set_property PACKAGE_PIN G22 [get_ports pwm_reset]
 set_property IOSTANDARD LVCMOS33 [get_ports pwm_reset]
+
+## For enabling the state estimator
+set_property PACKAGE_PIN H22 [get_ports enable_fdi]
+set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
+
+## For enabling the parameter estimator
+set_property PACKAGE_PIN F21 [get_ports enable_pe]
+set_property IOSTANDARD LVCMOS33 [get_ports enable_pe]
 
 ##JA7 AB11
 #set_property PACKAGE_PIN AB11 [get_ports FD_flag]
