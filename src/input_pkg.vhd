@@ -26,14 +26,14 @@ package input_pkg is
   constant v_out : sfixed(15 downto -16)  := to_sfixed(380, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(2,15,-16);
   
-  -- Initial values of il, vc, ipv, vpv (Initial state input)
+  -- Initial values of il, vc (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(377,15,-16);
  
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant zer0h : sfixed(1 downto -30) := to_sfixed(0, 1,-30);
-  constant zer0_H_mat : sfixed(10 downto -30) := to_sfixed(0, 10,-30);  -- H_mat22 initial values
+  constant zer0_H_mat : sfixed(7 downto -24) := to_sfixed(0, 7,-24);  -- H_mat22 initial values
   
  -- theta_star parameters
   constant L_star :  sfixed(1 downto -30) := to_sfixed(0.005, 1, -30);
@@ -41,10 +41,10 @@ package input_pkg is
   constant theta_L_star : sfixed(15 downto -16) := to_sfixed(200, 15, -16);
   constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
     
- -- Adaptive Gain for theta correction
- constant e11 : sfixed(15 downto -16) := to_sfixed(0.01,15,-16);
- constant e22 : sfixed(15 downto -16) := to_sfixed(0.01,15,-16);
- type gain_mat is array (0 to 1, 0 to 1) of sfixed(15 downto -16);
+ -- Adaptive Gain for theta correction (descretized gain)
+ constant e11 : sfixed(1 downto -30) := to_sfixed(-0.01,1,-30);
+ constant e22 : sfixed(1 downto -30) := to_sfixed(-0.01,1,-30);
+ type gain_mat is array (0 to 1, 0 to 1) of sfixed(1 downto -30);
  
  -- Luneberger oberver gain
   constant l11 : sfixed(1 downto -30) := to_sfixed(0.00001160310000,1,-30);
@@ -61,7 +61,7 @@ package input_pkg is
  type mat22 is array (0 to 1, 0 to 1) of sfixed(15 downto -16); -- for A,B
  type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
  type discrete_mat22 is array (0 to 1, 0 to 1) of sfixed(1 downto -30); -- for w
- type H_mat22 is array (0 to 1, 0 to 1) of sfixed(10 downto -30); -- for H
+ type H_mat22 is array (0 to 1, 0 to 1) of sfixed(7 downto -24); -- for H
     
  -- Precision
  constant n_left: integer := 15;
