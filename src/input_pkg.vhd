@@ -27,8 +27,8 @@ package input_pkg is
   constant i_load : sfixed(15 downto -16) := to_sfixed(2,15,-16);
   
   -- Initial values of il, vc (Initial state input)
-  constant il0 : sfixed(15 downto -16) := to_sfixed(3.79, 15,-16);
-  constant vc0 : sfixed(15 downto -16) := to_sfixed(364,15,-16);
+  constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
+  constant vc0 : sfixed(15 downto -16) := to_sfixed(400,15,-16);
  
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
@@ -42,8 +42,8 @@ package input_pkg is
   constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
     
  -- Adaptive Gain for theta correction (descretized gain)
- constant e11 : sfixed(1 downto -30) := to_sfixed(-0.00001,1,-30);
- constant e22 : sfixed(1 downto -30) := to_sfixed(-0.001,1,-30);
+ constant e11 : sfixed(1 downto -30) := to_sfixed(-0.000005,1,-30);
+ constant e22 : sfixed(1 downto -30) := to_sfixed(-0.0001,1,-30);
  type gain_mat is array (0 to 1, 0 to 1) of sfixed(1 downto -30);
  
  -- Luneberger oberver gain
