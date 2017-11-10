@@ -22,7 +22,7 @@ Port ( -- General
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
-       gain : in sfixed(n_left downto n_right);
+       gain : in vect2;
        pc_x : in vect2 ;
        -- Observer outputs
        theta_done : out STD_LOGIC := '0';
@@ -46,7 +46,7 @@ architecture Behavioral of processor_core is
                Mode : in INTEGER range 0 to 2;
                pc_x : in vect2;
                load : in sfixed(n_left downto n_right);
-               gain : in sfixed(n_left downto n_right);
+               gain : in vect2;
                Done : out STD_LOGIC := '0';
                pc_theta : out vect2 := (theta_L_star,theta_C_star);
                pc_err : out vect2 := (zer0,zer0);
@@ -110,11 +110,11 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
                       
   ---- To determine Mode PWM for top switch ----
    if counter = 0 then
-           if (pc_pwm = '0') then -- active low (pc_pwm(0) given to top switch)
-           -- SW1 Top switch conducting
+           if (pc_pwm = '0') then -- active low (pc_pwm(0) given to bottom switch)
+           -- SW2 Bottom switch conducting
              mode <= 2;
            else
-           -- SW2 Bottom Switch conducting
+           -- SW1 Top Switch conducting
              mode <= 1;  
            end if;
    end if;

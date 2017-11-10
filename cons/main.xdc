@@ -83,17 +83,17 @@ set_property PACKAGE_PIN W8 [get_ports AD_SCK_2]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_2]
 
  #Digilent PMOD AD1_3 ADC to PMOD JB7 to JB10 (For adc_5 and adc_6)
-#set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
-#set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
+set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
+set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
 
-#set_property PACKAGE_PIN W10 [get_ports AD_D0_3]
-#set_property IOSTANDARD LVCMOS33 [get_ports AD_D0_3]
+set_property PACKAGE_PIN W10 [get_ports AD_D0_3]
+set_property IOSTANDARD LVCMOS33 [get_ports AD_D0_3]
 
-#set_property PACKAGE_PIN V9 [get_ports AD_D1_3]
-#set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
+set_property PACKAGE_PIN V9 [get_ports AD_D1_3]
+set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_3]
 
-#set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
-#set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
+set_property PACKAGE_PIN V8 [get_ports AD_SCK_3]
+set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_3]
 
 #--------------------------------
 

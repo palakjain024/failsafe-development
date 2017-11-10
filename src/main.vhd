@@ -40,7 +40,12 @@ entity main is
            AD_CS_2 : out STD_LOGIC;
            AD_D0_2 : in STD_LOGIC;
            AD_D1_2 : in STD_LOGIC;
-           AD_SCK_2 : out STD_LOGIC
+           AD_SCK_2 : out STD_LOGIC;
+           -- ADC ports 3
+           AD_CS_3 : out STD_LOGIC;
+           AD_D0_3 : in STD_LOGIC;
+           AD_D1_3 : in STD_LOGIC;
+           AD_SCK_3 : out STD_LOGIC
          );
 end main;
 
@@ -141,7 +146,7 @@ Port ( -- General
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
-       gain : in sfixed(n_left downto n_right);
+       gain : in vect2;
        pc_x : in vect2 ;
        -- Observer outputs
        theta_done : out STD_LOGIC := '0';
@@ -173,18 +178,22 @@ signal dac_1, dac_2, dac_3, dac_4: std_logic_vector(11 downto 0);
 
 -- ADC Descaler inputs
 signal adc_out_1, adc_out_2 : vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
+signal adc_out_3: vect2 := (to_sfixed(3,n_left,n_right),to_sfixed(175,n_left,n_right));
 signal de_done_1, de_done_2, de_done_3, de_done_4 : STD_LOGIC;
+signal de_done_5, de_done_6 : STD_LOGIC;
 
 -- ADC signals
 signal AD_sync_1, AD_sync_2 : STD_LOGIC;
+signal AD_sync_3: STD_LOGIC;
 signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => '0');
+signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
 signal z_val, err_val : vect2;
 signal plt_x : vect2;
 signal pc_theta: vect2;
 signal theta_done : STD_LOGIC;
-signal gain: sfixed(n_left downto n_right);
+signal gain: vect2;
 -- Gain coming from hil, max value could be 3300
  
 begin
@@ -267,6 +276,18 @@ adc_2_inst: pmodAD1_ctrl port map (
         DONE   => AD_sync_2
         );  
 
+adc_3_inst: pmodAD1_ctrl port map (
+        CLK => CLK,       
+        RST => '0',
+        SDATA1 => AD_D0_3,
+        SDATA2 => AD_D1_3, 
+        SCLK   => AD_SCK_3,
+        nCS    => AD_CS_3,
+        DATA1  => adc_5,  
+        DATA2  => adc_6, 
+        START  => AD_sync_3, 
+        DONE   => AD_sync_3
+        ); 
                
 -- ADC Retrieval   
 de_inst_1: descaler generic map (adc_factor => i_factor )
@@ -296,8 +317,24 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             start => AD_sync_2,
             adc_in => adc_4,
             done => de_done_4,
-            adc_val => adc_out_2(1)); -- gain
-    
+            adc_val => adc_out_2(1)); -- gain for L
+ 
+de_inst_5: descaler generic map (adc_factor => i_factor)
+            port map (
+            clk => clk,
+            start => AD_sync_3,
+            adc_in => adc_5,
+            done => de_done_5,
+            adc_val => adc_out_3(0));-- no use
+                        
+de_inst_6: descaler generic map (adc_factor => v_factor)
+            port map (
+            clk => clk,
+            start => AD_sync_3,
+            adc_in => adc_6,
+            done => de_done_6,
+            adc_val => adc_out_3(1)); -- gain for C 
+            
 -- DAC Scaler       
 scaler_1: scaler generic map (
               dac_left => n_left,
@@ -373,7 +410,8 @@ begin
     plt_x(0) <= adc_out_1(0);
     plt_x(1) <= adc_out_1(1);
     -- Gain
-    gain <= adc_out_2(1);
+    gain(0) <= adc_out_2(1);
+    gain(1) <= adc_out_3(1);
     end if;
 end process main_loop; 
 

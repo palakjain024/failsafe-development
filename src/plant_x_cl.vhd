@@ -19,7 +19,7 @@ entity plant_x_cl is
                Mode : in INTEGER range 0 to 2;
                pc_x : in vect2;
                load : in sfixed(n_left downto n_right);
-               gain : in sfixed(n_left downto n_right);
+               gain : in vect2;
                Done : out STD_LOGIC := '0';
                pc_theta : out vect2 := (theta_L_star,theta_C_star);
                pc_err : out vect2 := (zer0,zer0);
@@ -158,23 +158,36 @@ mult: process(Clk, load)
        ------------------------------------------
        when S0 =>
        
+       -- To enable state estimation
+       if pc_en = '0' then
+       z_val(0) <= il0;
+       z_val(1) <= vc0;
+       err_val(0) <= zer0;
+       err_val(1) <= zer0;
+       h_g_h_err(0) <= zer0;
+       h_g_h_err(1) <= zer0;
+       H_mem(0,0) <= zer0_H_mat;
+       H_mem(0,1) <= zer0_H_mat;
+       H_mem(1,0) <= zer0_H_mat;
+       H_mem(1,1) <= zer0_H_mat;
+       end if;
+       
        -- To enable parameter estimator algorithm
-           if ena = '1' then
-             --G(0,0) <= resize(-h * gain, d_left, d_right);
-             G(0,0) <= e11;
-             G(0,1) <= zer0;
-             G(1,0) <= zer0;
-             G(1,1) <= resize(-h * gain, d_left, d_right);
-             
-             else
-             G <= ((zer0, zer0),
-                   (zer0, zer0));
-             theta_est(0) <= theta_L_star;
-             theta_est(1) <= theta_C_star;
-                   
-                   
-           end if;
-           
+       if ena = '1' then
+         --G(0,0) <= resize(-h * gain, d_left, d_right);
+         G(0,0) <= resize(-h * gain(0), d_left, d_right);
+         G(0,1) <= zer0h;
+         G(1,0) <= zer0h;
+         G(1,1) <= resize(-h * gain(1), d_left, d_right);
+         
+         else
+         G <= ((zer0h, zer0h),
+               (zer0h, zer0h));
+         theta_est(0) <= theta_L_star;
+         theta_est(1) <= theta_C_star;
+         end if;
+         
+        ----- Dont do this kind of baakchodi -----   
         --  if theta_est(0) < to_sfixed(0,15,-16) or theta_est(1) < to_sfixed(0,15,-16) then
         --  theta_est(0) <= theta_L_star;
         --  theta_est(1) <= theta_C_star;
