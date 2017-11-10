@@ -27,8 +27,8 @@ package input_pkg is
   constant i_load : sfixed(15 downto -16) := to_sfixed(2,15,-16);
   
   -- Initial values of il, vc (Initial state input)
-  constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
-  constant vc0 : sfixed(15 downto -16) := to_sfixed(377,15,-16);
+  constant il0 : sfixed(15 downto -16) := to_sfixed(3.79, 15,-16);
+  constant vc0 : sfixed(15 downto -16) := to_sfixed(364,15,-16);
  
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);

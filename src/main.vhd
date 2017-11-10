@@ -351,7 +351,7 @@ pc_inst: processor_core port map (
         --reset_fd => reset_fd,
         --FD_flag => FD_flag,
    -- Observer inputs
-   pc_pwm => a_pwm1_out,
+   pc_pwm => a_pwm2_out,
    load => adc_out_2(0), 
    gain => gain,
    pc_x => plt_x,

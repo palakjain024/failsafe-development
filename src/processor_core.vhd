@@ -40,6 +40,7 @@ architecture Behavioral of processor_core is
  component plant_x_cl
  port (        clk : in STD_LOGIC;
                clk_ila : in STD_LOGIC;
+               pc_en : in STD_LOGIC;
                ena : in STD_LOGIC;
                Start : in STD_LOGIC;
                Mode : in INTEGER range 0 to 2;
@@ -75,6 +76,7 @@ begin
 Plant_inst: plant_x_cl port map (
 clk => clk,
 clk_ila => clk_ila,
+pc_en => pc_en,
 ena => pc_pe,
 Start => Start,
 Mode => Mode,
@@ -110,10 +112,10 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
    if counter = 0 then
            if (pc_pwm = '0') then -- active low (pc_pwm(0) given to top switch)
            -- SW1 Top switch conducting
-             mode <= 1;
+             mode <= 2;
            else
            -- SW2 Bottom Switch conducting
-             mode <= 2;  
+             mode <= 1;  
            end if;
    end if;
   ---- For constant time step 500 ns Matrix Mutiplication to run ----

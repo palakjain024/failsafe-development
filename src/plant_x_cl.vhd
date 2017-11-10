@@ -13,6 +13,7 @@ use work.input_pkg.all;
 entity plant_x_cl is
      port (    clk : in STD_LOGIC;
                clk_ila : in STD_LOGIC;
+               pc_en : in STD_LOGIC;
                ena : in STD_LOGIC;
                Start : in STD_LOGIC;
                Mode : in INTEGER range 0 to 2;
@@ -126,7 +127,7 @@ mult: process(Clk, load)
    variable State         : STATE_VALUE := S0;
    -- Matrix values depends on type of mode
    variable A_Aug_Matrix         : mat24;
-   variable State_inp_Matrix     : vect4:= (il0, vc0, v_in, load);
+   variable State_inp_Matrix     : vect4 := (il0, vc0, v_in, load);
    variable C_Matrix             : vect2;
 
    begin
@@ -149,11 +150,7 @@ mult: process(Clk, load)
    probe_h22 <= result_type(H_est(1,1));
    probe_ena(0) <= ena;
    
-   ---- Vector initialization ----
-   State_inp_Matrix(2) := v_in;
-   State_inp_Matrix(3) := load;
-   
-                 
+                
               
        case State is
        ------------------------------------------
@@ -188,6 +185,13 @@ mult: process(Clk, load)
            Count0 <= "000";
            if( Start = '1' ) then
                State := S1;
+              ---- Vector initialization ----
+               State_inp_Matrix(0) := z_val(0);
+               State_inp_Matrix(1) := z_val(1);
+               State_inp_Matrix(2) := v_in;
+               State_inp_Matrix(3) := load;
+                       
+                       
            else
                State := S0;
            end if;
@@ -286,7 +290,7 @@ mult: process(Clk, load)
 
         if (k2 = 0) then
             Sum <= resize(P, Sum'high, Sum'low);
-            C_Matrix(k3) := resize(Sum - LO_err(k3) + h_g_h_err(k3), n_left, n_right);
+            C_Matrix(k3) := resize(Sum - LO_err(0) + h_g_h_err(0), n_left, n_right);
             k3 <= k3 +1;
         else
             Sum <= resize(Sum + P, Sum'high, Sum'low);
@@ -336,7 +340,7 @@ mult: process(Clk, load)
        -------------------------------------------
        when S7 =>
                           
-                  C_Matrix(k3) := resize(Sum - LO_err(k3) + h_g_h_err(k3), n_left, n_right);                 
+                  C_Matrix(k3) := resize(Sum - LO_err(1) + h_g_h_err(1), n_left, n_right);                 
                   State := S8;
                   Count0 <= "000";
                   k0 <= 0;
@@ -345,11 +349,19 @@ mult: process(Clk, load)
        --    State S8 (output the data)
        ------------------------------------
        when S8 =>
-       
-        State_inp_Matrix(0) := C_Matrix(0);
-        State_inp_Matrix(1) := C_Matrix(1);
+        if C_Matrix(0) < zer0 or C_Matrix(1) < zer0 then
+        
+        z_val(0) <= zer0;
+        z_val(1) <= zer0;
+        pc_z(0) <= zer0;
+        pc_z(1) <= zer0;
+        
+        else                           
+        
         z_val <= C_Matrix;
         pc_z <=  C_Matrix;
+        
+        end if;
         State := S9;
         
        when S9 =>
