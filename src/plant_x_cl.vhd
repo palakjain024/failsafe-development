@@ -160,10 +160,11 @@ mult: process(Clk, load)
        
        -- To enable parameter estimator algorithm
            if ena = '1' then
+             --G(0,0) <= resize(-h * gain, d_left, d_right);
              G(0,0) <= e11;
              G(0,1) <= zer0;
              G(1,0) <= zer0;
-             G(1,1) <= e22;
+             G(1,1) <= resize(-h * gain, d_left, d_right);
              
              else
              G <= ((zer0, zer0),
@@ -174,10 +175,10 @@ mult: process(Clk, load)
                    
            end if;
            
-           if theta_est(0) < to_sfixed(0,15,-16) or theta_est(1) < to_sfixed(0,15,-16) then
-           theta_est(0) <= theta_L_star;
-           theta_est(1) <= theta_C_star;
-           end if;
+        --  if theta_est(0) < to_sfixed(0,15,-16) or theta_est(1) < to_sfixed(0,15,-16) then
+        --  theta_est(0) <= theta_L_star;
+        --  theta_est(1) <= theta_C_star;
+        --  end if;
            
         -- For starting the computation process
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
@@ -349,19 +350,20 @@ mult: process(Clk, load)
        --    State S8 (output the data)
        ------------------------------------
        when S8 =>
-        if C_Matrix(0) < zer0 or C_Matrix(1) < zer0 then
+        -- Don't do this as it may cause trouble depending upon the initial conditions. Stop this baakchodi here
+        -- if C_Matrix(0) < zer0 or C_Matrix(1) < zer0 then
         
-        z_val(0) <= zer0;
-        z_val(1) <= zer0;
-        pc_z(0) <= zer0;
-        pc_z(1) <= zer0;
+        -- z_val(0) <= zer0;
+        -- z_val(1) <= zer0;
+        -- pc_z(0) <= zer0;
+        -- pc_z(1) <= zer0;
         
-        else                           
+        -- else                           
         
         z_val <= C_Matrix;
         pc_z <=  C_Matrix;
         
-        end if;
+        -- end if;
         State := S9;
         
        when S9 =>
