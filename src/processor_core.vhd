@@ -22,6 +22,7 @@ Port ( -- General
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
+       Vin  : in sfixed(n_left downto n_right);
        gain : in vect2;
        pc_x : in vect2 ;
        -- Observer outputs
@@ -46,6 +47,7 @@ architecture Behavioral of processor_core is
                Mode : in INTEGER range 0 to 2;
                pc_x : in vect2;
                load : in sfixed(n_left downto n_right);
+               Vin  : in sfixed(n_left downto n_right);
                gain : in vect2;
                Done : out STD_LOGIC := '0';
                pc_theta : out vect2 := (theta_L_star,theta_C_star);
@@ -82,6 +84,7 @@ Start => Start,
 Mode => Mode,
 pc_x => pc_x,
 load => load,
+Vin => Vin,
 gain => gain,
 Done => done,
 pc_theta => theta_ila,

@@ -146,6 +146,7 @@ Port ( -- General
        -- Observer inputs
        pc_pwm : in STD_LOGIC;
        load : in sfixed(n_left downto n_right);
+       Vin  : in sfixed(n_left downto n_right);
        gain : in vect2;
        pc_x : in vect2 ;
        -- Observer outputs
@@ -271,7 +272,7 @@ adc_2_inst: pmodAD1_ctrl port map (
         SCLK   => AD_SCK_2,
         nCS    => AD_CS_2,
         DATA1  => adc_3, -- Load 
-        DATA2  => adc_4, -- Gain 
+        DATA2  => adc_4, -- Gain for L
         START  => AD_sync_2, 
         DONE   => AD_sync_2
         );  
@@ -283,8 +284,8 @@ adc_3_inst: pmodAD1_ctrl port map (
         SDATA2 => AD_D1_3, 
         SCLK   => AD_SCK_3,
         nCS    => AD_CS_3,
-        DATA1  => adc_5,  
-        DATA2  => adc_6, 
+        DATA1  => adc_5,  -- Vin
+        DATA2  => adc_6,  -- Gain for C
         START  => AD_sync_3, 
         DONE   => AD_sync_3
         ); 
@@ -319,13 +320,13 @@ de_inst_4: descaler generic map (adc_factor => v_factor)
             done => de_done_4,
             adc_val => adc_out_2(1)); -- gain for L
  
-de_inst_5: descaler generic map (adc_factor => i_factor)
+de_inst_5: descaler generic map (adc_factor => to_sfixed(100, n_left, n_right))
             port map (
             clk => clk,
             start => AD_sync_3,
             adc_in => adc_5,
             done => de_done_5,
-            adc_val => adc_out_3(0));-- no use
+            adc_val => adc_out_3(0));-- Vin
                         
 de_inst_6: descaler generic map (adc_factor => v_factor)
             port map (
@@ -369,12 +370,12 @@ scaler_3: scaler generic map (
 scaler_4: scaler generic map (
             dac_left => n_left,
             dac_right => n_right,
-            dac_max => to_sfixed(3300,15,-16),
+            dac_max => to_sfixed(330,15,-16),
             dac_min => to_sfixed(0,15,-16)
             )
             port map (
             clk => clk,
-            dac_in => adc_out_2(1),  
+            dac_in => adc_out_3(0),  
             dac_val => dac_4); 
 
 
@@ -390,6 +391,7 @@ pc_inst: processor_core port map (
    -- Observer inputs
    pc_pwm => a_pwm2_out,
    load => adc_out_2(0), 
+   Vin => adc_out_3(0),
    gain => gain,
    pc_x => plt_x,
    -- Observer outputs

@@ -19,6 +19,7 @@ entity plant_x_cl is
                Mode : in INTEGER range 0 to 2;
                pc_x : in vect2;
                load : in sfixed(n_left downto n_right);
+               Vin  : in sfixed(n_left downto n_right);
                gain : in vect2;
                Done : out STD_LOGIC := '0';
                pc_theta : out vect2 := (theta_L_star,theta_C_star);
@@ -144,7 +145,7 @@ mult: process(Clk, load)
    probe_z2 <= result_type(z_val(1));
    probe_e11 <= result_type(G(0,0));
    probe_e22 <= result_type(G(1,1));
-   probe_h11 <= result_type(H_est(0,0));
+   probe_h11 <= result_type(Vin);
    probe_h12 <= result_type(H_est(0,1));
    probe_h21 <= result_type(H_est(1,0));
    probe_h22 <= result_type(H_est(1,1));
@@ -175,10 +176,10 @@ mult: process(Clk, load)
        -- To enable parameter estimator algorithm
        if ena = '1' then
          --G(0,0) <= resize(-h * gain, d_left, d_right);
-         G(0,0) <= resize(-h * gain(0), d_left, d_right);
+         G(0,0) <= resize(e11, d_left, d_right);
          G(0,1) <= zer0h;
          G(1,0) <= zer0h;
-         G(1,1) <= resize(-h * gain(1), d_left, d_right);
+         G(1,1) <= resize(e22, d_left, d_right);
          
          else
          G <= ((zer0h, zer0h),
@@ -202,7 +203,7 @@ mult: process(Clk, load)
               ---- Vector initialization ----
                State_inp_Matrix(0) := z_val(0);
                State_inp_Matrix(1) := z_val(1);
-               State_inp_Matrix(2) := v_in;
+               State_inp_Matrix(2) := Vin;
                State_inp_Matrix(3) := load;
                        
                        
