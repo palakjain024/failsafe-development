@@ -127,7 +127,8 @@ mult: process(Clk, load)
    type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21);
    variable State         : STATE_VALUE := S0;
    -- Matrix values depends on type of mode
-   variable A_Aug_Matrix         : mat24;
+   variable A_Aug_Matrix         : mat24;          -- For A:B
+   variable AL_Aug_Matrix        : discrete_mat22; -- For A - LO
    variable State_inp_Matrix     : vect4 := (il0, vc0, v_in, load);
    variable C_Matrix             : vect2;
 
@@ -145,7 +146,7 @@ mult: process(Clk, load)
    probe_z2 <= result_type(z_val(1));
    probe_e11 <= result_type(G(0,0));
    probe_e22 <= result_type(G(1,1));
-   probe_h11 <= result_type(Vin);
+   probe_h11 <= result_type(H_est(0,0));
    probe_h12 <= result_type(H_est(0,1));
    probe_h21 <= result_type(H_est(1,0));
    probe_h22 <= result_type(H_est(1,1));
@@ -384,6 +385,13 @@ mult: process(Clk, load)
        err_val(0) <= resize(z_val(0) - pc_x(0), n_left, n_right);
        err_val(1) <= resize(z_val(1) - pc_x(1), n_left, n_right);
        State := S10;
+       
+       -- Luenbeger gain cum state matrix
+        AL_Aug_Matrix(0,0) := resize(A_Aug_Matrix(0,0) - l11, d_left, d_right);
+        AL_Aug_Matrix(0,1) := resize(A_Aug_Matrix(0,1) - l12, d_left, d_right);
+        AL_Aug_Matrix(1,0) := resize(A_Aug_Matrix(1,0) - l21, d_left, d_right);
+        AL_Aug_Matrix(1,1) := resize(A_Aug_Matrix(1,1) - l22, d_left, d_right);
+        
        ---------------------------------------
        -- Calculation of W matrix
        ---------------------------------------
@@ -415,17 +423,17 @@ mult: process(Clk, load)
        -- H matrix calculation 
        -----------------------------------------------
         when S14 =>
-        H_est(0,0) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,0),7, -24);
-        H_est(0,1) <= resize((A_Aug_Matrix(0,0) - l11) * H_mem(0,1),7, -24);
-        H_est(1,0) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,0),7, -24);
-        H_est(1,1) <= resize((A_Aug_Matrix(1,0) - l21) * H_mem(0,1),7, -24);
+        H_est(0,0) <= resize(AL_Aug_Matrix(0,0) * H_mem(0,0),7, -24);
+        H_est(0,1) <= resize(AL_Aug_Matrix(0,0) * H_mem(0,1),7, -24);
+        H_est(1,0) <= resize(AL_Aug_Matrix(1,0) * H_mem(0,0),7, -24);
+        H_est(1,1) <= resize(AL_Aug_Matrix(1,0) * H_mem(0,1),7, -24);
         State := S15;
        
         when S15 =>
-        H_est(0,0) <= resize(H_est(0,0) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,0) + w(0,0),7, -24);
-        H_est(0,1) <= resize(H_est(0,1) + (A_Aug_Matrix(0,1) - l12) * H_mem(1,1),7, -24);
-        H_est(1,0) <= resize(H_est(1,0) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,0),7, -24);
-        H_est(1,1) <= resize(H_est(1,1) + (A_Aug_Matrix(1,1) - l22) * H_mem(1,1) + w(1,1),7, -24);
+        H_est(0,0) <= resize(H_est(0,0) + (AL_Aug_Matrix(0,1) * H_mem(1,0)) + w(0,0),7, -24);
+        H_est(0,1) <= resize(H_est(0,1) + (AL_Aug_Matrix(0,1) * H_mem(1,1)),7, -24);
+        H_est(1,0) <= resize(H_est(1,0) + (AL_Aug_Matrix(1,1) * H_mem(1,0)),7, -24);
+        H_est(1,1) <= resize(H_est(1,1) + (AL_Aug_Matrix(1,1) * H_mem(1,1)) + w(1,1),7, -24);
         State := S16;
                  
 

@@ -42,15 +42,15 @@ package input_pkg is
   constant theta_C_star : sfixed(15 downto -16):= to_sfixed(350.877, 15, -16);
     
  -- Adaptive Gain for theta correction (descretized gain)
- constant e11 : sfixed(1 downto -30) := to_sfixed(-0.0001,1,-30);
- constant e22 : sfixed(1 downto -30) := to_sfixed(-0.0001,1,-30);
+ constant e11 : sfixed(1 downto -30) := to_sfixed(-0.5,1,-30);
+ constant e22 : sfixed(1 downto -30) := to_sfixed(-0.5,1,-30);
  type gain_mat is array (0 to 1, 0 to 1) of sfixed(1 downto -30);
  
  -- Luneberger oberver gain
-  constant l11 : sfixed(1 downto -30) := to_sfixed(0.00001160310000,1,-30);
-  constant l12 : sfixed(1 downto -30) := to_sfixed(0.00000093635000,1,-30);
-  constant l21 : sfixed(1 downto -30) := to_sfixed(0.00000154145000,1,-30);
-  constant l22 : sfixed(1 downto -30) := to_sfixed(0.00002495015000,1,-30);
+  constant l11 : sfixed(1 downto -30) := to_sfixed(0.000533500000000000,1,-30);
+  constant l12 : sfixed(1 downto -30) := to_sfixed(-0.000063050000000000,1,-30);
+  constant l21 : sfixed(1 downto -30) := to_sfixed(0.000073950000000000,1,-30);
+  constant l22 : sfixed(1 downto -30) := to_sfixed(0.000438350000000000,1,-30);
       
  -- vectors
  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,u
