@@ -12,10 +12,11 @@ use work.input_pkg.all;
 entity main is
     Port ( -- General
            sysclk : in STD_LOGIC;
+           pwm_reset : in STD_LOGIC;
            enable_fdi: in STD_LOGIC;
            -- PWM ports
-           pwm_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
-           pwm_n_out_t : out STD_LOGIC_VECTOR(phases-1 downto 0);
+           pwm_out_t : out STD_LOGIC_VECTOR(1 downto 0);
+           pwm_n_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            -- Flags
            FD_flag : out STD_LOGIC;
            reset_fd : in STD_LOGIC;
@@ -364,8 +365,8 @@ if (clk = '1' and clk'event) then
 -- Output (no fault) ---
 pwm_out_t(0) <= a_pwm1_out;
 pwm_n_out_t(0)  <= a_pwm2_out;
-pwm_out_t(1) <= '0';    -- Top switch --> Inverted signal for power trench
-pwm_n_out_t(1)  <= '1'; -- Bottom switch
+pwm_out_t(1) <= '1';    -- Top switch 
+pwm_n_out_t(1)  <= '0'; -- Bottom switch
 end if;
 end process; 
 
@@ -381,7 +382,7 @@ begin
 
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.75, n_left, n_right);
+       duty_ratio <= to_sfixed(0.5, n_left, n_right);
        state := S1;
        
        when S1 =>

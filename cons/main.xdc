@@ -6,14 +6,30 @@ set_property IOSTANDARD LVCMOS33 [get_ports sysclk]
 
 #----- For fault management -----
 
-# For injecting switch faults (PWM for phase a change: switch SW0)
-set_property PACKAGE_PIN F22 [get_ports enable_fdi]
+# SW F22 s not working at create zedboard
+# Also decrease the jtag speed when use ila core
+
+## For reseting PWM
+set_property PACKAGE_PIN G22 [get_ports pwm_reset]
+set_property IOSTANDARD LVCMOS33 [get_ports pwm_reset]
+
+## For enabling the state estimator and Fault detection and identification
+set_property PACKAGE_PIN H22 [get_ports enable_fdi]
 set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 
 # For reseting faults
-set_property PACKAGE_PIN G22 [get_ports reset_fd]
+set_property PACKAGE_PIN F21 [get_ports reset_fd]
 set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
 
+## Mapping of sensor fault injection Switch H19
+#set_property PACKAGE_PIN H19 [get_ports reset_fd]
+#set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+
+## Mapping of switch fault injection Switch H18
+#set_property PACKAGE_PIN H18 [get_ports reset_fd]
+#set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+
+# Mapping of FD and FI flag
 #JA7 AB11
 set_property PACKAGE_PIN AB11 [get_ports FD_flag]
 set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
@@ -24,15 +40,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 
 # ----- For Controller ------
 
-#Mapping PWM module phase a to PMOD JC1_p (AB7) and JCI_n (AB6)
+#Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6)
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 
-set_property PACKAGE_PIN AB6 [get_ports {pwm_n_out_t[0]}]
+set_property PACKAGE_PIN R6 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
-# Mapping PWM module phase b to PMOD JC3_p (R6) and JC3_n (T6) 
-set_property PACKAGE_PIN R6 [get_ports {pwm_out_t[1]}]
+# Mapping PWM module phase b to PMOD JC1_n (AB6) and JC3_n (T6) 
+set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[1]}]
 
 set_property PACKAGE_PIN T6 [get_ports {pwm_n_out_t[1]}]

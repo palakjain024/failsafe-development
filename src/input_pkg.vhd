@@ -12,24 +12,24 @@ package input_pkg is
   constant sys_clk         : INTEGER := 100_000_000;  --system clock frequency in Hz
   constant pwm_freq        : INTEGER := 10_000;       --PWM switching frequency in Hz
   constant bits_resolution : INTEGER := 8;            --bits of resolution setting the duty cycle
-  constant phases          : INTEGER := 2;            --number of output pwms and phases
+  constant phases          : INTEGER := 1;            --number of output pwms and phases
   -- Deadtime
   constant c_Dead_t        : INTEGER :=  100;         -- Dead time
     
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
-  constant rL : sfixed(1 downto -30) := to_sfixed(0.082,1,-30);      -- Inductor resistance
+  constant rL : sfixed(1 downto -30) := to_sfixed(-1,1,-30);      -- Inductor resistance
   constant fd_th : sfixed(15 downto -16) := to_sfixed(0.4, 15, -16); -- Threshold
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
-  constant v_out : sfixed(15 downto -16)  := to_sfixed(20, 15, -16);
+  constant v_out : sfixed(15 downto -16)  := to_sfixed(60, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(4,15,-16);
   
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
-  constant vc0 : sfixed(15 downto -16) := to_sfixed(20,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant vc0 : sfixed(15 downto -16) := to_sfixed(60,15,-16);
+  constant ipv : sfixed(15 downto -16) := to_sfixed(8,15,-16);
   constant vpv : sfixed(15 downto -16) := v_in;
   
   -- Zero initial input
