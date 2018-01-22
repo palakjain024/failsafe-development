@@ -14,12 +14,14 @@ Port ( -- General
        clk_ila : in STD_LOGIC;
        pc_en : in STD_LOGIC;
        reset_fd : in STD_LOGIC;
-       -- Converter fault flag;
-       FD_flag : out STD_LOGIC := '0';
+       -- FDI outputs
+       fd_flag_out : out STD_LOGIC := '0';
+       -- FI_flag : out STD_LOGIC_VECTOR(3 downto 0);
        -- Observer inputs
-       pc_pwm : in STD_LOGIC_VECTOR(phases-1 downto 0);
-       load : in sfixed(n_left downto n_right);
-       pc_x : in vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+       pc_pwm_top : in STD_LOGIC;
+       pc_pwm_bot : in STD_LOGIC;
+       plt_u : in vect3;
+       plt_y : in vect2
        );
 end processor_core;
 
@@ -45,16 +47,20 @@ PORT (
     probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
 );
 END COMPONENT  ;
- -- Converter estimator
+ -- Digital twin estimator (Buck-boost converter)
  component plant_x
- port (   Clk : in STD_LOGIC;
-          Start : in STD_LOGIC;
-          Mode : in INTEGER range 1 to 4;
-          load : in sfixed(n_left downto n_right);
+ port (   clk : in STD_LOGIC;
+          start : in STD_LOGIC;
+          -- Buck-boost operation
+          mode : in INTEGER range 1 to 2;
+          -- Plant input
+          plt_u : in vect3; -- see through CRO
+          -- Plant output
           plt_y : in vect2;
+          -- Estimator outputs
           done : out STD_LOGIC := '0';
-          FD_residual : out sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
-          plt_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
+          fd_residual : out sfixed(n_left downto n_right) := zer0;
+          plt_z : out vect4 := (zer0,zer0,zer0,zer0)
          );
  end component plant_x;
  
@@ -63,33 +69,34 @@ END COMPONENT  ;
 
 -- ILA core
  signal trig_in_ack, trig_in : STD_LOGIC := '0';
- signal probe_normfd, probe_normc, probe_z1fd, probe_z2fd, probe_y1c : STD_LOGIC_VECTOR(31 downto 0);
- signal probe_y2c, probe_y1p, probe_y2p : STD_LOGIC_VECTOR(31 downto 0);
+ signal probe_normfd, probe_fdflag, probe_z1, probe_z2, probe_y1, probe_y2: STD_LOGIC_VECTOR(31 downto 0);
+ signal probe6, probe7: STD_LOGIC_VECTOR(31 downto 0) := (others => 0);
  
  -- General
  signal counter : integer range 0 to 50000 := -1;
  
  -- Common Inputs 
- signal Start : STD_LOGIC := '0';
- signal Mode  : INTEGER range 1 to 4 := 1;
+ signal start : STD_LOGIC := '0';
+ signal mode  : INTEGER range 1 to 2 := 1;
  
  -- Plant outputs and Fault detection logic
  signal done: STD_LOGIC := '1';
  signal z_val: vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
- signal FD_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
- signal flag : STD_LOGIC := '0';
+ signal fd_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+ signal fd_flag : STD_LOGIC := '0';
  
 begin
 
 ---- Instances ----
 Plant_inst: plant_x port map (
-Clk => clk,
-Start => start,
-Mode => mode,
+clk => clk,
+ctart => start,
+mode => mode,
 load => load,
-plt_y => pc_y,
-Done => done,
-FD_residual => FD_residual,
+plt_u => plt_u,
+plt_y => plt_y,
+done => done,
+fd_residual => fd_residual,
 plt_z => z_val
 );
 
@@ -99,18 +106,17 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_normfd, 
-    probe1 => probe_normc, 
-    probe2 => probe_z1fd,  
-    probe3 => probe_z2fd, 
-    probe4 => probe_y1c,
-    probe5 => probe_y2c,
-    probe6 => probe_y1p,
-    probe7 => probe_y2p
+    probe0 => probe_fdflag, 
+    probe1 => probe_normfd, 
+    probe2 => probe_z1,  
+    probe3 => probe_z2, 
+    probe4 => probe_y1,
+    probe5 => probe_y2,
+    probe6 => probe6,
+    probe7 => probe7
     
 ); 
 ---- Processes ----
-
 -- Main loop
 CoreLOOP: process(clk, pc_pwm, pc_en)
  begin
@@ -123,53 +129,51 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
 
 
    ---- ILA ----
-      probe_normfd <= result_type(FD_residual);
-      probe_normc <= result_type(norm_c); 
-      probe_z1fd  <= result_type(z_val(0));
-      probe_y1p <= result_type(pc_y(0)) ; 
-      probe_y2p <= result_type(pc_y(1));
-      probe_z2fd <= result_type(z_val(1));
-      probe_y1c <= result_type(y_est_c(0));
-      probe_y2c <= result_type(y_est_c(1));
-           
-          ---- Output to main ----
-          
-           -- FD observer
-            pc_z <= z_val;
-            FD_residual_out <= FD_residual;
-            FD_flag <= flag;
+      probe_fdflag(0) <= fd_flag;
+      probe_normfd <= result_type(fd_residual); 
+      probe_z1  <= result_type(z_val(0));
+      probe_z2 <= result_type(z_val(1)) ; 
+      probe_y1 <= result_type(plt_y(0));
+      probe_y2 <= result_type(plt_y(1));
+                
+   ---- Output to main ----
+   fd_flag_out <= fd_flag;   -- FD observer
             
-                      
-           ---- To determine Mode PWM for top switch ----
-               if counter = 0 then
-                       if (pc_pwm(0) = '1' and pc_pwm(1) = '0' ) then
-                       -- Mode SW1 top conducting
-                         mode <= 1;
-                       elsif (pc_pwm(0) = '0' and pc_pwm(1) = '0' ) then
-                       -- Mode no top SW conducting
-                         mode <= 2; 
-                       elsif (pc_pwm(0) = '0' and pc_pwm(1) = '1' ) then
-                       -- Mode SW2 top conducting
-                         mode <= 3;
-                       elsif (pc_pwm(0) = '1' and pc_pwm(1) = '1' ) then
-                       -- Mode both top SW conducting
-                         mode <= 4;  
-                       end if;
-              end if;
-           ---- For constant time step 500 ns Matrix Mutiplication to run ----
-                if (counter = 1) then
-                  start <= '1';
-                  trig_in <= '1'; 
-                  elsif (counter = 2) then
-                  start <= '0';
-                  else null;
-                end if; 
-                 
-                 if (counter = 49) then
-                    counter <= 0;
-                    else
-                    counter <= counter + 1;
-                 end if;
+   ---- To determine Matrix for corresponding mode ----
+   if buck = '1' then
+           if (pc_pwm_top = '1' and pc_pwm_bottom = '0' ) then
+               mode <= 1;
+           elsif (pc_pwm_top = '0' and pc_pwm_bottom = '1' ) then
+                  mode <= 2; 
+           else null;
+           end if;
+    elsif boost = '1' then       
+           if (pc_pwm_top = '1' and pc_pwm_bottom = '0' ) then
+                   mode <= 1;
+           elsif (pc_pwm_top = '0' and pc_pwm_bottom = '1' ) then
+                      mode <= 3; 
+           else null;
+           end if;
+    elsif passthrough = '1' then       
+           mode <= 1;
+    else
+          null;                  
+    end if;
+              
+   ---- For constant time step 500 ns Matrix Mutiplication to run ----
+    if (counter = 1) then
+      start <= '1';
+      trig_in <= '1'; 
+      elsif (counter = 2) then
+      start <= '0';
+      else null;
+    end if; 
+     
+     if (counter = 49) then
+        counter <= 0;
+        else
+        counter <= counter + 1;
+     end if;
                            
     end if; -- pc_en
    end if; -- Clk
@@ -179,20 +183,16 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
 fault_detection: process(clk, reset_fd, FD_residual)
                begin
                    if (clk = '1' and clk'event) then
-                    -- Fault detection
-                      --flag <= '0';
-                      if FD_residual > fd_th or flag = '1' then
-                      
-                      flag <= '1';
-                          if (reset_fd = '1') then
-                          flag <= '0';
-                          else
-                          flag <= '1';
-                          end if;
+                   
+                    -- Fault detection with latch
+                      fd_flag <= '0';
+                      if fd_residual > fd_th or fd_flag = '1' or reset_fd = '0' then
+                      fd_flag <= '1';
                       else
-                      flag <= '0';
-                      end if;
-                 end if;
-             end process;
+                      fd_flag <= '0';
+                      end if; -- fd logic
+                      
+                 end if; -- clk
+             end process; -- process
 
 end Behavioral;

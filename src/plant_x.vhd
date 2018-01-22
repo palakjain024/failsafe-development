@@ -1,5 +1,6 @@
--- With C = 500e-3 and L = 5 mH
+-- With C = 1.85e-3 and L = 5 mH
 -- State estimator
+-- Use matlab file matrix_discretization.m in 2018 Jain_JESTPE Rewrite->simulation
 library IEEE;
 library IEEE_PROPOSED;
 library work;
@@ -10,312 +11,256 @@ use IEEE.numeric_std.all;
 use work.input_pkg.all;
 
 entity plant_x is
- port (  Clk   : in STD_LOGIC;
-         Start : in STD_LOGIC;
-         Mode  : in INTEGER range 1 to 4;
-         ut    : in vect2;
-         plt_x : in vect2;
-         pv_x  : in vect2;
-         done : out STD_LOGIC := '0';
-         FD_residual : out sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
-         plt_z : out vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right))
-        );
+    port (clk : in STD_LOGIC;
+          start : in STD_LOGIC;
+          -- Buck-boost operation
+          mode : in INTEGER range 1 to 2;
+          -- Plant input
+          plt_u : in vect3; -- see through CRO
+          -- Plant output
+          plt_y : in vect2;
+          -- Estimator outputs
+          done : out STD_LOGIC := '0';
+          fd_residual : out sfixed(n_left downto n_right) := zer0;
+          plt_z : out vect4 := (zer0,zer0,zer0,zer0)
+         );
 end plant_x;
 
 architecture Behavioral of plant_x is
 
----- Components ----
 ---- Signals ----     
+ 
  -- Matrix
+    signal	  Count0  : UNSIGNED (2 downto 0):="000";
     signal    A       : sfixed(d_left downto d_right);
-
     signal    B       : sfixed(n_left downto n_right);
-    signal    C       : sfixed(n_left downto n_right);
-    signal    D       : sfixed(n_left downto n_right);
-    
-    signal    P       : sfixed(n_left downto n_right);
-    signal    Sum     : sfixed(n_left downto n_right); 
+    signal    P       : sfixed(A'left+B'left+1 downto A'right+B'right);
+    signal    Sum        : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
+    signal    j0, k0, k2, k3 : INTEGER := 0;
+ -- Gamma cal
+    signal gamma : vect4 := (zer0, zer0, zer0, zer0);
 
- -- Error correction
-    signal err : vect4 := (zer0, zer0, zer0, zer0);
-
- -- z estimate
-    signal z_est : vect3 := (il0, il0, vc0);
+ -- digital twin estimate
+    signal z_est : vect2 := (il0, vc0);
+    signal pv_est : vect2 := (ipv, vpv);
     signal norm: sfixed(n_left downto n_right) := zer0;
     
 begin
                 
-mult: process(Clk, load, plt_y, err)
+mult: process(clk, plt_u, plt_y, gamma)
 
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17,
-   S18, S19, S20);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10);
    variable     State         : STATE_VALUE := S0;
     
-   -- LE cal
+   -- digital twin cal
+   -- Augmented A and B matrix   
    variable A_Aug_Matrix       : mat24 := ((zer0h, zer0h, zer0h, zer0h),
                                            (zer0h, zer0h, zer0h, zer0h));
-   variable err_vect           : vect4 := (err(0), err(1), err(2), err(3));
-   
+   -- Output vector   
    variable C_vect             : vect2;
-   
-   -- Estimation vector
-   variable State_inp_vect     : vect4 := (il0, vc0, ipv, vpv);
+   -- Augmented estimation and input vector
+   variable State_inp_vect     : vect4 := (il0, vc0, plt_u(0), plt_u(1));
   
    
    begin
               
    if (Clk'event and Clk = '1') then
-   
-   -- output 
-      plt_z <= y_est;
- 
-    -- L matrix
-    A_Aug_Matrix(0,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
-    A_Aug_Matrix(0,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
-    A_Aug_Matrix(1,0) := to_sfixed(-0.000001558800000000,d_left,d_right);
-    A_Aug_Matrix(1,1) := to_sfixed(-0.000099688000000000,d_left,d_right);
-    A_Aug_Matrix(2,0) := to_sfixed( 0.000175197200000000 ,d_left,d_right);
-    A_Aug_Matrix(2,1) := to_sfixed( 0.000007515600000000,d_left,d_right);
+    
+   -- Update the inputs with latest value
+    State_inp_vect(2) := plt_u(0);
+    State_inp_vect(3) := plt_u(1);
+   -- Outputs to main 
+    plt_z <= z_est;
            
----- Step 2:  Multiplication -----
+   
         case State is
-         --  State S0 (wait for start signal)
+         
                when S0 =>
+               
+           -- For starting the computation process
+           j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
+           Count0 <= "000";
+           done <= '0';
+           if( start = '1' ) then   
+               State := S1;
+           else
+               State := S0;
+           end if;
+           
+          -- For State Matrix calculation
+           if mode = 1 then
+           ----------------------------------------
+           -- Mode 1:common mode
+           ----------------------------------------
+           A_Aug_Matrix(0,0) := a00d;
+           A_Aug_Matrix(0,1) := a01d;
+           A_Aug_Matrix(0,2) := a10d;
+           A_Aug_Matrix(0,3) := a11d;
+           A_Aug_Matrix(1,0) := b00d;
+           A_Aug_Matrix(1,1) := zer0;
+           A_Aug_Matrix(1,2) := zer0;
+           A_Aug_Matrix(1,3) := b11d;          
+                       
+           elsif mode = 2 then
+           ----------------------------------------
+           -- Mode 2: Buck mode
+           ----------------------------------------
+           A_Aug_Matrix(0,0) := a00d;
+           A_Aug_Matrix(0,1) := a01d;
+           A_Aug_Matrix(0,2) := a10d;
+           A_Aug_Matrix(0,3) := a11d;
+           A_Aug_Matrix(1,0) := zer0;
+           A_Aug_Matrix(1,1) := zer0;
+           A_Aug_Matrix(1,2) := zer0;
+           A_Aug_Matrix(1,3) := b11d;  
+                      
+           elsif mode = 3 then
+          ----------------------------------------
+          -- Mode 3: Boost mode
+          ----------------------------------------
+            A_Aug_Matrix(0,0) := a00d;
+            A_Aug_Matrix(0,1) := zer0;
+            A_Aug_Matrix(0,2) := zer0;
+            A_Aug_Matrix(0,3) := a11d;
+            A_Aug_Matrix(1,0) := b00d;
+            A_Aug_Matrix(1,1) := zer0;
+            A_Aug_Matrix(1,2) := zer0;
+            A_Aug_Matrix(1,3) := b11d;    
+           
+           else null;       
+           end if;
                    
-                   done <= '0';
-                   if( start = '1' ) then   
-                        State := S1;
-                       -- Error cal
-                       err(0) <= resize(plt_y(0) - y_est(0), n_left, n_right);
-                       err(1) <= resize(plt_y(1) - y_est(1), n_left, n_right); 
-                   else
-                       State := S0;
-                   end if;
-                   
-        -- Sigh Calculation
-               when S1 =>
-               -- Error intialization
-                err_Matrix(0) := err(0);
-                err_Matrix(1) := err(1);  
+    -------------------------------------------
+    --    State S1 (filling up of pipeline)
+    -------------------------------------------
+       when S1 =>
+       A <= A_Aug_Matrix(j0, k0);  
+       B <= State_inp_vect(k0);
+       k0 <= k0 +1;
+       Count0 <= Count0 + 1;
+       State := S2;
+
+   ---------------------------------------
+   --    State S2 (more of filling up)
+   ---------------------------------------
+   when S2 =>
+       A <= A_Aug_Matrix(j0, k0);  
+       B <= State_inp_vect(k0);
+
+       P <= A * B;
+       k0 <= k0 +1;
+       Count0 <= Count0 + 1;
+       State := S3;
+
+   -------------------------------------------
+   --    State S3 (even more of filling up)
+   -------------------------------------------
+   when S3 =>
+       A <= A_Aug_Matrix(j0, k0);  
+       B <= State_inp_vect(k0);
+
+       P <= A * B;
+       
+       if (k2 = 0) then
+           Sum <= resize(P, Sum'high, Sum'low);
+       else             
+           Sum <= resize(Sum + P, Sum'high, Sum'low);
+       end if;
+       k2 <= k2+1;
+       k0 <= k0+1;
+       Count0 <= Count0 + 1;
+       State := S4;
+
+   -------------------------------------------------
+   --    State S4 (pipeline full, complete work)
+   -------------------------------------------------
+   when S4 =>
+       A <= A_Aug_Matrix(j0, k0);  
+       B <= State_inp_vect(k0);
+
+       P <= A * B;
+
+       if (k2 = 0) then
+           Sum <= resize(P, Sum'high, Sum'low);
+           C_vect(k3) := resize(Sum, n_left, n_right);
+           k3 <= k3 +1;
+       else
+           Sum <= resize(Sum + P, Sum'high, Sum'low);
+       end if;
+
+       if (k2 = 3) then
+           k2 <= 0;
+           else
+              k2 <= k2 + 1;
+       end if;
+       
+    
+       ----------------------------------
+       -- check if all initiations done
+       ----------------------------------
+       if (Count0 = 7) then
+           State := S5;
+       else
+           State := S4;                
+           Count0 <= Count0 + 1;
+          if (k0 = 3) then
+           j0 <= j0 +1;
+           k0 <= 0;
+           else 
+           k0 <= k0 +1;
+           end if;
+       end if;
+       
+      ------------------------------------------------
+      --    State S5 (start flushing the pipeline)
+      ------------------------------------------------
+      when S5 =>
+              P <= A * B;           
+              Sum <= resize(Sum + P, Sum'high, Sum'low);
+              State := S6;
+
+      -------------------------------------
+      --    State S6 (more of flushing)
+      -------------------------------------
+      when S6 =>
+                 
+                  Sum <= resize(Sum + P, Sum'high, Sum'low);
+                  State := S7;
+
+      -------------------------------------------
+      --    State S7 (completion of flushing)
+      -------------------------------------------
+      when S7 =>
+                         
+                 C_vect(k3) := resize(Sum, n_left, n_right);                 
+                 State := S8;
+                 Count0 <= "000";
+                 k0 <= 0;
               
-               -- Sigh calculation
-                A <= rL;
-                B <= State_inp_Matrix(0);
-                C <= State_inp_Matrix(1);
-                D <= load;
-               
+      ------------------------------------
+      --    State S8 (output the data)
+      ------------------------------------
+      when S8 =>
+      
+       State_inp_vect(0) := C_vect(0);
+       State_inp_vect(1) := C_vect(1);
+       z_val <= C_vect;
+       plt_z <=  C_vect;
+       State := S9;
+       
+      when S9 =>
+      gamma(0) <= resize(z_val(0) - plt_y(0), n_left, n_right);
+      gamma(1) <= resize(z_val(1) - plt_y(1), n_left, n_right);
+      gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
+      gamma(3) <= resize(vpv - plt_u(0), n_left, n_right);
+      State := S10;
                 
-                State := S2;
-               
-               when S2 =>
-               
-               -- Sigh calculation
-                A <= esr;
-                B <= State_inp_Matrix(0);
-                C <= State_inp_Matrix(1);
-                D <= load;
-                
-                P_sigh1 <= resize(A * B, n_left, n_right);
-                P_sigh2 <= resize(A * C, n_left, n_right);
-                
-               -- Sigh3 for Capacitor
-               sigh3_noh(0) <= resize(B - D, n_left, n_right); -- Mode 1
-               sigh3_noh(1) <= resize(to_sfixed(-1, n_left, n_right) * D, n_left, n_right); -- Mode 2
-               sigh3_noh(2) <= resize(C - D, n_left, n_right); -- Mode 3
-               sigh3_noh(3) <= resize(B + C, n_left, n_right); -- Mode 4
-
-                State := S3;
-                
-               when S3 =>
-               
-               -- Norm calculation
-               C <= err(0);
-               D <= err(0);
-                                                      
-               -- Sigh calculation
-               P_sigh1 <= resize(A * B, n_left, n_right);
-               P_sigh2 <= resize(A * C, n_left, n_right);
-               P_load  <= resize(A * D, n_left, n_right);
-               
-               -- sigh1 for L1
-               sigh1_noh(1) <= resize(v_in - P_sigh1, n_left, n_right); --Mode 2,3
-               
-               -- sigh2 for L2
-               sigh2_noh(0) <= resize(v_in - P_sigh2, n_left, n_right); -- Mode 1,2 
-               
-               -- sigh3 for capacitor
-               sigh3_noh(3) <= resize(sigh3_noh(3) - D, n_left, n_right); -- Mode 4
-               
-               State := S4;
-               
-               when S4 =>
-               -- Norm calculation
-               C <= err(1);
-               D <= err(1); 
-               P <= resize(C * D, n_left, n_right);
-                               
-               -- Sigh calculation
-               B <= State_inp_Matrix(2);
-               -- sigh1 for L1
-               sigh1_noh(0) <= resize(sigh1_noh(1) - P_sigh1 + P_load, n_left, n_right);  -- Mode 1
-               sigh1_noh(2) <= resize(sigh1_noh(1) - P_sigh1 - P_sigh2 + P_load, n_left, n_right);  -- Mode 4
-               
-               -- sigh2 for L2
-               sigh2_noh(1) <= resize(sigh2_noh(0) - P_sigh2 + P_load, n_left, n_right); -- Mode 3
-               sigh2_noh(2) <= resize(sigh2_noh(0) - P_sigh2 - P_sigh1 + P_load, n_left, n_right); -- Mode 4
-               
-               State := S5;
-               
-               when S5 =>
-               -- Norm calculation
-               Sum <= P;
-               P <= resize(C * D, n_left, n_right);
-                              
-               -- sigh1 for L1
-               sigh1_noh(0) <= resize(sigh1_noh(0) - B, n_left, n_right); -- Mode 1
-               sigh1_noh(2) <= resize(sigh1_noh(2) - B, n_left, n_right); -- Mode 4
-               
-               -- sigh2 for L2
-               sigh2_noh(1) <= resize(sigh2_noh(1) - B, n_left, n_right); -- Mode 3
-               sigh2_noh(2) <= resize(sigh2_noh(2) - B, n_left, n_right); -- Mode 4
-               
-               State := S6;
-               
-               when S6 =>
-               -- Norm calculation
-               FD_residual <= resize(Sum + P, n_left, n_right);
-                               
-                -- Sigh calculation                           
-               sigh1_out(1) <= zer0h;
-               sigh1_out(2) <= zer0h;  
-               
-               sigh2_out(0) <= zer0h;
-               sigh2_out(2) <= zer0h;  
-                              
-               sigh3_out(0) <= zer0h;
-               sigh3_out(1) <= zer0h;  
-                                                
-               if Mode = 1 then
-               sigh1_out(0) <= resize(sigh1_noh(0) * h, d_left, d_right);
-               sigh2_out(1) <= resize(sigh2_noh(0) * h, d_left, d_right);
-               sigh3_out(2) <= resize(sigh3_noh(0) * h, d_left, d_right);
-               
-               elsif Mode = 2 then
-               sigh1_out(0) <= resize(sigh1_noh(1) * h, d_left, d_right);
-               sigh2_out(1) <= resize(sigh2_noh(0) * h, d_left, d_right);
-               sigh3_out(2) <= resize(sigh3_noh(1) * h, d_left, d_right);
-                                         
-               elsif Mode = 3 then
-               sigh1_out(0) <= resize(sigh1_noh(1) * h, d_left, d_right);
-               sigh2_out(1)<=  resize(sigh2_noh(1) * h, d_left, d_right);
-               sigh3_out(2) <= resize(sigh3_noh(2) * h, d_left, d_right);
-                  
-               elsif Mode = 4 then
-               sigh1_out(0) <= resize(sigh2_noh(2) * h, d_left, d_right);
-               sigh2_out(1) <= resize(sigh2_noh(2) * h, d_left, d_right);
-               sigh3_out(2) <= resize(sigh3_noh(3) * h, d_left, d_right);
-               
-               else null;
-               end if;
-               State := S7;
-               
-               when S7 =>
-                z_est(0) <= resize(Ltheta_star * sigh1_out(0), n_left, n_right);
-                z_est(1) <= resize(Ltheta_star * sigh2_out(1), n_left, n_right);
-                z_est(2) <= resize(Ctheta_star * sigh3_out(2), n_left, n_right);
-               State :=  S8;
-                
-                when S8 =>
-                z_est(0) <= resize(z_est(0) + State_inp_Matrix(0), n_left, n_right);
-                z_est(1) <= resize(z_est(1) + State_inp_Matrix(1), n_left, n_right);
-                z_est(2) <= resize(z_est(2) + State_inp_Matrix(2), n_left, n_right);
-                State := S9;
-                
-                -- L*E calculation
-                when S9 =>
-
-                    A <= A_Aug_Matrix(0,0);  
-                    B <= err_Matrix(0);
-                    State := S10;
-
-                when S10 =>
-                    A <= A_Aug_Matrix(0,1);  
-                    B <= err_Matrix(1);
-                    P <= resize(A * B, P'high, P'low);
-                    State := S11;
-
-                when S11 =>
-
-                    A <= A_Aug_Matrix(1,0);  
-                    B <= err_Matrix(0);
-                    P <= resize(A * B, P'high, P'low);
-                    Sum <= P;
-                    State := S12;
-
-                when S12 =>
-                    A <= A_Aug_Matrix(1,1);  
-                    B <= err_Matrix(1);
-                    P <= resize(A * B, P'high, P'low);
-                    Sum <= resize(Sum + P, Sum'high, Sum'low);
-                    State := S13;
-                   
-                when S13 =>
-                     A <= A_Aug_Matrix(2,0);  
-                     B <= err_Matrix(0);
-                     P <= resize(A * B, P'high, P'low);
-                     Sum <= P;
-                    
-                     C_Matrix(0) := Sum; 
-                     State := S14;  
-                                    
-                when S14 =>
-                    A <= A_Aug_Matrix(2,1);  
-                    B <= err_Matrix(1);
-                    P <= resize(A * B, P'high, P'low);
-                    Sum <= resize(Sum + P, Sum'high, Sum'low);
-                    State := S15;        
-
-               when S15 =>
-                    P <= resize(A * B, P'high, P'low);          
-                    Sum <= P;
-               
-                    C_Matrix(1) := Sum; 
-                    State := S16;
-
-               when S16 =>
-                    Sum <= resize(Sum + P, Sum'high, Sum'low);
-                    State := S17;
+     when S10 =>
+        done <= '1';
+        State := S0;
         
-
-               when S17 =>
-                    C_Matrix(2) := Sum;                 
-                    State := S18;
-
-               when S18 =>
-                    le(0) <= C_Matrix(0);
-                    le(1) <= C_Matrix(1);
-                    le(2) <= C_Matrix(2);
-                    State := S19;
-                    
-               when S19 =>
-                z_est(0) <= resize(z_est(0) + le(0), n_left, n_right);
-                z_est(1) <= resize(z_est(1) + le(1), n_left, n_right);
-                z_est(2) <= resize(z_est(2) + le(2), n_left, n_right);
-                State := S20;
-                
-               when S20 =>
-                State_inp_Matrix(0) := z_est(0);
-                State_inp_Matrix(1) := z_est(1);
-                State_inp_Matrix(2) := z_est(2);
-                
-                y_est(0) <= resize(z_est(0) + z_est(1), n_left, n_right);
-                y_est(1) <= z_est(2);
-                
-                done <= '1';
-                State := S0;
-                
-                end case;
+        end case;
         end if; -- clk
     end process;            
 end Behavioral;

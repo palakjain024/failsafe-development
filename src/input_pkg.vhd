@@ -15,6 +15,19 @@ package input_pkg is
   constant phases          : INTEGER := 1;            --number of output pwms and phases
   -- Deadtime
   constant c_Dead_t        : INTEGER :=  100;         -- Dead time
+   
+  -- Mode of operation
+  constant buck : STD_LOGIC := '0';
+  constant boost : STD_LOGIC := '1';
+  constant passthrough : STD_LOGIC := '0';
+  
+ -- Matrix discretization
+ constant a00d : sfixed(1 downto -30) := to_sfixed(0.999900000000000, 1, -30); -- common mode
+ constant a01d : sfixed(1 downto -30) := to_sfixed(-0.000100000000000, 1, -30); -- common mode
+ constant a10d : sfixed(1 downto -30) := to_sfixed(0.000270270270270, 1, -30); -- common mode
+ constant a11d : sfixed(1 downto -30) := to_sfixed(1.000000000000000, 1, -30); -- common mode 
+ constant b00d : sfixed(1 downto -30) := to_sfixed(0.000100000000000, 1, -30); -- common mode 
+ constant b11d : sfixed(1 downto -30) := to_sfixed(-0.000270270270270, 1, -30); -- common mode
     
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
@@ -37,7 +50,8 @@ package input_pkg is
   constant zer0h : sfixed(1 downto -30) := to_sfixed(0, 1,-30);
   
   -- vectors
-  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z
+  type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,y
+  type vect3 is array (0 to 2) of sfixed(15 downto -16); -- for u
   type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for gamma
     
   -- Matrices
