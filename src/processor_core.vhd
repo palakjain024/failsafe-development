@@ -52,7 +52,7 @@ END COMPONENT  ;
  port (   clk : in STD_LOGIC;
           start : in STD_LOGIC;
           -- Buck-boost operation
-          mode : in INTEGER range 1 to 2;
+          mode : in INTEGER range 1 to 3;
           -- Plant input
           plt_u : in vect3; -- see through CRO
           -- Plant output
@@ -60,7 +60,7 @@ END COMPONENT  ;
           -- Estimator outputs
           done : out STD_LOGIC := '0';
           fd_residual : out sfixed(n_left downto n_right) := zer0;
-          plt_z : out vect4 := (zer0,zer0,zer0,zer0)
+          plt_z : out vect2 := (zer0,zer0)
          );
  end component plant_x;
  
@@ -70,19 +70,19 @@ END COMPONENT  ;
 -- ILA core
  signal trig_in_ack, trig_in : STD_LOGIC := '0';
  signal probe_normfd, probe_fdflag, probe_z1, probe_z2, probe_y1, probe_y2: STD_LOGIC_VECTOR(31 downto 0);
- signal probe6, probe7: STD_LOGIC_VECTOR(31 downto 0) := (others => 0);
+ signal probe6, probe7: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  -- General
  signal counter : integer range 0 to 50000 := -1;
  
  -- Common Inputs 
  signal start : STD_LOGIC := '0';
- signal mode  : INTEGER range 1 to 2 := 1;
+ signal mode  : INTEGER range 1 to 3 := 1;
  
  -- Plant outputs and Fault detection logic
  signal done: STD_LOGIC := '1';
- signal z_val: vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
- signal fd_residual : sfixed(n_left downto n_right) := to_sfixed(0,n_left,n_right);
+ signal z_val: vect2 := (zer0,zer0);
+ signal fd_residual : sfixed(n_left downto n_right) := zer0;
  signal fd_flag : STD_LOGIC := '0';
  
 begin
@@ -90,9 +90,8 @@ begin
 ---- Instances ----
 Plant_inst: plant_x port map (
 clk => clk,
-ctart => start,
+start => start,
 mode => mode,
-load => load,
 plt_u => plt_u,
 plt_y => plt_y,
 done => done,
@@ -118,12 +117,14 @@ PORT MAP (
 ); 
 ---- Processes ----
 -- Main loop
-CoreLOOP: process(clk, pc_pwm, pc_en)
+CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
  begin
  
  
 
   if clk'event and clk = '1' then
+  
+  trig_in <= pc_en;
            
            if pc_en = '1' then
 
@@ -135,22 +136,23 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
       probe_z2 <= result_type(z_val(1)) ; 
       probe_y1 <= result_type(plt_y(0));
       probe_y2 <= result_type(plt_y(1));
+      probe6 <= STD_LOGIC_VECTOR(to_unsigned(mode,probe6'length));
                 
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
             
    ---- To determine Matrix for corresponding mode ----
    if buck = '1' then
-           if (pc_pwm_top = '1' and pc_pwm_bottom = '0' ) then
+           if (pc_pwm_top = '1' and pc_pwm_bot = '0' ) then
                mode <= 1;
-           elsif (pc_pwm_top = '0' and pc_pwm_bottom = '1' ) then
+           elsif (pc_pwm_top = '0' and pc_pwm_bot = '1' ) then
                   mode <= 2; 
            else null;
            end if;
     elsif boost = '1' then       
-           if (pc_pwm_top = '1' and pc_pwm_bottom = '0' ) then
+           if (pc_pwm_top = '1' and pc_pwm_bot = '0' ) then
                    mode <= 1;
-           elsif (pc_pwm_top = '0' and pc_pwm_bottom = '1' ) then
+           elsif (pc_pwm_top = '0' and pc_pwm_bot = '1' ) then
                       mode <= 3; 
            else null;
            end if;
@@ -163,7 +165,6 @@ CoreLOOP: process(clk, pc_pwm, pc_en)
    ---- For constant time step 500 ns Matrix Mutiplication to run ----
     if (counter = 1) then
       start <= '1';
-      trig_in <= '1'; 
       elsif (counter = 2) then
       start <= '0';
       else null;
@@ -186,7 +187,9 @@ fault_detection: process(clk, reset_fd, FD_residual)
                    
                     -- Fault detection with latch
                       fd_flag <= '0';
-                      if fd_residual > fd_th or fd_flag = '1' or reset_fd = '0' then
+                      if reset_fd = '1' then
+                      fd_flag <= '0';
+                      elsif fd_residual > fd_th or fd_flag = '1'  then
                       fd_flag <= '1';
                       else
                       fd_flag <= '0';

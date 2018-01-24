@@ -14,15 +14,15 @@ entity plant_x is
     port (clk : in STD_LOGIC;
           start : in STD_LOGIC;
           -- Buck-boost operation
-          mode : in INTEGER range 1 to 2;
+          mode : in INTEGER range 1 to 3;
           -- Plant input
           plt_u : in vect3; -- see through CRO
           -- Plant output
-          plt_y : in vect2;
+          plt_y : in vect2; -- see through ILA core
           -- Estimator outputs
           done : out STD_LOGIC := '0';
           fd_residual : out sfixed(n_left downto n_right) := zer0;
-          plt_z : out vect4 := (zer0,zer0,zer0,zer0)
+          plt_z : out vect2 := (zer0,zer0)
          );
 end plant_x;
 
@@ -31,11 +31,11 @@ architecture Behavioral of plant_x is
 ---- Signals ----     
  
  -- Matrix
-    signal	  Count0  : UNSIGNED (2 downto 0):="000";
+    signal	  Count0  : UNSIGNED (2 downto 0) := "000";
     signal    A       : sfixed(d_left downto d_right);
     signal    B       : sfixed(n_left downto n_right);
     signal    P       : sfixed(A'left+B'left+1 downto A'right+B'right);
-    signal    Sum        : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
+    signal    Sum     : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
     signal    j0, k0, k2, k3 : INTEGER := 0;
  -- Gamma cal
     signal gamma : vect4 := (zer0, zer0, zer0, zer0);
@@ -76,8 +76,7 @@ mult: process(clk, plt_u, plt_y, gamma)
    
         case State is
          
-               when S0 =>
-               
+        when S0 =>
            -- For starting the computation process
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
            Count0 <= "000";
@@ -95,11 +94,14 @@ mult: process(clk, plt_u, plt_y, gamma)
            ----------------------------------------
            A_Aug_Matrix(0,0) := a00d;
            A_Aug_Matrix(0,1) := a01d;
-           A_Aug_Matrix(0,2) := a10d;
-           A_Aug_Matrix(0,3) := a11d;
-           A_Aug_Matrix(1,0) := b00d;
-           A_Aug_Matrix(1,1) := zer0;
-           A_Aug_Matrix(1,2) := zer0;
+           
+           A_Aug_Matrix(0,2) := b00d;
+           A_Aug_Matrix(0,3) := zer0h;
+           
+           A_Aug_Matrix(1,0) := a10d;
+           A_Aug_Matrix(1,1) := a11d;
+           
+           A_Aug_Matrix(1,2) := zer0h;
            A_Aug_Matrix(1,3) := b11d;          
                        
            elsif mode = 2 then
@@ -108,11 +110,14 @@ mult: process(clk, plt_u, plt_y, gamma)
            ----------------------------------------
            A_Aug_Matrix(0,0) := a00d;
            A_Aug_Matrix(0,1) := a01d;
-           A_Aug_Matrix(0,2) := a10d;
-           A_Aug_Matrix(0,3) := a11d;
-           A_Aug_Matrix(1,0) := zer0;
-           A_Aug_Matrix(1,1) := zer0;
-           A_Aug_Matrix(1,2) := zer0;
+           
+           A_Aug_Matrix(0,2) := zer0h;
+           A_Aug_Matrix(0,3) := zer0h;
+           
+           A_Aug_Matrix(1,0) := a10d;
+           A_Aug_Matrix(1,1) := a11d;
+           
+           A_Aug_Matrix(1,2) := zer0h;
            A_Aug_Matrix(1,3) := b11d;  
                       
            elsif mode = 3 then
@@ -120,12 +125,15 @@ mult: process(clk, plt_u, plt_y, gamma)
           -- Mode 3: Boost mode
           ----------------------------------------
             A_Aug_Matrix(0,0) := a00d;
-            A_Aug_Matrix(0,1) := zer0;
-            A_Aug_Matrix(0,2) := zer0;
-            A_Aug_Matrix(0,3) := a11d;
-            A_Aug_Matrix(1,0) := b00d;
-            A_Aug_Matrix(1,1) := zer0;
-            A_Aug_Matrix(1,2) := zer0;
+            A_Aug_Matrix(0,1) := zer0h;
+            
+            A_Aug_Matrix(0,2) := b00d;
+            A_Aug_Matrix(0,3) := zer0h;
+            
+            A_Aug_Matrix(1,0) := zer0h;
+            A_Aug_Matrix(1,1) := a11d;
+            
+            A_Aug_Matrix(1,2) := zer0h;
             A_Aug_Matrix(1,3) := b11d;    
            
            else null;       
@@ -134,7 +142,7 @@ mult: process(clk, plt_u, plt_y, gamma)
     -------------------------------------------
     --    State S1 (filling up of pipeline)
     -------------------------------------------
-       when S1 =>
+    when S1 =>
        A <= A_Aug_Matrix(j0, k0);  
        B <= State_inp_vect(k0);
        k0 <= k0 +1;
@@ -245,13 +253,13 @@ mult: process(clk, plt_u, plt_y, gamma)
       
        State_inp_vect(0) := C_vect(0);
        State_inp_vect(1) := C_vect(1);
-       z_val <= C_vect;
+       z_est <= C_vect;
        plt_z <=  C_vect;
        State := S9;
        
       when S9 =>
-      gamma(0) <= resize(z_val(0) - plt_y(0), n_left, n_right);
-      gamma(1) <= resize(z_val(1) - plt_y(1), n_left, n_right);
+      gamma(0) <= resize(z_est(0) - plt_y(0), n_left, n_right);
+      gamma(1) <= resize(z_est(1) - plt_y(1), n_left, n_right);
       gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
       gamma(3) <= resize(vpv - plt_u(0), n_left, n_right);
       State := S10;

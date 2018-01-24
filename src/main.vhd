@@ -62,8 +62,8 @@ port
  );
 end component;
 
--- PWM Module
-component pwm
+-- PWM Module (For imperix module, change to 'pwm_activehigh' to 'pwm')
+component pwm_activehigh
     PORT(
         clk       : IN  STD_LOGIC;                                    --system clock
         reset_n   : IN  STD_LOGIC;                                    --asynchronous reset
@@ -71,14 +71,14 @@ component pwm
         duty      : IN  sfixed(n_left downto n_right);                       --duty cycle
         pwm_out   : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1');          --pwm outputs
         pwm_n_out : OUT STD_LOGIC_VECTOR(phases-1 DOWNTO 0) := (others => '1'));          --pwm inverse outputs
-end component pwm;
--- Dead Time Module
-component deadtime
+end component pwm_activehigh;
+-- Dead Time Module (For imperix module, change to 'deadtime_activehigh' to 'deadtime')
+component deadtime_activehigh
          Port ( clk : in STD_LOGIC;
                p_Pwm_In : in STD_LOGIC;
                p_Pwm1_Out : out STD_LOGIC := '1';
                p_Pwm2_Out : out STD_LOGIC := '1');
-end component deadtime;
+end component deadtime_activehigh;
 -- DAC Module
 component pmodDA2_ctrl
      Port ( 
@@ -133,8 +133,22 @@ Generic(
            dac_val : out STD_LOGIC_VECTOR(11 downto 0));
 end component;
 -- Processor core
-
-
+component processor_core
+Port ( -- General
+       Clk : in STD_LOGIC;
+       clk_ila : in STD_LOGIC;
+       pc_en : in STD_LOGIC;
+       reset_fd : in STD_LOGIC;
+       -- FDI outputs
+       fd_flag_out : out STD_LOGIC := '0';
+       -- FI_flag : out STD_LOGIC_VECTOR(3 downto 0);
+       -- Observer inputs
+       pc_pwm_top : in STD_LOGIC;
+       pc_pwm_bot : in STD_LOGIC;
+       plt_u : in vect3;
+       plt_y : in vect2
+       );
+end component;
 
 -- Signal Definition
 -- clk wizard
@@ -169,10 +183,8 @@ signal adc_1, adc_2, adc_3, adc_4 : std_logic_vector(11 downto 0) := (others => 
 signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 
 -- Processor core
---signal pc_pwm : STD_LOGIC;
---signal FD_residual:  sfixed(n_left downto n_right);
---signal z_val : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
---signal plt_x : vect2 := (to_sfixed(0,n_left,n_right),to_sfixed(0,n_left,n_right));
+signal plt_u : vect3 := (zer0,zer0,zer0);
+signal plt_y : vect2 := (zer0,zer0);
 
  
 begin
@@ -187,17 +199,18 @@ clk_wizard_inst: clk_wiz_0
    clk_ila => clk_ila              
  );
  
--- PWM and Deadtime module
-pwm_inst: pwm 
+-- PWM and Deadtime module 
+--(For imperix module, change to 'pwm_activehigh' to 'pwm')
+pwm_inst: pwm_activehigh 
  port map(
     clk => clk, 
-    reset_n => '1', 
+    reset_n => pwm_reset, 
     ena => ena, 
     duty => duty, 
     pwm_out => pwm_out, 
     pwm_n_out => pwm_n_out);
-
-deadtime_inst: deadtime  
+--(For imperix module, change to 'deadtime_activehigh' to 'deadtime')
+deadtime_inst: deadtime_activehigh  
 port map(
     p_pwm_in => pwm_out(0), 
     clk => clk, 
@@ -356,7 +369,19 @@ scaler_4: scaler generic map (
 
 
 -- Processor_core
-
+processor_core_inst: processor_core port map (
+clk => clk,
+clk_ila => clk_ila,
+pc_en => enable_fdi,
+reset_fd => reset_fd,
+-- FDI outputs
+fd_flag_out => FD_flag,
+-- FI_flag : out STD_LOGIC_VECTOR(3 downto 0);
+-- Observer inputs
+pc_pwm_top => a_pwm1_out,
+pc_pwm_bot => a_pwm2_out,
+plt_u => plt_u,
+plt_y => plt_y);
  
 ---- Process ----           
 main_loop: process (clk)
@@ -367,6 +392,16 @@ pwm_out_t(0) <= a_pwm1_out;
 pwm_n_out_t(0)  <= a_pwm2_out;
 pwm_out_t(1) <= '1';    -- Top switch 
 pwm_n_out_t(1)  <= '0'; -- Bottom switch
+
+-- Plant inputs
+plt_u(0) <= adc_out_2(1); -- PV voltage
+plt_u(1) <= adc_out_2(0); -- load
+plt_u(2) <= adc_out_3(0); -- PV current
+-- Plant outputs
+plt_y(0) <= adc_out_1(0); -- Inductor current
+plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+
+
 end if;
 end process; 
 
