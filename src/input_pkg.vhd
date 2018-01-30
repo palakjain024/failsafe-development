@@ -82,4 +82,7 @@ package input_pkg is
   -- DAC scaler constants
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
   
+  -- Moving avg depth 
+  constant address_size: STD_LOGIC_VECTOR(3 downto 0) := "1111";
+  
 end package input_pkg;

@@ -9,43 +9,55 @@ library work;
 use work.input_pkg.all;
 
 entity moving_avg is
-    Port ( clk : in STD_LOGIC;
+    Port ( clk : in STD_LOGIC;      -- 100 MHz rate
            start : in STD_LOGIC;
-           datain : in sfixed(n_left downto n_right);
-           done: out STD_LOGIC;
-           avg: out sfixed(n_left downto n_right));
+           datain : in sfixed(d_left downto d_right);
+           done: out STD_LOGIC := '0';
+           avg: out sfixed(d_left downto d_right) := zer0h
+           );
 end moving_avg;
 
 architecture Behavioral of moving_avg is
  -- Component Definitions
- component memory_block
- port (
-    clk   : in  std_logic;
-    we      : in  std_logic;
-    address : in  std_logic_vector(address_size downto 0);
-    datain  : in  sfixed(n_left downto n_right);
-    dataout : out sfixed(n_left downto n_right)
-  );
-  end component;
+ -- Memory Block (Read first mode)
+ COMPONENT blk_mem_gen_0
+   PORT (
+     clka : IN STD_LOGIC;
+     ena : IN STD_LOGIC;
+     wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+     addra : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+     dina : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+     douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+     rsta_busy : OUT STD_LOGIC
+   );
+ END COMPONENT;
+   
+  -- Memory Block
+  signal wea: std_logic := '0';
+  signal addra: std_logic_vector(3 downto 0) := (others => '0');
+  signal douta, dina: STD_LOGIC_VECTOR(31 DOWNTO 0);
+  signal rsta_busy: STD_LOGIC;
   
-  -- Signal 
-  signal sum: sfixed(n_left downto n_right) := to_sfixed(0, n_left, n_right);
-  signal we: std_logic := '0';
-  signal address: std_logic_vector(address_size downto 0) := (others => '0');
-  signal dataout: sfixed(n_left downto n_right);
-    
+  -- For averaging
+  signal sum_slv: STD_LOGIC_VECTOR(31 DOWNTO 0) := (others => '0');   
+  signal avg_slv: STD_LOGIC_VECTOR(31 DOWNTO 0) := (others => '0');   
+  
 begin
 
-memory_inst: memory_block port map (
-clk => clk,
-we => we,
-address => address,
-datain => datain,
-dataout => dataout);
+mem_inst: blk_mem_gen_0
+  PORT MAP (
+    clka => clk,
+    ena => '1',
+    wea => wea,
+    addra => addra,
+    dina => dina,
+    douta => douta,
+    rsta_busy => rsta_busy
+  );
 
 moving_avg: process(clk)
 
-type STATE_VALUE is (S0, S1, S2, S3);
+type STATE_VALUE is (S0, S1, S2, S3, S4);
 variable State: STATE_VALUE := S0; 
 
 begin
@@ -56,32 +68,38 @@ if (Clk'event and Clk = '1') then
    
     when S0 =>
     
+    dina <= result_type(datain);
+    wea <= '1';
+    done <= '0';
+    
     if start = '1' then
      State := S1;
     else
-    State := S0;
+     State := S0;
     end if;
-    we <= '0';
-    done <= '0';
+   
     
    when S1 =>
-   sum <= resize(sum - dataout + datain, n_left, n_right);
+   sum_slv <= sum_slv - douta;
    State := S2;
    
    when S2 =>
-   we <= '1';
-   avg <= resize(sum/to_sfixed(2048, n_left, n_right), n_left, n_right);
-   done <= '1';
+   sum_slv <= sum_slv + dina;
    State := S3;
    
    when S3 =>
-   we <= '0';
-   address <= address + '1';
+   avg_slv <= sum_slv/address_size;
+   wea <= '0';
+   addra <= addra + '1';
+   State := S4;
+   
+   when S4 =>
+   avg <= to_sfixed(to_integer(signed(avg_slv)), d_left, d_right);
+   done <= '1';
+   
    State := S0;
    end case;
-   
-end if;
-
-end process moving_avg;
+  end if; -- CLK
+ end process moving_avg;
 
 end Behavioral;

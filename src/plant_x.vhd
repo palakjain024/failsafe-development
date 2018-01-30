@@ -22,7 +22,7 @@ entity plant_x is
           -- Estimator outputs
           done : out STD_LOGIC := '0';
           gamma_norm_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
-          max_gamma_out : out sfixed(n_left downto n_right) := zer0;
+          max_gamma_out : out sfixed(d_left downto d_right) := zer0h;
           plt_z : out vect2 := (zer0,zer0)
          );
 end plant_x;
