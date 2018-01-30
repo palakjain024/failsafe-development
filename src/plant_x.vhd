@@ -21,14 +21,21 @@ entity plant_x is
           plt_y : in vect2; -- see through ILA core
           -- Estimator outputs
           done : out STD_LOGIC := '0';
-          fd_residual : out sfixed(n_left downto n_right) := zer0;
+          gamma_norm_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
+          max_gamma_out : out sfixed(n_left downto n_right) := zer0;
           plt_z : out vect2 := (zer0,zer0)
          );
 end plant_x;
 
 architecture Behavioral of plant_x is
 
----- Signals ----     
+
+------ Component Definitions ------
+  
+------------------------------------
+
+
+---- Signal Definitions ----     
  
  -- Matrix
     signal	  Count0  : UNSIGNED (2 downto 0) := "000";
@@ -37,20 +44,23 @@ architecture Behavioral of plant_x is
     signal    P       : sfixed(A'left+B'left+1 downto A'right+B'right);
     signal    Sum     : sfixed(P'left+3 downto P'right);  -- +3 because of 3 sums would be done for one element [A:B]*[state input] = State(element)
     signal    j0, k0, k2, k3 : INTEGER := 0;
+    
  -- Gamma cal
     signal gamma : vect4 := (zer0, zer0, zer0, zer0);
-
+    signal gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
+    signal ab_gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
+    
  -- digital twin estimate
     signal z_est : vect2 := (il0, vc0);
     signal pv_est : vect2 := (ipv, vpv);
-    signal norm: sfixed(n_left downto n_right) := zer0;
     
+---------------------------------    
 begin
-                
+ 
 mult: process(clk, plt_u, plt_y, gamma)
 
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13);
    variable     State         : STATE_VALUE := S0;
     
    -- digital twin cal
@@ -62,6 +72,8 @@ mult: process(clk, plt_u, plt_y, gamma)
    -- Augmented estimation and input vector
    variable State_inp_vect     : vect4 := (il0, vc0, plt_u(0), plt_u(1));
   
+   -- Maximum gamma
+   variable max_gamma: sfixed(d_left downto d_right):= zer0h;
    
    begin
               
@@ -81,6 +93,9 @@ mult: process(clk, plt_u, plt_y, gamma)
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
            Count0 <= "000";
            done <= '0';
+           -- Max gamma reset
+           max_gamma := zer0h;
+           
            if( start = '1' ) then   
                State := S1;
            else
@@ -258,15 +273,44 @@ mult: process(clk, plt_u, plt_y, gamma)
        State := S9;
        
       when S9 =>
+      -- Gamma Calculation
       gamma(0) <= resize(z_est(0) - plt_y(0), n_left, n_right);
       gamma(1) <= resize(z_est(1) - plt_y(1), n_left, n_right);
       gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
       gamma(3) <= resize(vpv - plt_u(0), n_left, n_right);
       State := S10;
-                
+    
      when S10 =>
-        done <= '1';
-        State := S0;
+     -- Gamma normalization
+     gamma_norm(0) <= resize(gamma(0)/ibase, d_left, d_right);
+     gamma_norm(1) <= resize(gamma(1)/vbase, d_left, d_right);
+     gamma_norm(2) <= resize(gamma(2)/ibase, d_left, d_right);
+     gamma_norm(3) <= resize(gamma(3)/vbase, d_left, d_right);
+     State := S11;
+     
+     when S11 =>
+     -- Absolute normalizaed gamma
+     ab_gamma_norm(0) <= resize(abs(gamma_norm(0)), d_left, d_right); 
+     ab_gamma_norm(1) <= resize(abs(gamma_norm(1)), d_left, d_right); 
+     ab_gamma_norm(2) <= resize(abs(gamma_norm(2)), d_left, d_right); 
+     ab_gamma_norm(3) <= resize(abs(gamma_norm(3)), d_left, d_right);      
+     State := S12; 
+     
+     when S12 =>
+     -- Calculation of infinity norm
+         for i in 0 to 3 loop
+             if (max_gamma < ab_gamma_norm(i)) then
+             max_gamma := ab_gamma_norm(i);
+             end if;
+         end loop;
+      State := S13; 
+                
+     when S13 =>
+     -- Output to mains 
+     max_gamma_out <= max_gamma;
+     gamma_norm_out <= gamma_norm;
+     done <= '1';
+     State := S0;
         
         end case;
         end if; -- clk

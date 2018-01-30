@@ -59,7 +59,8 @@ END COMPONENT  ;
           plt_y : in vect2;
           -- Estimator outputs
           done : out STD_LOGIC := '0';
-          fd_residual : out sfixed(n_left downto n_right) := zer0;
+          gamma_norm_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
+          max_gamma_out : out sfixed(n_left downto n_right) := zer0;
           plt_z : out vect2 := (zer0,zer0)
          );
  end component plant_x;
@@ -69,11 +70,11 @@ END COMPONENT  ;
 
 -- ILA core
  signal trig_in_ack, trig_in : STD_LOGIC := '0';
- signal probe_normfd, probe_fdflag, probe_z1, probe_z2, probe_y1, probe_y2: STD_LOGIC_VECTOR(31 downto 0);
- signal probe6, probe7: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_normfd, probe_z1, probe_z2, probe_ipv: STD_LOGIC_VECTOR(31 downto 0);
+ signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  -- General
- signal counter : integer range 0 to 50000 := -1;
+ signal counter : integer range 0 to 50000 := 0;
  
  -- Common Inputs 
  signal start : STD_LOGIC := '0';
@@ -82,7 +83,8 @@ END COMPONENT  ;
  -- Plant outputs and Fault detection logic
  signal done: STD_LOGIC := '1';
  signal z_val: vect2 := (zer0,zer0);
- signal fd_residual : sfixed(n_left downto n_right) := zer0;
+ signal gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
+ signal max_gamma : sfixed(d_left downto d_right):= zer0h;
  signal fd_flag : STD_LOGIC := '0';
  
 begin
@@ -95,7 +97,8 @@ mode => mode,
 plt_u => plt_u,
 plt_y => plt_y,
 done => done,
-fd_residual => fd_residual,
+gamma_norm_out => gamma_norm,
+max_gamma_out => max_gamma,
 plt_z => z_val
 );
 
@@ -105,14 +108,14 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_fdflag, 
-    probe1 => probe_normfd, 
-    probe2 => probe_z1,  
-    probe3 => probe_z2, 
-    probe4 => probe_y1,
-    probe5 => probe_y2,
-    probe6 => probe6,
-    probe7 => probe7
+    probe0 => probe_normfd, 
+    probe1 => probe_z1, 
+    probe2 => probe_z2,  
+    probe3 => probe_ipv, 
+    probe4 => probe_gn0,
+    probe5 => probe_gn1,
+    probe6 => probe_gn2,
+    probe7 => probe_gn3
     
 ); 
 ---- Processes ----
@@ -130,13 +133,16 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 
 
    ---- ILA ----
-      probe_fdflag(0) <= fd_flag;
-      probe_normfd <= result_type(fd_residual); 
+      probe_gn0 <= result_type(gamma_norm(0));
+      probe_gn1 <= result_type(gamma_norm(1));
+      probe_gn2 <= result_type(gamma_norm(2));
+      probe_gn3 <= result_type(gamma_norm(3));
+      probe_normfd <= result_type(max_gamma); 
       probe_z1  <= result_type(z_val(0));
       probe_z2 <= result_type(z_val(1)) ; 
-      probe_y1 <= result_type(plt_y(0));
-      probe_y2 <= result_type(plt_y(1));
-      probe6 <= STD_LOGIC_VECTOR(to_unsigned(mode,probe6'length));
+      probe_ipv <= result_type(plt_u(2));
+      
+      
                 
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
@@ -181,7 +187,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
  end process; 
  
 -- Fault detection logic
-fault_detection: process(clk, reset_fd, FD_residual)
+fault_detection: process(clk, reset_fd, max_gamma)
                begin
                    if (clk = '1' and clk'event) then
                    
@@ -189,7 +195,7 @@ fault_detection: process(clk, reset_fd, FD_residual)
                       fd_flag <= '0';
                       if reset_fd = '1' then
                       fd_flag <= '0';
-                      elsif fd_residual > fd_th or fd_flag = '1'  then
+                      elsif max_gamma > fd_th or fd_flag = '1'  then
                       fd_flag <= '1';
                       else
                       fd_flag <= '0';
