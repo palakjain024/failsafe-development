@@ -70,6 +70,7 @@ package input_pkg is
   
   -- ILA
   subtype result_type is std_logic_vector (31 downto 0);
+  subtype constrained_result is std_logic_vector (30 downto 0);
   
   -- ADC Descaler constants
   constant vmax : sfixed(15 downto -16):= to_sfixed(3.3,15,-16);
@@ -83,6 +84,7 @@ package input_pkg is
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
   
   -- Moving avg depth 
-  constant address_size: STD_LOGIC_VECTOR(3 downto 0) := "1111";
+   -- Address
+   constant address_size: integer range 0 to 1000 := 10;
   
 end package input_pkg;

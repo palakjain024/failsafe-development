@@ -1,4 +1,6 @@
--- For averaging gamma
+-- For averaging gamma: It is the test VHDL program.
+-- Its test bench name is moving_avg_t
+-- For main program, use moving_average file 
 library IEEE;
 library IEEE_PROPOSED;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -12,6 +14,16 @@ entity moving_avg is
     Port ( clk : in STD_LOGIC;      -- 100 MHz rate
            start : in STD_LOGIC;
            datain : in sfixed(d_left downto d_right);
+           -- Intermediate signals
+           wea: inout std_logic_vector(0 downto 0) := (others => '0');
+           addra: inout std_logic_vector(3 downto 0) := (others => '0');
+           douta: inout STD_LOGIC_VECTOR(31 DOWNTO 0);
+           dina: inout STD_LOGIC_VECTOR(31 DOWNTO 0);
+           rsta_busy: out STD_LOGIC;
+            -- For averaging
+           sum: inout sfixed(1 downto -30):= zer0h;   
+           avg_int: inout sfixed(1 downto -30):= zer0h ;
+           -- Output signals   
            done: out STD_LOGIC := '0';
            avg: out sfixed(d_left downto d_right) := zer0h
            );
@@ -33,14 +45,14 @@ architecture Behavioral of moving_avg is
  END COMPONENT;
    
   -- Memory Block
-  signal wea: std_logic := '0';
-  signal addra: std_logic_vector(3 downto 0) := (others => '0');
-  signal douta, dina: STD_LOGIC_VECTOR(31 DOWNTO 0);
-  signal rsta_busy: STD_LOGIC;
+--  signal wea: std_logic_vector(0 downto 0) := (others => '0');
+--  signal addra: std_logic_vector(3 downto 0) := (others => '0');
+--  signal douta, dina: STD_LOGIC_VECTOR(31 DOWNTO 0);
+--  signal rsta_busy: STD_LOGIC;
   
-  -- For averaging
-  signal sum_slv: STD_LOGIC_VECTOR(31 DOWNTO 0) := (others => '0');   
-  signal avg_slv: STD_LOGIC_VECTOR(31 DOWNTO 0) := (others => '0');   
+--  -- For averaging
+--  signal sum_slv: STD_LOGIC_VECTOR(31 DOWNTO 0) := (others => '0');   
+--  signal avg_int: sfixed(1 downto -30):= zer0h ;   
   
 begin
 
@@ -68,8 +80,7 @@ if (Clk'event and Clk = '1') then
    
     when S0 =>
     
-    dina <= result_type(datain);
-    wea <= '1';
+    dina <= to_slv(datain);
     done <= '0';
     
     if start = '1' then
@@ -80,21 +91,22 @@ if (Clk'event and Clk = '1') then
    
     
    when S1 =>
-   sum_slv <= sum_slv - douta;
+   sum <= resize(sum - to_sfixed(douta,d_left,d_right), d_left, d_right);
    State := S2;
    
    when S2 =>
-   sum_slv <= sum_slv + dina;
+   wea <= "1";
+   sum <= resize(sum + datain, d_left, d_right);
    State := S3;
    
    when S3 =>
-   avg_slv <= sum_slv/address_size;
-   wea <= '0';
-   addra <= addra + '1';
+   avg_int <= resize(sum*address_size,d_left,d_right);
    State := S4;
    
    when S4 =>
-   avg <= to_sfixed(to_integer(signed(avg_slv)), d_left, d_right);
+   wea <= "0";
+   addra <= addra + "1";
+   avg <= avg_int;
    done <= '1';
    
    State := S0;

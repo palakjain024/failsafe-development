@@ -23,6 +23,7 @@ entity plant_x is
           done : out STD_LOGIC := '0';
           gamma_norm_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
           max_gamma_out : out sfixed(d_left downto d_right) := zer0h;
+          gamma_avg_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
           plt_z : out vect2 := (zer0,zer0)
          );
 end plant_x;
@@ -31,7 +32,14 @@ architecture Behavioral of plant_x is
 
 
 ------ Component Definitions ------
-  
+Component moving_avg_v0
+    Port ( clk : in STD_LOGIC;
+           start : in STD_LOGIC;
+           datain : in sfixed(n_left downto n_right);
+           done: out STD_LOGIC;
+           avg: out sfixed(n_left downto n_right)
+           );
+end component moving_avg_v0; 
 ------------------------------------
 
 
@@ -53,10 +61,47 @@ architecture Behavioral of plant_x is
  -- digital twin estimate
     signal z_est : vect2 := (il0, vc0);
     signal pv_est : vect2 := (ipv, vpv);
+  
+ -- Averaging moving
+    signal start_ma, done_ma0, done_ma1, done_ma2, done_ma3 : STD_LOGIC := '0';
+    signal gamma_avg: vectd4 := (zer0h, zer0h, zer0h, zer0h);
     
 ---------------------------------    
 begin
- 
+
+gamma0_avg_inst: moving_avg_v0 port map (
+                clk => clk,
+                Start => start_ma,
+                datain => gamma_norm(0), 
+                done => done_ma0,
+                avg => gamma_avg(0)
+                );
+                
+gamma1_avg_inst: moving_avg_v0 port map (
+                                clk => clk,
+                                Start => start_ma,
+                                datain => gamma_norm(1), 
+                                done => done_ma1,
+                                avg => gamma_avg(1)
+                                );
+                                
+gamma2_avg_inst: moving_avg_v0 port map (
+                                                clk => clk,
+                                                Start => start_ma,
+                                                datain => gamma_norm(2), 
+                                                done => done_ma2,
+                                                avg => gamma_avg(2)
+                                                );
+                                                
+gamma3_avg_inst: moving_avg_v0 port map (
+                                                                clk => clk,
+                                                                Start => start_ma,
+                                                                datain => gamma_norm(3), 
+                                                                done => done_ma3,
+                                                                avg => gamma_avg(3)
+                                                                );                                             
+                                                
+
 mult: process(clk, plt_u, plt_y, gamma)
 
    -- General Variables for multiplication and addition
@@ -84,6 +129,23 @@ mult: process(clk, plt_u, plt_y, gamma)
     State_inp_vect(3) := plt_u(1);
    -- Outputs to main 
     plt_z <= z_est;
+    
+    if done_ma0 = '1' then
+    gamma_avg_out(0) <= gamma_avg(0);
+    end if;
+    
+    if done_ma1 = '1' then
+        gamma_avg_out(1) <= gamma_avg(1);
+        end if;
+        
+        if done_ma2 = '1' then
+            gamma_avg_out(2) <= gamma_avg(2);
+            end if;
+            
+            if done_ma3 = '1' then
+                gamma_avg_out(3) <= gamma_avg(3);
+                end if;
+    
            
    
         case State is
@@ -286,6 +348,8 @@ mult: process(clk, plt_u, plt_y, gamma)
      gamma_norm(1) <= resize(gamma(1)/vbase, d_left, d_right);
      gamma_norm(2) <= resize(gamma(2)/ibase, d_left, d_right);
      gamma_norm(3) <= resize(gamma(3)/vbase, d_left, d_right);
+     -- Moving average
+     start_ma <= '1';
      State := S11;
      
      when S11 =>
@@ -309,7 +373,7 @@ mult: process(clk, plt_u, plt_y, gamma)
      -- Output to mains 
      max_gamma_out <= max_gamma;
      gamma_norm_out <= gamma_norm;
-     done <= '1';
+     done <= '1'; 
      State := S0;
         
         end case;
