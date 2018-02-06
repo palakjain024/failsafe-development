@@ -21,15 +21,22 @@ set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 set_property PACKAGE_PIN F21 [get_ports reset_fd]
 set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
 
+#### Fault injection ####
+
 ## Mapping of sensor fault injection Switch H19
-#set_property PACKAGE_PIN H19 [get_ports reset_fd]
-#set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+set_property PACKAGE_PIN H19 [get_ports sensor_fault]
+set_property IOSTANDARD LVCMOS33 [get_ports sensor_fault]
 
-## Mapping of switch fault injection Switch H18
-#set_property PACKAGE_PIN H18 [get_ports reset_fd]
-#set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
+## Mapping of open switch fault injection Switch H18
+set_property PACKAGE_PIN H18 [get_ports openswitch_fault]
+set_property IOSTANDARD LVCMOS33 [get_ports openswitch_fault]
 
-# Mapping of FD and FI flag
+## Mapping of short switch fault injection Switch H17
+set_property PACKAGE_PIN H17 [get_ports shortswitch_fault]
+set_property IOSTANDARD LVCMOS33 [get_ports shortswitch_fault]
+########################################################
+
+#### Mapping of FD and FI flag ####
 #JA7 AB11
 set_property PACKAGE_PIN AB11 [get_ports FD_flag]
 set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]

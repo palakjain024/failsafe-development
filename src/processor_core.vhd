@@ -73,7 +73,8 @@ END COMPONENT  ;
  signal trig_in_ack, trig_in : STD_LOGIC := '0';
  signal probe_normfd, probe_z1, probe_z2, probe_ipv: STD_LOGIC_VECTOR(31 downto 0);
  signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
-  signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_fdflag: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  -- General
  signal counter : integer range 0 to 50000 := 0;
@@ -111,13 +112,13 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_gn2, 
-    probe1 => probe_gn2avg, 
-    probe2 => probe_gn3,  
-    probe3 => probe_gn3avg, 
-    probe4 => probe_gn0,
-    probe5 => probe_gn0avg,
-    probe6 => probe_gn1,
+    probe0 => probe_fdflag, 
+    probe1 => probe_normfd, 
+    probe2 => probe_gn0,  
+    probe3 => probe_gn1, 
+    probe4 => probe_gn2,
+    probe5 => probe_gn3,
+    probe6 => probe_gn0avg,
     probe7 => probe_gn1avg
     
 ); 
@@ -148,6 +149,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
       probe_z1  <= result_type(z_val(0));
       probe_z2 <= result_type(z_val(1)) ; 
       probe_ipv <= result_type(plt_u(2));
+      probe_fdflag(0) <= fd_flag;
       
       
                 
@@ -199,7 +201,7 @@ fault_detection: process(clk, reset_fd, max_gamma)
                    if (clk = '1' and clk'event) then
                    
                     -- Fault detection with latch
-                      fd_flag <= '0';
+                      --fd_flag <= '0';
                       if reset_fd = '1' then
                       fd_flag <= '0';
                       elsif max_gamma > fd_th or fd_flag = '1'  then

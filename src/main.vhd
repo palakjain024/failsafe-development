@@ -17,6 +17,10 @@ entity main is
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(1 downto 0);
+           -- Fault injection
+           sensor_fault : in STD_LOGIC;
+           shortswitch_fault : in STD_LOGIC;
+           openswitch_fault : in STD_LOGIC;
            -- Flags
            FD_flag : out STD_LOGIC;
            reset_fd : in STD_LOGIC;
@@ -387,20 +391,41 @@ plt_y => plt_y);
 main_loop: process (clk)
 begin
 if (clk = '1' and clk'event) then
--- Output (no fault) ---
-pwm_out_t(0) <= a_pwm1_out;
-pwm_n_out_t(0)  <= a_pwm2_out;
-pwm_out_t(1) <= '1';    -- Top switch 
-pwm_n_out_t(1)  <= '0'; -- Bottom switch
 
+----- PWM outputs from any control scheme -----       
+        if shortswitch_fault = '1' then
+                -- short Fault in SW2
+                pwm_out_t(0) <= a_pwm1_out;
+                pwm_n_out_t(0)  <= a_pwm2_out;
+                pwm_out_t(1) <= '1';    -- Top switch 
+                pwm_n_out_t(1)  <= '1'; -- Bottom switch
+        elsif openswitch_fault = '1' then
+                -- open Fault in SW1
+                pwm_out_t(0) <= a_pwm1_out;
+                pwm_n_out_t(0)  <= a_pwm2_out;
+                pwm_out_t(1) <= '0';    -- Top switch 
+                pwm_n_out_t(1)  <= '0'; -- Bottom switch
+        else
+                -- Output (no fault) ---
+                pwm_out_t(0) <= a_pwm1_out;
+                pwm_n_out_t(0)  <= a_pwm2_out;
+                pwm_out_t(1) <= '1';    -- Top switch 
+                pwm_n_out_t(1)  <= '0'; -- Bottom switch
+        end if;
+        
 -- Plant inputs
 plt_u(0) <= adc_out_2(1); -- PV voltage
 plt_u(1) <= adc_out_2(0); -- load
 plt_u(2) <= adc_out_3(0); -- PV current
--- Plant outputs
-plt_y(0) <= adc_out_1(0); -- Inductor current
-plt_y(1) <= adc_out_1(1); -- Capacitor voltage
 
+-- Plant outputs
+if sensor_fault = '1' then
+plt_y(0) <= resize(adc_out_1(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Inductor current
+else
+plt_y(0) <= adc_out_1(0); -- Inductor current
+end if;
+
+plt_y(1) <= adc_out_1(1); -- Capacitor voltage
 
 end if;
 end process; 
