@@ -32,18 +32,18 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-1,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.4, 1, -30); -- Threshold
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.2, 1, -30); -- Threshold
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
-  constant v_out : sfixed(15 downto -16)  := to_sfixed(60, 15, -16);
+  constant v_out : sfixed(15 downto -16)  := to_sfixed(54, 15, -16);
   constant i_load : sfixed(15 downto -16) := to_sfixed(4,15,-16);
   
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(60,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(8,15,-16);
-  constant vpv : sfixed(15 downto -16) := v_in;
+  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant vpv : sfixed(15 downto -16) := to_sfixed(29,15,-16);
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
@@ -55,9 +55,9 @@ package input_pkg is
   type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for gamma
   type vectd4 is array (0 to 3) of sfixed(1 downto -30); -- for gamma normalized
     
-  -- For normalization of gamma
-  constant ibase: sfixed(15 downto -16) := to_sfixed(9, 15, -16);
-  constant vbase: sfixed(15  downto -16) := to_sfixed(80, 15, -16);
+  -- For normalization of gamma, put reciprocal to avoid division
+  constant ibase: sfixed(15 downto -16) := to_sfixed(0.12, 15, -16); -- Ibase = 9
+  constant vbase: sfixed(15  downto -16) := to_sfixed(0.0125, 15, -16); -- Vbase = 80
     
   -- Matrices
   type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]

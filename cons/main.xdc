@@ -21,20 +21,37 @@ set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 set_property PACKAGE_PIN F21 [get_ports reset_fd]
 set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
 
-#### Fault injection ####
-
-## Mapping of sensor fault injection Switch H19
+## ------------Fault injection --------------------------##
+### Mapping of sensor fault injection Switch H19
 set_property PACKAGE_PIN H19 [get_ports sensor_fault]
 set_property IOSTANDARD LVCMOS33 [get_ports sensor_fault]
 
-## Mapping of open switch fault injection Switch H18
+### Mapping of open switch fault injection Switch H18
 set_property PACKAGE_PIN H18 [get_ports openswitch_fault]
 set_property IOSTANDARD LVCMOS33 [get_ports openswitch_fault]
 
-## Mapping of short switch fault injection Switch H17
+### Mapping of short switch fault injection Switch H17
 set_property PACKAGE_PIN H17 [get_ports shortswitch_fault]
 set_property IOSTANDARD LVCMOS33 [get_ports shortswitch_fault]
-########################################################
+
+## Here, subfault injection using push buttons
+## Mapping of subfault type injection using buttonC P16
+set_property PACKAGE_PIN P16 [get_ports fault_type]
+set_property IOSTANDARD LVCMOS33 [get_ports fault_type]
+
+## MApping of fault type f1, f2, f3 see main_loop for details
+## Mapping of f1 on LD0
+set_property PACKAGE_PIN T22 [get_ports LD_f1]
+set_property IOSTANDARD LVCMOS33 [get_ports LD_f1]
+
+## Mapping of f2 on LD1
+set_property PACKAGE_PIN T21 [get_ports LD_f2]
+set_property IOSTANDARD LVCMOS33 [get_ports LD_f2]
+
+## Mapping of f3 on LD2
+set_property PACKAGE_PIN U22 [get_ports LD_f3]
+set_property IOSTANDARD LVCMOS33 [get_ports LD_f3]
+## ---------------------------------------------##
 
 #### Mapping of FD and FI flag ####
 #JA7 AB11
@@ -43,7 +60,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
 
 #JA8 (AB10), JA9(AB9), JA10(AA8) for fault identification
 
-#-----------------------------------
+#-----------------------------------#
 
 # ----- For Controller ------
 

@@ -339,15 +339,16 @@ mult: process(clk, plt_u, plt_y, gamma)
       gamma(0) <= resize(z_est(0) - plt_y(0), n_left, n_right);
       gamma(1) <= resize(z_est(1) - plt_y(1), n_left, n_right);
       gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
-      gamma(3) <= resize(vpv - plt_u(0), n_left, n_right);
+      gamma(3) <= resize(vpv - plt_u(0), n_left, n_right); 
+      -- this difference should not be equal to 0 otherwise problem is in division
       State := S10;
     
      when S10 =>
      -- Gamma normalization
-     gamma_norm(0) <= resize(gamma(0)/ibase, d_left, d_right);
-     gamma_norm(1) <= resize(gamma(1)/vbase, d_left, d_right);
-     gamma_norm(2) <= resize(gamma(2)/ibase, d_left, d_right);
-     gamma_norm(3) <= resize(gamma(3)/vbase, d_left, d_right);
+     gamma_norm(0) <= resize(gamma(0)*ibase, d_left, d_right);
+     gamma_norm(1) <= resize(gamma(1)*vbase, d_left, d_right);
+     gamma_norm(2) <= resize(gamma(2)*ibase, d_left, d_right);
+     gamma_norm(3) <= resize(gamma(3)*vbase, d_left, d_right);
      -- Moving average
      start_ma <= '1';
      State := S11;
