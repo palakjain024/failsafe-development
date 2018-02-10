@@ -68,8 +68,8 @@ end component moving_avg_v1;
     signal gamma_avg: vect4 := (zer0, zer0, zer0, zer0);
     signal gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
     signal ab_gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
-     -- Averaging moving
-       signal start_ma, done_ma0, done_ma1, done_ma2, done_ma3 : STD_LOGIC := '0';
+ -- Averaging moving
+    signal done_ma0, done_ma1, done_ma2, done_ma3 : STD_LOGIC := '0';
     
  -- digital twin estimate
     signal z_est : vect2 := (il0, vc0);
@@ -83,7 +83,7 @@ begin
 
 gamma0_avg_inst: moving_avg_v1 port map (
                 clk => clk,
-                Start => start_ma,
+                Start => start,
                 datain => gamma(0), 
                 done => done_ma0,
                 avg => gamma_avg(0)
@@ -91,7 +91,7 @@ gamma0_avg_inst: moving_avg_v1 port map (
                 
 gamma1_avg_inst: moving_avg_v1 port map (
                                 clk => clk,
-                                Start => start_ma,
+                                Start => start,
                                 datain => gamma(1), 
                                 done => done_ma1,
                                 avg => gamma_avg(1)
@@ -99,7 +99,7 @@ gamma1_avg_inst: moving_avg_v1 port map (
                                 
 gamma2_avg_inst: moving_avg_v1 port map (
                                                 clk => clk,
-                                                Start => start_ma,
+                                                Start => start,
                                                 datain => gamma(2), 
                                                 done => done_ma2,
                                                 avg => gamma_avg(2)
@@ -107,7 +107,7 @@ gamma2_avg_inst: moving_avg_v1 port map (
                                                 
 gamma3_avg_inst: moving_avg_v1 port map (
                                                                 clk => clk,
-                                                                Start => start_ma,
+                                                                Start => start,
                                                                 datain => gamma(3), 
                                                                 done => done_ma3,
                                                                 avg => gamma_avg(3)
@@ -353,9 +353,7 @@ mult: process(clk, plt_u, plt_y, gamma)
       gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
       gamma(3) <= resize(vpv - plt_u(0), n_left, n_right); 
       -- this difference should not be equal to 0 otherwise problem is in division
-      
-      -- Moving average
-      start_ma <= '1';
+     
       State := S10;
     
      when S10 =>
