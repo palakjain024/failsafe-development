@@ -66,7 +66,7 @@ package input_pkg is
   constant n_left: integer := 15;
   constant n_right: integer := -16;
   constant sum_left: integer := 23;
-  constant sum_right: integer := -8;
+  constant sum_right: integer := -16;
   constant d_left: integer := 1;
   constant d_right:integer := -30;
   
@@ -87,9 +87,9 @@ package input_pkg is
   
   -- Moving avg depth 
   -- Address
-  constant total_address : sfixed(1 downto -30) := to_sfixed(0.00049, 1, -30); -- Reciprocal of 2048
-  constant address_size: integer range 0 to 100 := 10;
-  constant address_depth: integer range 0 to 100 := 11;  -- For calculating total address depth
+  constant total_address : sfixed(1 downto -30) := to_sfixed(0.001, 1, -30); -- Reciprocal of 1024
+  constant address_size: integer range 0 to 100 := 9;
+  constant address_depth: integer range 0 to 100 := 10;  -- For calculating total address depth
    
   -- Fault Identification
   type ip_array is array (0 to 10) of sfixed(15 downto -16);
