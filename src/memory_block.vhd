@@ -13,15 +13,15 @@ entity memory_block is
    clk   : in  std_logic;
    we      : in  std_logic;
    address : in  std_logic_vector(address_size downto 0);
-   datain  : in  sfixed(d_left downto d_right);
-   dataout : out sfixed(d_left downto d_right)
+   datain  : in  sfixed(n_left downto n_right);
+   dataout : out sfixed(n_left downto n_right)
  );
 end memory_block;
 
 architecture Behavioral of memory_block is
 
-   type ram_type is array (0 to (2**address'length)-1) of sfixed(d_left downto d_right);
-   signal ram : ram_type := (others => to_sfixed(0, d_left, d_right));
+   type ram_type is array (0 to (2**address_depth)-1) of sfixed(n_left downto n_right);
+   signal ram : ram_type :=  (others => zer0);
    signal read_address : std_logic_vector(address'range);
 
 begin

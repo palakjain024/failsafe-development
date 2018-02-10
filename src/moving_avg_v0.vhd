@@ -11,9 +11,9 @@ use work.input_pkg.all;
 entity moving_avg_v0 is
     Port ( clk : in STD_LOGIC;
            start : in STD_LOGIC;
-           datain : in sfixed(d_left downto d_right);
+           datain : in sfixed(n_left downto n_right);
            done: out STD_LOGIC := '0';
-           avg: out sfixed(d_left downto d_right):= zer0h
+           avg: out sfixed(n_left downto n_right):= zer0
            );
 end moving_avg_v0;
 
@@ -24,16 +24,16 @@ architecture Behavioral of moving_avg_v0 is
     clk   : in  std_logic;
     we      : in  std_logic;
     address : in  std_logic_vector(address_size downto 0);
-    datain  : in  sfixed(d_left downto d_right);
-    dataout : out sfixed(d_left downto d_right)
+    datain  : in  sfixed(n_left downto n_right);
+    dataout : out sfixed(n_left downto n_right)
   );
   end component;
   
   -- Signal 
-  signal sum: sfixed(d_left downto d_right) := zer0h;
+  signal sum: sfixed(n_left downto n_right) := zer0;
   signal we: std_logic := '0';
   signal address: std_logic_vector(address_size downto 0) := (others => '0');
-  signal dataout: sfixed(d_left downto d_right) := zer0h;
+  signal dataout: sfixed(n_left downto n_right) := zer0;
     
 begin
 
@@ -66,16 +66,16 @@ if (Clk'event and Clk = '1') then
     done <= '0';
     
    when S1 =>
-   sum <= resize(sum - dataout + datain, d_left, d_right);
+   sum <= resize(sum - dataout + datain, n_left, n_right);
    State := S2;
    
    when S2 =>
    we <= '1';
-   avg <= resize(sum/to_sfixed(2048, n_left, n_right), d_left, d_right);
-   done <= '1';
+   avg <= resize(sum/to_sfixed(2048, n_left, n_right), n_left, n_right);
    State := S3;
    
    when S3 =>
+   done <= '1';
    we <= '0';
    address <= address + '1';
    State := S0;

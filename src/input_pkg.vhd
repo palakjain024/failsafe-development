@@ -84,7 +84,12 @@ package input_pkg is
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
   
   -- Moving avg depth 
-   -- Address
-   constant address_size: integer range 0 to 1000 := 10;
+  -- Address
+  constant total_address : sfixed(1 downto -30) := to_sfixed(0.00049, 1, -30); -- Reciprocal of 2048
+  constant address_size: integer range 0 to 100 := 10;
+  constant address_depth: integer range 0 to 100 := 11;  -- For calculating total address depth
+   
+  -- Fault Identification
+  type ip_array is array (0 to 10) of sfixed(15 downto -16);
   
 end package input_pkg;

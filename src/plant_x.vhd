@@ -21,9 +21,9 @@ entity plant_x is
           plt_y : in vect2; -- see through ILA core
           -- Estimator outputs
           done : out STD_LOGIC := '0';
-          gamma_norm_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
+          gamma_out : out vect4 := (zer0, zer0, zer0, zer0);
           max_gamma_out : out sfixed(d_left downto d_right) := zer0h;
-          gamma_avg_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
+          gamma_avg_out : out vect4 := (zer0, zer0, zer0, zer0);
           plt_z : out vect2 := (zer0,zer0)
          );
 end plant_x;
@@ -32,14 +32,24 @@ architecture Behavioral of plant_x is
 
 
 ------ Component Definitions ------
-Component moving_avg_v0
-    Port ( clk : in STD_LOGIC;
-           start : in STD_LOGIC;
-           datain : in sfixed(n_left downto n_right);
-           done: out STD_LOGIC;
-           avg: out sfixed(n_left downto n_right)
-           );
-end component moving_avg_v0; 
+--Component moving_avg_v0
+--    Port ( clk : in STD_LOGIC;
+--           start : in STD_LOGIC;
+--           datain : in sfixed(n_left downto n_right);
+--           done: out STD_LOGIC;
+--           avg: out sfixed(n_left downto n_right) := zer0
+--           );
+--end component moving_avg_v0; 
+
+Component moving_avg_v1
+ Port (
+         clk : in STD_LOGIC;      -- 100 MHz rate
+         start : in STD_LOGIC;
+         datain : in sfixed(n_left downto n_right);
+         -- Output signals   
+         done: out STD_LOGIC := '0';
+         avg: out sfixed(n_left downto n_right) := zer0);
+end component moving_avg_v1;
 ------------------------------------
 
 
@@ -55,48 +65,50 @@ end component moving_avg_v0;
     
  -- Gamma cal
     signal gamma : vect4 := (zer0, zer0, zer0, zer0);
+    signal gamma_avg: vect4 := (zer0, zer0, zer0, zer0);
     signal gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
     signal ab_gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
+     -- Averaging moving
+       signal start_ma, done_ma0, done_ma1, done_ma2, done_ma3 : STD_LOGIC := '0';
     
  -- digital twin estimate
     signal z_est : vect2 := (il0, vc0);
     signal pv_est : vect2 := (ipv, vpv);
   
- -- Averaging moving
-    signal start_ma, done_ma0, done_ma1, done_ma2, done_ma3 : STD_LOGIC := '0';
-    signal gamma_avg: vectd4 := (zer0h, zer0h, zer0h, zer0h);
+
+    
     
 ---------------------------------    
 begin
 
-gamma0_avg_inst: moving_avg_v0 port map (
+gamma0_avg_inst: moving_avg_v1 port map (
                 clk => clk,
                 Start => start_ma,
-                datain => gamma_norm(0), 
+                datain => gamma(0), 
                 done => done_ma0,
                 avg => gamma_avg(0)
                 );
                 
-gamma1_avg_inst: moving_avg_v0 port map (
+gamma1_avg_inst: moving_avg_v1 port map (
                                 clk => clk,
                                 Start => start_ma,
-                                datain => gamma_norm(1), 
+                                datain => gamma(1), 
                                 done => done_ma1,
                                 avg => gamma_avg(1)
                                 );
                                 
-gamma2_avg_inst: moving_avg_v0 port map (
+gamma2_avg_inst: moving_avg_v1 port map (
                                                 clk => clk,
                                                 Start => start_ma,
-                                                datain => gamma_norm(2), 
+                                                datain => gamma(2), 
                                                 done => done_ma2,
                                                 avg => gamma_avg(2)
                                                 );
                                                 
-gamma3_avg_inst: moving_avg_v0 port map (
+gamma3_avg_inst: moving_avg_v1 port map (
                                                                 clk => clk,
                                                                 Start => start_ma,
-                                                                datain => gamma_norm(3), 
+                                                                datain => gamma(3), 
                                                                 done => done_ma3,
                                                                 avg => gamma_avg(3)
                                                                 );                                             
@@ -341,6 +353,9 @@ mult: process(clk, plt_u, plt_y, gamma)
       gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
       gamma(3) <= resize(vpv - plt_u(0), n_left, n_right); 
       -- this difference should not be equal to 0 otherwise problem is in division
+      
+      -- Moving average
+      start_ma <= '1';
       State := S10;
     
      when S10 =>
@@ -349,8 +364,7 @@ mult: process(clk, plt_u, plt_y, gamma)
      gamma_norm(1) <= resize(gamma(1)*vbase, d_left, d_right);
      gamma_norm(2) <= resize(gamma(2)*ibase, d_left, d_right);
      gamma_norm(3) <= resize(gamma(3)*vbase, d_left, d_right);
-     -- Moving average
-     start_ma <= '1';
+ 
      State := S11;
      
      when S11 =>
@@ -373,7 +387,7 @@ mult: process(clk, plt_u, plt_y, gamma)
      when S13 =>
      -- Output to mains 
      max_gamma_out <= max_gamma;
-     gamma_norm_out <= gamma_norm;
+     gamma_out <= gamma;
      done <= '1'; 
      State := S0;
         

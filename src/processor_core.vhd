@@ -59,9 +59,9 @@ END COMPONENT  ;
           plt_y : in vect2;
           -- Estimator outputs
           done : out STD_LOGIC := '0';
-          gamma_norm_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
+          gamma_out : out vect4 := (zer0, zer0, zer0, zer0);
           max_gamma_out : out sfixed(d_left downto d_right) := zer0h;
-          gamma_avg_out : out vectd4 := (zer0h, zer0h, zer0h, zer0h);
+          gamma_avg_out : out vect4 := (zer0, zer0, zer0, zer0);
           plt_z : out vect2 := (zer0,zer0)
          );
  end component plant_x;
@@ -86,7 +86,8 @@ END COMPONENT  ;
  -- Plant outputs and Fault detection logic
  signal done: STD_LOGIC := '1';
  signal z_val: vect2 := (zer0,zer0);
- signal gamma_norm, gamma_avg : vectd4 := (zer0h, zer0h, zer0h, zer0h);
+ signal gamma, gamma_avg : vect4 := (zer0, zer0, zer0, zer0);
+ signal gamma_norm, gamma_avg_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
  signal max_gamma : sfixed(d_left downto d_right):= zer0h;
  signal fd_flag : STD_LOGIC := '0';
  
@@ -100,7 +101,7 @@ mode => mode,
 plt_u => plt_u,
 plt_y => plt_y,
 done => done,
-gamma_norm_out => gamma_norm,
+gamma_out => gamma,
 max_gamma_out => max_gamma,
 gamma_avg_out => gamma_avg,
 plt_z => z_val
@@ -112,13 +113,13 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_fdflag, 
-    probe1 => probe_normfd, 
+    probe0 => probe_gn0, 
+    probe1 => probe_gn1, 
     probe2 => probe_gn0avg,  
     probe3 => probe_gn1avg, 
     probe4 => probe_gn2avg,
     probe5 => probe_gn3avg,
-    probe6 => probe_gn0,
+    probe6 => probe_gn2,
     probe7 => probe_gn3
     
 ); 
@@ -137,13 +138,13 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 
 
    ---- ILA ----
-      probe_gn0 <= result_type(gamma_norm(0));
+      probe_gn0 <= result_type(gamma(0));
       probe_gn0avg <= result_type(gamma_avg(0));
-      probe_gn1 <= result_type(gamma_norm(1));
+      probe_gn1 <= result_type(gamma(1));
       probe_gn1avg <= result_type(gamma_avg(1));
-      probe_gn2 <= result_type(gamma_norm(2));
+      probe_gn2 <= result_type(gamma(2));
       probe_gn2avg <= result_type(gamma_avg(2));
-      probe_gn3 <= result_type(gamma_norm(3));
+      probe_gn3 <= result_type(gamma(3));
       probe_gn3avg <= result_type(gamma_avg(3));
       probe_normfd <= result_type(max_gamma); 
       probe_z1  <= result_type(z_val(0));
