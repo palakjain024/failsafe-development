@@ -65,6 +65,8 @@ package input_pkg is
   -- Precision
   constant n_left: integer := 15;
   constant n_right: integer := -16;
+  constant sum_left: integer := 23;
+  constant sum_right: integer := -8;
   constant d_left: integer := 1;
   constant d_right:integer := -30;
   

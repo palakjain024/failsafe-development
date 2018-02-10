@@ -39,7 +39,7 @@ END COMPONENT;
  signal rsta_busy: STD_LOGIC;
    
  -- For averaging
- signal sum: sfixed(n_left downto n_right):= zer0;  
+ signal sum: sfixed(sum_left downto sum_right):= to_sfixed(0, sum_left, sum_right);  
  signal avg_out: sfixed(n_left downto n_right):= zer0;
  
 begin
@@ -68,23 +68,21 @@ if (Clk'event and Clk = '1') then
    
     when S0 =>
     
-    dina <= to_slv(datain);
     done <= '0';
-    
     if start = '1' then
      State := S1;
     else
      State := S0;
     end if;
-   
     
    when S1 =>
-   sum <= resize(sum - to_sfixed(douta,n_left,n_right), n_left, n_right);
+   sum <= resize(sum - to_sfixed(douta,n_left,n_right), sum_left, sum_right);
    State := S2;
    
    when S2 =>
    wea <= "1";
-   sum <= resize(sum + datain, n_left, n_right);
+   dina <= to_slv(datain);
+   sum <= resize(sum + datain, sum_left, sum_right);
    State := S3;
    
    when S3 =>
