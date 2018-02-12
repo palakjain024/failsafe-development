@@ -499,40 +499,40 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
 ------------------------------------------------------------------------------------      
 
 ------------------------------ SHORT SWITCH FAULTS ---------------------------------
- if openswitch_f1 = '1' then  
+             if shortswitch_f1 = '1' then  
+     
+                 -- PWM signals
+                 pwm_out_t(0) <= a_pwm1_out;
+                 pwm_n_out_t(0)  <= a_pwm2_out;  
+                 -- short Fault in SW2
+                 pwm_out_t(1) <= '1';    -- Top switch 
+                 pwm_n_out_t(1)  <= '1'; -- Bottom switch
+                  state := S1;
+                  
+            elsif shortswitch_f2 = '1' then 
               
-              -- PWM signals
-              pwm_out_t(0) <= a_pwm1_out;
-              pwm_n_out_t(0)  <= a_pwm2_out;  
-              -- open Fault in SW1
-              pwm_out_t(1) <= '0';    -- Top switch 
-              pwm_n_out_t(1)  <= '0'; -- Bottom switch
-               state := S1;
-               
-         elsif openswitch_f2 = '1' then 
-           
-              -- PWM signals
-               pwm_n_out_t(0)  <= a_pwm2_out;
-               pwm_out_t(1) <= '1';    -- Top switch 
-               pwm_n_out_t(1)  <= '0'; -- Bottom switch
-               -- open Fault in SW3
-               pwm_out_t(0) <= '0';
-               state := S1;
-               
-                
-         elsif openswitch_f3 = '1' then    
-              -- PWM signals
-              pwm_out_t(0) <= a_pwm1_out;  
-              pwm_out_t(1) <= '1';    -- Top switch 
-              pwm_n_out_t(1)  <= '0'; -- Bottom switch
-             -- open Fault in SW4
-              pwm_n_out_t(0)  <= '0';
-              
-               state := S1;
-               
-         else  
-         state := S0;
-         end if;
+                 -- PWM signals
+                  pwm_n_out_t(0)  <= a_pwm2_out;
+                  pwm_out_t(1) <= '1';    -- Top switch 
+                  pwm_n_out_t(1)  <= '0'; -- Bottom switch
+                  -- short Fault in SW3
+                  pwm_out_t(0) <= '1';
+                  state := S1;
+                  
+                   
+            elsif shortswitch_f3 = '1' then    
+                 -- PWM signals
+                 pwm_out_t(0) <= a_pwm1_out;  
+                 pwm_out_t(1) <= '1';    -- Top switch 
+                 pwm_n_out_t(1)  <= '0'; -- Bottom switch
+                -- short Fault in SW4
+                 pwm_n_out_t(0)  <= '1';
+                 
+                  state := S1;
+                  
+            else  
+            state := S0;
+            end if;
 ------------------------------------------------------------------------------------ 
 
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------
