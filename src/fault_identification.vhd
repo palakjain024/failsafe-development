@@ -32,21 +32,32 @@ signal  D       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, z
 signal  ip      : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
 signal  gavg_norm : vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
 
--- Fault signature lib
-signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f4 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f5 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f6 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f8 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f9 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+-- Fault signature lib (Normalized it)
+-- PV faults
+signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right));
+signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.7,n_left,n_right), to_sfixed(0.7,n_left,n_right));
+-- Short Switch
+-- SW2
+signal f3 : vect4 := (to_sfixed(1.2,n_left,n_right), to_sfixed(-0.3,n_left,n_right), to_sfixed(-0.1,n_left,n_right), to_sfixed(0.7,n_left,n_right));
+-- SW3
+signal f4 : vect4 := (to_sfixed(-0.1,n_left,n_right), to_sfixed(-0.04,n_left,n_right), to_sfixed(-0.1,n_left,n_right), to_sfixed(0.7,n_left,n_right));
+-- Open Switch
+--SW1
+signal f5 : vect4 := (to_sfixed(0.2,n_left,n_right), to_sfixed(0.38,n_left,n_right), to_sfixed(0.274,n_left,n_right), to_sfixed(-0.054,n_left,n_right));
+-- SW4
+signal f6 : vect4 := (to_sfixed(0.2,n_left,n_right), to_sfixed(0.39,n_left,n_right), to_sfixed(0.27,n_left,n_right), to_sfixed(-0.1,n_left,n_right));
+-- Sensor fault
+-- Vc
+signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+-- Iload
+signal f8 : vect4 := (to_sfixed(-0.707,n_left,n_right), to_sfixed(0.707,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+-- Vpv
+signal f9 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(-0.707,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.707,n_left,n_right));
     
 begin
 main_loop: process(clk)
 
-        type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7);
+        type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9);
         variable State : STATE_VALUE := S0;
         variable max_ip : sfixed(n_left downto n_right) := zer0;
         variable index : integer range 0 to 9 := 0;
@@ -102,6 +113,9 @@ main_loop: process(clk)
             A(6) <= resize(f7(0) * gavg_norm(0), n_left, n_right);
             A(7) <= resize(f8(0) * gavg_norm(0), n_left, n_right); 
             A(8) <= resize(f9(0) * gavg_norm(0), n_left, n_right); 
+            State := S2;
+            
+            When S2 =>
             
             B(0) <= resize(f1(1) * gavg_norm(1), n_left, n_right);
             B(1) <= resize(f2(1) * gavg_norm(1), n_left, n_right); 
@@ -112,11 +126,9 @@ main_loop: process(clk)
             B(6) <= resize(f7(1) * gavg_norm(1), n_left, n_right);
             B(7) <= resize(f8(1) * gavg_norm(1), n_left, n_right); 
             B(8) <= resize(f9(1) * gavg_norm(1), n_left, n_right); 
-            State := S2;
-            --------------------------------------------------------
-            -- state S2 (Integrate inner product)
-            ---------------------------------------------------------
-            When S2 =>
+            State := S3;
+          
+            When S3 =>
            
             C(0) <= resize(f1(2) * gavg_norm(2), n_left, n_right);
             C(1) <= resize(f2(2) * gavg_norm(2), n_left, n_right);
@@ -127,7 +139,10 @@ main_loop: process(clk)
             C(6) <= resize(f7(2) * gavg_norm(2), n_left, n_right);
             C(7) <= resize(f8(2) * gavg_norm(2), n_left, n_right); 
             C(8) <= resize(f9(2) * gavg_norm(2), n_left, n_right); 
-           
+            State := S4;
+            
+            When S4 =>
+            
             D(0) <= resize(f1(3) * gavg_norm(3), n_left, n_right);
             D(1) <= resize(f2(3) * gavg_norm(3), n_left, n_right); 
             D(2) <= resize(f3(3) * gavg_norm(3), n_left, n_right);
@@ -137,9 +152,9 @@ main_loop: process(clk)
             D(6) <= resize(f7(3) * gavg_norm(3), n_left, n_right);
             D(7) <= resize(f8(3) * gavg_norm(3), n_left, n_right); 
             D(8) <= resize(f9(3) * gavg_norm(3), n_left, n_right);       
-            State := S3;
+            State := S5;
           
-           When S3 =>
+           When S5 =>
            
            ip(0) <= resize(A(0) + B(0), n_left, n_right);
            ip(1) <= resize(A(1) + B(1), n_left, n_right);
@@ -150,9 +165,9 @@ main_loop: process(clk)
            ip(6) <= resize(A(6) + B(6), n_left, n_right);
            ip(7) <= resize(A(7) + B(7), n_left, n_right);
            ip(8) <= resize(A(8) + B(8), n_left, n_right);
-           State := S4;
+           State := S6;
          
-           When S4 =>            
+           When S6 =>            
            ip(0) <= resize(ip(0) + C(0), n_left, n_right);
            ip(1) <= resize(ip(1) + C(1), n_left, n_right);
            ip(2) <= resize(ip(2) + C(2), n_left, n_right);
@@ -162,9 +177,9 @@ main_loop: process(clk)
            ip(6) <= resize(ip(6) + C(6), n_left, n_right);
            ip(7) <= resize(ip(7) + C(7), n_left, n_right);
            ip(8) <= resize(ip(8) + C(8), n_left, n_right);
-           State := S5; 
+           State := S7; 
             
-           When S5 =>
+           When S7 =>
            ip(0) <= resize(ip(0) + D(0), n_left, n_right);
            ip(1) <= resize(ip(1) + D(1), n_left, n_right);
            ip(2) <= resize(ip(2) + D(2), n_left, n_right);
@@ -174,24 +189,26 @@ main_loop: process(clk)
            ip(6) <= resize(ip(6) + D(6), n_left, n_right);
            ip(7) <= resize(ip(7) + D(7), n_left, n_right);
            ip(8) <= resize(ip(8) + D(8), n_left, n_right);
-           State := S6;
+           State := S8;
            
-           When S6 =>
+           When S8 =>
              ip_out <= ip;                  
           -- Finding max ip
               for i in 0 to 8 loop
                  if ip(i) > max_ip then
                     max_ip := ip(i);
-                    index := i;
+                    index := i + 1;
                  end if;
                  end loop;
-                State := S7;
+                State := S9;
                    
-           When S7 =>            
+           When S9 =>            
            --Fault identification flag
              done <= '1';
-             if max_ip > to_sfixed(0.8, n_left, n_right) then
-             FI_flag <= std_logic_vector(to_unsigned(index, FI_flag'length));       
+             if max_ip > to_sfixed(0.2, n_left, n_right) then
+             FI_flag <= std_logic_vector(to_unsigned(index, FI_flag'length));   
+             else
+             FI_flag <= "0000";   
              end if; 
             State := S0;       
         end case;  

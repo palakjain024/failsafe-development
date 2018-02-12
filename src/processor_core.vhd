@@ -29,24 +29,27 @@ architecture Behavioral of processor_core is
 
 ---- Component definition ----
  -- ILA core
-    COMPONENT ila_0
-
-PORT (
-    clk : IN STD_LOGIC;
-
-
-    trig_in : IN STD_LOGIC;
-    trig_in_ack : OUT STD_LOGIC;
-    probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-    probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-    probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-    probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-    probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-    probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-    probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-    probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
-);
-END COMPONENT  ;
+COMPONENT ila_0
+ 
+ PORT (
+     clk : IN STD_LOGIC;
+ 
+ 
+     trig_in : IN STD_LOGIC;
+     trig_in_ack : OUT STD_LOGIC;
+     probe0 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe1 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe2 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe3 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe5 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe8 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe9 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+     probe10 : IN STD_LOGIC_VECTOR(3 DOWNTO 0)
+ );
+ END COMPONENT  ;
  -- Digital twin estimator (Buck-boost converter)
  component plant_x
  port (   clk : in STD_LOGIC;
@@ -85,15 +88,17 @@ END COMPONENT  ;
 
 -- ILA core
  signal trig_in_ack, trig_in: STD_LOGIC := '0';
- signal probe_z1, probe_z2, probe_ipv, probe_vpv: STD_LOGIC_VECTOR(31 downto 0);
  
- signal probe_normfd: STD_LOGIC_VECTOR(31 downto 0);
- signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_fdflag, probe_fiflag: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_ip1 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_ip2 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_ip3 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ --signal probe_z1, probe_z2, probe_ipv, probe_vpv: STD_LOGIC_VECTOR(31 downto 0);
+ --signal probe_normfd: STD_LOGIC_VECTOR(31 downto 0);
+ --signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ --signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ 
+ signal probe_fd: STD_LOGIC_VECTOR(0 downto 0) := (others => '0');
+ signal probe_fi: STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
+ signal probe_ip1, probe_ip2, probe_ip3 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_ip4, probe_ip5, probe_ip6 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_ip7, probe_ip8, probe_ip9 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  -- General
  signal counter : integer range 0 to 50000 := 0;
@@ -149,14 +154,17 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_gn0avg, 
-    probe1 => probe_gn1avg, 
-    probe2 => probe_gn2avg,  
-    probe3 => probe_gn3avg, 
-    probe4 => probe_fdflag,
-    probe5 => probe_fiflag,
-    probe6 => probe_normfd,
-    probe7 => probe_ip1
+    probe0 => probe_ip1, 
+    probe1 => probe_ip2, 
+    probe2 => probe_ip3,  
+    probe3 => probe_ip4, 
+    probe4 => probe_ip5,
+    probe5 => probe_ip6,
+    probe6 => probe_ip7,
+    probe7 => probe_ip8,
+    probe8 => probe_ip9, 
+    probe9 => probe_fd,  -- Fd
+    probe10 => probe_fi  -- FI
     
 ); 
 ---- Processes ----
@@ -174,29 +182,35 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 
 
        ---- ILA ----
-      probe_z1  <= result_type(z_val(0));
-      probe_z2 <= result_type(z_val(1)) ; 
-      probe_ipv <= result_type(plt_u(2));
-      probe_vpv <= result_type(plt_u(0));
+--      probe_z1  <= result_type(z_val(0));
+--      probe_z2 <= result_type(z_val(1)) ; 
+--      probe_ipv <= result_type(plt_u(2));
+--      probe_vpv <= result_type(plt_u(0));
       
-      probe_gn0 <= result_type(gamma(0));
-      probe_gn1 <= result_type(gamma(1));
-      probe_gn2 <= result_type(gamma(2));
-      probe_gn3 <= result_type(gamma(3));
+--      probe_gn0 <= result_type(gamma(0));
+--      probe_gn1 <= result_type(gamma(1));
+--      probe_gn2 <= result_type(gamma(2));
+--      probe_gn3 <= result_type(gamma(3));
       
-      probe_gn0avg <= result_type(gavg_norm(0));
-      probe_gn1avg <= result_type(gavg_norm(1));
-      probe_gn2avg <= result_type(gavg_norm(2));
-      probe_gn3avg <= result_type(gavg_norm(3));
+--      probe_gn0avg <= result_type(gavg_norm(0));
+--      probe_gn1avg <= result_type(gavg_norm(1));
+--      probe_gn2avg <= result_type(gavg_norm(2));
+--      probe_gn3avg <= result_type(gavg_norm(3));
      
-      probe_normfd <= result_type(max_gamma); 
-      probe_fdflag(0) <= fd_flag;
-      probe_fiflag(3 downto 0) <= FI_flag;
+--      probe_normfd <= result_type(max_gamma); 
+
+      probe_fd(0) <= fd_flag;
+      probe_fi  <= FI_flag;
       probe_ip1 <= result_type(ip(0));
-      
-      
-      
-                
+      probe_ip2 <= result_type(ip(1));
+      probe_ip3 <= result_type(ip(2));
+      probe_ip4 <= result_type(ip(3));
+      probe_ip5 <= result_type(ip(4));
+      probe_ip6 <= result_type(ip(5));
+      probe_ip7 <= result_type(ip(6));
+      probe_ip8 <= result_type(ip(7));
+      probe_ip9 <= result_type(ip(8));
+ 
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
             
