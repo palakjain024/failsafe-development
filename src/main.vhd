@@ -1,6 +1,8 @@
 -- Top Module
 -- Uncomment for the fault injection type
 -- SENSOR (3 FAULTS), SHORT SWITCH (3 FAULTS), OPEN SWITCH (3 FAULTS)
+-- Update fault signaturs in fault_identification.vhd: put normalized fault signature
+-- Update thresholds in input package
 -------  Fault injection planning --------------
 --                  sensor    openswitch  shortswitch (for boost mode) 
        --  fault 1    Vc           SW1         SW2

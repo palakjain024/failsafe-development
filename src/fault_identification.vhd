@@ -205,7 +205,7 @@ main_loop: process(clk)
            When S9 =>            
            --Fault identification flag
              done <= '1';
-             if max_ip > to_sfixed(0.2, n_left, n_right) then
+             if max_ip > fi_th then
              FI_flag <= std_logic_vector(to_unsigned(index, FI_flag'length));   
              else
              FI_flag <= "0000";   
