@@ -491,18 +491,88 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
                 -- Plant outputs 
                 plt_y(1) <= adc_out_1(1); -- Capacitor voltage
                 state := S1;
+                          
+         else  
+         state := S0;
+         end if;
+              
 ------------------------------------------------------------------------------------      
 
 ------------------------------ SHORT SWITCH FAULTS ---------------------------------
+ if openswitch_f1 = '1' then  
+              
+              -- PWM signals
+              pwm_out_t(0) <= a_pwm1_out;
+              pwm_n_out_t(0)  <= a_pwm2_out;  
+              -- open Fault in SW1
+              pwm_out_t(1) <= '0';    -- Top switch 
+              pwm_n_out_t(1)  <= '0'; -- Bottom switch
+               state := S1;
+               
+         elsif openswitch_f2 = '1' then 
+           
+              -- PWM signals
+               pwm_n_out_t(0)  <= a_pwm2_out;
+               pwm_out_t(1) <= '1';    -- Top switch 
+               pwm_n_out_t(1)  <= '0'; -- Bottom switch
+               -- open Fault in SW3
+               pwm_out_t(0) <= '0';
+               state := S1;
+               
+                
+         elsif openswitch_f3 = '1' then    
+              -- PWM signals
+              pwm_out_t(0) <= a_pwm1_out;  
+              pwm_out_t(1) <= '1';    -- Top switch 
+              pwm_n_out_t(1)  <= '0'; -- Bottom switch
+             -- open Fault in SW4
+              pwm_n_out_t(0)  <= '0';
+              
+               state := S1;
+               
+         else  
+         state := S0;
+         end if;
 ------------------------------------------------------------------------------------ 
 
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------
 -- Better to use mechanical switches
+         if openswitch_f1 = '1' then  
+              
+              -- PWM signals
+              pwm_out_t(0) <= a_pwm1_out;
+              pwm_n_out_t(0)  <= a_pwm2_out;  
+              -- open Fault in SW1
+              pwm_out_t(1) <= '0';    -- Top switch 
+              pwm_n_out_t(1)  <= '0'; -- Bottom switch
+               state := S1;
+               
+         elsif openswitch_f2 = '1' then 
+           
+              -- PWM signals
+               pwm_n_out_t(0)  <= a_pwm2_out;
+               pwm_out_t(1) <= '1';    -- Top switch 
+               pwm_n_out_t(1)  <= '0'; -- Bottom switch
+               -- open Fault in SW3
+               pwm_out_t(0) <= '0';
+               state := S1;
+               
+                
+         elsif openswitch_f3 = '1' then    
+              -- PWM signals
+              pwm_out_t(0) <= a_pwm1_out;  
+              pwm_out_t(1) <= '1';    -- Top switch 
+              pwm_n_out_t(1)  <= '0'; -- Bottom switch
+             -- open Fault in SW4
+              pwm_n_out_t(0)  <= '0';
+              
+               state := S1;
+               
+         else  
+         state := S0;
+         end if;
 ------------------------------------------------------------------------------------           
-          else  
-          state := S0;
-          end if;
-        
+
   end case;   
  end if; -- clk
 end process; 
