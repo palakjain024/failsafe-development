@@ -32,7 +32,7 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-1,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.2, 1, -30); -- Threshold
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.5, 1, -30); -- Threshold
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
@@ -56,8 +56,8 @@ package input_pkg is
   type vectd4 is array (0 to 3) of sfixed(1 downto -30); -- for gamma normalized
     
   -- For normalization of gamma, put reciprocal to avoid division
-  constant ibase: sfixed(15 downto -16) := to_sfixed(0.12, 15, -16); -- Ibase = 9
-  constant vbase: sfixed(15  downto -16) := to_sfixed(0.0125, 15, -16); -- Vbase = 80
+  constant ibase: sfixed(15 downto -16) := to_sfixed(0.2, 15, -16); -- Ibase = 5
+  constant vbase: sfixed(15  downto -16) := to_sfixed(0.025, 15, -16); -- Vbase = 40
     
   -- Matrices
   type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
@@ -92,6 +92,6 @@ package input_pkg is
   constant address_depth: integer range 0 to 100 := 10;  -- For calculating total address depth
    
   -- Fault Identification
-  type ip_array is array (0 to 10) of sfixed(15 downto -16);
+  type ip_array is array (0 to 8) of sfixed(15 downto -16);
   
 end package input_pkg;

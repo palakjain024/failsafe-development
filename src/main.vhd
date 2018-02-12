@@ -1,4 +1,5 @@
 -- Top Module
+-- Sensor fault injection
 library IEEE;
 library IEEE_PROPOSED;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -194,9 +195,6 @@ signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 signal plt_u : vect3 := (zer0,zer0,zer0);
 signal plt_y : vect2 := (zer0,zer0);
 
--- Fault injection using push buttons
-signal ctr: std_logic_vector(1 downto 0) := (others => '0');
-signal fault_type_buf: std_logic := '0';
 
 begin
 -- Clk
