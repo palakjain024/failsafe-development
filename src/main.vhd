@@ -1,5 +1,14 @@
 -- Top Module
--- Sensor fault injection
+-- Uncomment for the fault injection type
+-- SENSOR (3 FAULTS), SHORT SWITCH (3 FAULTS), OPEN SWITCH (3 FAULTS)
+-------  Fault injection planning --------------
+--                  sensor    openswitch  shortswitch (for boost mode) 
+       --  fault 1    Vc           SW1         SW2
+       --  fault 2    Iload        SW3         SW3
+       --  fault 3    Vpv          SW4         SW4
+       -- Two types of faults in PV panel: Bypass diode failure and heavy partial shading conditions
+       -- May be interconnect failures
+-----------------------------------------------------------
 library IEEE;
 library IEEE_PROPOSED;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -27,7 +36,8 @@ entity main is
            LD_f2 : out STD_LOGIC := '0';
            LD_f3 : out STD_LOGIC := '0';
            -- Flags
-           FD_flag : out STD_LOGIC;
+           FD_flag : out STD_LOGIC := '0';
+           -- FI_flag : out STD_LOGIC_VECTOR(3 DOWNTO 0);
            reset_fd : in STD_LOGIC;
            -- DAC ports 1
            DA_DATA1_1 : out STD_LOGIC;
@@ -401,37 +411,22 @@ variable state: state_variable := S0;
 begin
 if (clk = '1' and clk'event) then
 
--- no fault case --
-
+-- No Fault Case --
 -- Plant inputs
 plt_u(2) <= adc_out_3(0); -- PV current
 -- Plant outputs
 plt_y(0) <= adc_out_1(0); -- Inductor current
--- PWM outputs coul be from any control scheme --  
-pwm_out_t(0) <= a_pwm1_out;
-pwm_n_out_t(0)  <= a_pwm2_out;
-pwm_out_t(1) <= '1';    -- Top switch 
-pwm_n_out_t(1)  <= '0'; -- Bottom switch
-
--------  Earlier Fault injection planning --------------
-       -- Check if push buttons are pressed or not
-       -- ctr = 0 means no fault, ButtonL   ButtonC     ButtonR
-       --                        sensor    openswitch  shortswitch (for boost mode) 
-       -- ctr = 1 means fault 1    Vc           SW1         SW2
-       -- ctr = 2 means fault 2    Iload        SW3         SW3
-       -- ctr = 3 means fault 3    Vpv          SW4         SW4
-       -- Two types of faults in PV panel: Bypass diode failure and heavy partial shading conditions
-       -- May be interconnect failures
  
-  case state is
+-- Fault Management --  
+case state is
        
          when S0 =>
-         -- LED display
-         LD_f1 <= '0';
-         LD_f2 <= '0';
-         LD_f3 <= '0';
-         
 
+         -- PWM outputs could be from any control scheme --  
+         pwm_out_t(0) <= a_pwm1_out;
+         pwm_n_out_t(0)  <= a_pwm2_out;
+         pwm_out_t(1) <= '1';    -- Top switch 
+         pwm_n_out_t(1)  <= '0'; -- Bottom switch
          -- Plant inputs
          plt_u(0) <= adc_out_2(1); -- PV voltage
          plt_u(1) <= adc_out_2(0); -- load
@@ -459,6 +454,10 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
            state := S1;
            else
            state := S0;
+           -- LED display
+           LD_f1 <= '0';
+           LD_f2 <= '0';
+           LD_f3 <= '0';
            end if; -- fault type
             
             
@@ -499,78 +498,78 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
 ------------------------------------------------------------------------------------      
 
 ------------------------------ SHORT SWITCH FAULTS ---------------------------------
-             if shortswitch_f1 = '1' then  
+--             if f1_h19 = '1' then  
      
-                 -- PWM signals
-                 pwm_out_t(0) <= a_pwm1_out;
-                 pwm_n_out_t(0)  <= a_pwm2_out;  
-                 -- short Fault in SW2
-                 pwm_out_t(1) <= '1';    -- Top switch 
-                 pwm_n_out_t(1)  <= '1'; -- Bottom switch
-                  state := S1;
+--                 -- PWM signals
+--                 pwm_out_t(0) <= a_pwm1_out;
+--                 pwm_n_out_t(0)  <= a_pwm2_out;  
+--                 -- short Fault in SW2
+--                 pwm_out_t(1) <= '1';    -- Top switch 
+--                 pwm_n_out_t(1)  <= '1'; -- Bottom switch
+--                  state := S1;
                   
-            elsif shortswitch_f2 = '1' then 
+--            elsif f2_h18 = '1' then 
               
-                 -- PWM signals
-                  pwm_n_out_t(0)  <= a_pwm2_out;
-                  pwm_out_t(1) <= '1';    -- Top switch 
-                  pwm_n_out_t(1)  <= '0'; -- Bottom switch
-                  -- short Fault in SW3
-                  pwm_out_t(0) <= '1';
-                  state := S1;
+--                 -- PWM signals
+--                  pwm_n_out_t(0)  <= a_pwm2_out;
+--                  pwm_out_t(1) <= '1';    -- Top switch 
+--                  pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--                  -- short Fault in SW3
+--                  pwm_out_t(0) <= '1';
+--                  state := S1;
                   
                    
-            elsif shortswitch_f3 = '1' then    
-                 -- PWM signals
-                 pwm_out_t(0) <= a_pwm1_out;  
-                 pwm_out_t(1) <= '1';    -- Top switch 
-                 pwm_n_out_t(1)  <= '0'; -- Bottom switch
-                -- short Fault in SW4
-                 pwm_n_out_t(0)  <= '1';
+--            elsif f3_h17 = '1' then    
+--                 -- PWM signals
+--                 pwm_out_t(0) <= a_pwm1_out;  
+--                 pwm_out_t(1) <= '1';    -- Top switch 
+--                 pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--                -- short Fault in SW4
+--                 pwm_n_out_t(0)  <= '1';
                  
-                  state := S1;
+--                  state := S1;
                   
-            else  
-            state := S0;
-            end if;
+--            else  
+--            state := S0;
+--            end if;
 ------------------------------------------------------------------------------------ 
 
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------
 -- Better to use mechanical switches
-         if openswitch_f1 = '1' then  
+--         if f1_h19 = '1' then  
               
-              -- PWM signals
-              pwm_out_t(0) <= a_pwm1_out;
-              pwm_n_out_t(0)  <= a_pwm2_out;  
-              -- open Fault in SW1
-              pwm_out_t(1) <= '0';    -- Top switch 
-              pwm_n_out_t(1)  <= '0'; -- Bottom switch
-               state := S1;
+--              -- PWM signals
+--              pwm_out_t(0) <= a_pwm1_out;
+--              pwm_n_out_t(0)  <= a_pwm2_out;  
+--              -- open Fault in SW1
+--              pwm_out_t(1) <= '0';    -- Top switch 
+--              pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--               state := S1;
                
-         elsif openswitch_f2 = '1' then 
+--         elsif f2_h18 = '1' then 
            
-              -- PWM signals
-               pwm_n_out_t(0)  <= a_pwm2_out;
-               pwm_out_t(1) <= '1';    -- Top switch 
-               pwm_n_out_t(1)  <= '0'; -- Bottom switch
-               -- open Fault in SW3
-               pwm_out_t(0) <= '0';
-               state := S1;
+--              -- PWM signals
+--               pwm_n_out_t(0)  <= a_pwm2_out;
+--               pwm_out_t(1) <= '1';    -- Top switch 
+--               pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--               -- open Fault in SW3
+--               pwm_out_t(0) <= '0';
+--               state := S1;
                
                 
-         elsif openswitch_f3 = '1' then    
-              -- PWM signals
-              pwm_out_t(0) <= a_pwm1_out;  
-              pwm_out_t(1) <= '1';    -- Top switch 
-              pwm_n_out_t(1)  <= '0'; -- Bottom switch
-             -- open Fault in SW4
-              pwm_n_out_t(0)  <= '0';
+--         elsif f3_h17 = '1' then    
+--              -- PWM signals
+--              pwm_out_t(0) <= a_pwm1_out;  
+--              pwm_out_t(1) <= '1';    -- Top switch 
+--              pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--             -- open Fault in SW4
+--              pwm_n_out_t(0)  <= '0';
               
-               state := S1;
+--               state := S1;
                
-         else  
-         state := S0;
-         end if;
+--         else  
+--         state := S0;
+--         end if;
 ------------------------------------------------------------------------------------           
 
   end case;   
