@@ -19,9 +19,9 @@ entity main is
            pwm_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            -- Fault injection
-           sensor_f1 : in STD_LOGIC;
-           sensor_f2 : in STD_LOGIC;
-           sensor_f3 : in STD_LOGIC;
+           f1_h19 : in STD_LOGIC;
+           f2_h18 : in STD_LOGIC;
+           f3_h17 : in STD_LOGIC;
            -- Acknowledging fault
            LD_f1 : out STD_LOGIC := '0';
            LD_f2 : out STD_LOGIC := '0';
@@ -439,19 +439,19 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
          plt_y(1) <= adc_out_1(1); -- Capacitor voltage
          
          -- Fault injection
-           if sensor_f1 = '1' then
+           if f1_h19 = '1' then
            -- LED display
            LD_f1 <= '1';
            LD_f2 <= '0';
            LD_f3 <= '0'; 
            state := S1;
-           elsif sensor_f2 = '1' then
+           elsif f2_h18 = '1' then
            -- LED display
            LD_f1 <= '1';
            LD_f2 <= '1';
            LD_f3 <= '0'; 
            state := S1;
-           elsif sensor_f3 = '1' then
+           elsif f3_h17 = '1' then
            -- LED display
            LD_f1 <= '1';
            LD_f2 <= '1';
@@ -464,8 +464,8 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
             
            when S1 =>
 
-             
-          if sensor_f1 = '1' then  
+-------------------------------- SENSOR FAULTS ---------------------------------             
+          if f1_h19 = '1' then  
                  
                 -- Plant inputs
                 plt_u(0) <= adc_out_2(1); -- PV voltage
@@ -474,7 +474,7 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
                 plt_y(1) <= resize(adc_out_1(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Capacitor voltage
                 state := S1;
                 
-          elsif sensor_f2 = '1' then 
+          elsif f2_h18 = '1' then 
             
                -- Plant inputs
                 plt_u(0) <= adc_out_2(1); -- PV voltage
@@ -484,14 +484,21 @@ pwm_n_out_t(1)  <= '0'; -- Bottom switch
                 state := S1;
                 
                  
-          elsif sensor_f3 = '1' then    
+          elsif f3_h17 = '1' then    
                 -- Plant inputs
                 plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV voltage
                 plt_u(1) <= adc_out_2(0); -- load
                 -- Plant outputs 
                 plt_y(1) <= adc_out_1(1); -- Capacitor voltage
                 state := S1;
-                
+------------------------------------------------------------------------------------      
+
+------------------------------ SHORT SWITCH FAULTS ---------------------------------
+------------------------------------------------------------------------------------ 
+
+------------------------------ OPEN SWITCH FAULTS ---------------------------------
+-- Better to use mechanical switches
+------------------------------------------------------------------------------------           
           else  
           state := S0;
           end if;

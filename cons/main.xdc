@@ -22,17 +22,17 @@ set_property PACKAGE_PIN F21 [get_ports reset_fd]
 set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]
 
 ## ------------ Sensor Fault injection --------------------------##
-### Mapping of sensor fault injection Switch H19: Vc
-set_property PACKAGE_PIN H19 [get_ports sensor_f1]
-set_property IOSTANDARD LVCMOS33 [get_ports sensor_f1]
+### Mapping of fault injection Switch H19: Vc
+set_property PACKAGE_PIN H19 [get_ports f1_h19]
+set_property IOSTANDARD LVCMOS33 [get_ports f1_h19]
 
-### Mapping of sensor fault injection Switch H18 : Iload
-set_property PACKAGE_PIN H18 [get_ports sensor_f2]
-set_property IOSTANDARD LVCMOS33 [get_ports sensor_f2]
+### Mapping of fault injection Switch H18 : Iload
+set_property PACKAGE_PIN H18 [get_ports f2_h18]
+set_property IOSTANDARD LVCMOS33 [get_ports f2_h18]
 
-### Mapping of sensor fault injection Switch H17: Vpv
-set_property PACKAGE_PIN H17 [get_ports sensor_f3]
-set_property IOSTANDARD LVCMOS33 [get_ports sensor_f3]
+### Mapping of fault injection Switch H17: Vpv
+set_property PACKAGE_PIN H17 [get_ports f3_h17]
+set_property IOSTANDARD LVCMOS33 [get_ports f3_h17]
 
 ## MApping of fault type f1, f2, f3 see main_loop for details
 ## Mapping of f1 on LD0
