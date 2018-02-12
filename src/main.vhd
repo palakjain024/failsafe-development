@@ -18,10 +18,9 @@ entity main is
            pwm_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            -- Fault injection
-           sensor_fault : in STD_LOGIC;
-           shortswitch_fault : in STD_LOGIC;
-           openswitch_fault : in STD_LOGIC;
-           fault_type : in STD_LOGIC;
+           sensor_f1 : in STD_LOGIC;
+           sensor_f2 : in STD_LOGIC;
+           sensor_f3 : in STD_LOGIC;
            -- Acknowledging fault
            LD_f1 : out STD_LOGIC := '0';
            LD_f2 : out STD_LOGIC := '0';
@@ -403,14 +402,20 @@ variable state: state_variable := S0;
 
 begin
 if (clk = '1' and clk'event) then
--- Buffer
-fault_type_buf <= fault_type;
+
+-- no fault case --
+
 -- Plant inputs
 plt_u(2) <= adc_out_3(0); -- PV current
 -- Plant outputs
 plt_y(0) <= adc_out_1(0); -- Inductor current
+-- PWM outputs coul be from any control scheme --  
+pwm_out_t(0) <= a_pwm1_out;
+pwm_n_out_t(0)  <= a_pwm2_out;
+pwm_out_t(1) <= '1';    -- Top switch 
+pwm_n_out_t(1)  <= '0'; -- Bottom switch
 
-------- Fault injection planning --------------
+-------  Earlier Fault injection planning --------------
        -- Check if push buttons are pressed or not
        -- ctr = 0 means no fault, ButtonL   ButtonC     ButtonR
        --                        sensor    openswitch  shortswitch (for boost mode) 
@@ -428,12 +433,7 @@ plt_y(0) <= adc_out_1(0); -- Inductor current
          LD_f2 <= '0';
          LD_f3 <= '0';
          
-         -- no fault case
-         -- PWM outputs coul be from any control scheme --  
-         pwm_out_t(0) <= a_pwm1_out;
-         pwm_n_out_t(0)  <= a_pwm2_out;
-         pwm_out_t(1) <= '1';    -- Top switch 
-         pwm_n_out_t(1)  <= '0'; -- Bottom switch
+
          -- Plant inputs
          plt_u(0) <= adc_out_2(1); -- PV voltage
          plt_u(1) <= adc_out_2(0); -- load
@@ -441,164 +441,63 @@ plt_y(0) <= adc_out_1(0); -- Inductor current
          plt_y(1) <= adc_out_1(1); -- Capacitor voltage
          
          -- Fault injection
-           if sensor_fault = '1' then
-           ctr <= ctr + "01";
+           if sensor_f1 = '1' then
+           -- LED display
+           LD_f1 <= '1';
+           LD_f2 <= '0';
+           LD_f3 <= '0'; 
            state := S1;
-           elsif openswitch_fault = '1' then
-           ctr <= ctr + "01";
+           elsif sensor_f2 = '1' then
+           -- LED display
+           LD_f1 <= '1';
+           LD_f2 <= '1';
+           LD_f3 <= '0'; 
            state := S1;
-           elsif shortswitch_fault = '1' then
-           ctr <= ctr + "01";
+           elsif sensor_f3 = '1' then
+           -- LED display
+           LD_f1 <= '1';
+           LD_f2 <= '1';
+           LD_f3 <= '1'; 
            state := S1;
            else
-           ctr <= "00";
            state := S0;
            end if; -- fault type
             
             
            when S1 =>
+
              
-        -- Subfault type
-        -- For using push button, press the button and then release, dont do it fast for proper results
-             if ((fault_type = '0') and (fault_type_buf = '1')) then
-             ctr <= ctr + "01";
-             end if;
-             
-        if ctr = "01" then
-        
-        -- LED display
-         LD_f1 <= '1';
-         LD_f2 <= '0';
-         LD_f3 <= '0'; 
-         -- PWM signals
-         pwm_out_t(0) <= a_pwm1_out;
-         pwm_n_out_t(0)  <= a_pwm2_out;
-         -- Plant inputs
-         plt_u(0) <= adc_out_2(1); -- PV voltage
-         plt_u(1) <= adc_out_2(0); -- load 
-         
-        if openswitch_fault = '1' then
-                -- open Fault in SW1
-                pwm_out_t(1) <= '0';    -- Top switch 
-                pwm_n_out_t(1)  <= '0'; -- Bottom switch
-                -- Plant outputs 
-                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
-                state := S1;
-                
-        elsif shortswitch_fault = '1' then      
-                -- short Fault in SW2
-                pwm_out_t(1) <= '1';    -- Top switch 
-                pwm_n_out_t(1)  <= '1'; -- Bottom switch
-                -- Plant outputs 
-                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
-                state := S1;
-                
-        elsif sensor_fault = '1' then  
-        
-                -- PWM signals
-                pwm_out_t(1) <= '1';    -- Top switch 
-                pwm_n_out_t(1)  <= '0'; -- Bottom switch  
+          if sensor_f1 = '1' then  
+                 
+                -- Plant inputs
+                plt_u(0) <= adc_out_2(1); -- PV voltage
+                plt_u(1) <= adc_out_2(0); -- load
                 -- Plant outputs
                 plt_y(1) <= resize(adc_out_1(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Capacitor voltage
                 state := S1;
                 
-        else 
-        state := S0;
-        end if; -- ctr = 01   
-                
-                
-               
-                
-        elsif ctr = "10" then
-        
-        -- LED display
-          LD_f1 <= '1';
-          LD_f2 <= '1';
-          LD_f3 <= '0'; 
-        -- PWM signals
-          pwm_n_out_t(0)  <= a_pwm2_out;
-          pwm_out_t(1) <= '1';    -- Top switch 
-          pwm_n_out_t(1)  <= '0'; -- Bottom switch
-        -- Sensors
-        -- Plant inputs
-          plt_u(0) <= adc_out_2(1); -- PV voltage
-        -- Plant outputs 
-          plt_y(1) <= adc_out_1(1); -- Capacitor voltage
-                 
-         if openswitch_fault = '1' then
-         
-                -- open Fault in SW3
-                pwm_out_t(0) <= '0';
-                plt_u(1) <= adc_out_2(0); -- load
-                state := S1;
-                
-         elsif shortswitch_fault = '1' then   
-              
-                -- short Fault in SW3
-                pwm_out_t(0) <= '1';
-                plt_u(1) <= adc_out_2(0); -- load
-                state := S1;
-                
-         elsif sensor_fault = '1' then 
+          elsif sensor_f2 = '1' then 
             
-                -- PWM signals
-                pwm_out_t(0) <= a_pwm1_out;
-                plt_u(1) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
-                state := S1;
-                
-         else
-         state := S0;
-         end if; -- ctr = 10      
-             
-               
-                
-                
-        elsif ctr = "11" then 
-        
-         -- LED display
-         LD_f1 <= '1';
-         LD_f2 <= '1';
-         LD_f3 <= '1';
-         -- PWM signals
-         pwm_out_t(0) <= a_pwm1_out;  
-         pwm_out_t(1) <= '1';    -- Top switch 
-         pwm_n_out_t(1)  <= '0'; -- Bottom switch  
-         -- Plant inputs
-         plt_u(1) <= adc_out_2(0); -- load
-         -- Plant outputs 
-         plt_y(1) <= adc_out_1(1); -- Capacitor voltage
-         
-        if openswitch_fault = '1' then  
-                -- open Fault in SW4
-                pwm_n_out_t(0)  <= '0';
-                -- Plant inputs
-                plt_u(0) <= adc_out_2(1); -- PV voltage
-                state := S1;
-                
-        elsif shortswitch_fault = '1' then 
-                
-                -- short Fault in SW4
-                pwm_n_out_t(0)  <= '1';
                -- Plant inputs
                 plt_u(0) <= adc_out_2(1); -- PV voltage
+                plt_u(1) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
+               -- Plant outputs 
+                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
                 state := S1;
                 
-        elsif sensor_fault = '1' then    
-                
-                -- no fault in PWM
-                pwm_n_out_t(0)  <= a_pwm2_out;
+                 
+          elsif sensor_f3 = '1' then    
                 -- Plant inputs
                 plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV voltage
+                plt_u(1) <= adc_out_2(0); -- load
+                -- Plant outputs 
+                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
                 state := S1;
                 
-        else  
-        state := S0;
-        end if; -- ctr = 11
-                
-        else 
-        ctr <= ctr + "01";
-        state := S1;     
-       end if; -- ctr
+          else  
+          state := S0;
+          end if;
+        
   end case;   
  end if; -- clk
 end process; 
