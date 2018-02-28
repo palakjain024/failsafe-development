@@ -92,7 +92,7 @@ COMPONENT ila_0
  --signal probe_z1, probe_z2, probe_ipv, probe_vpv: STD_LOGIC_VECTOR(31 downto 0);
  --signal probe_normfd: STD_LOGIC_VECTOR(31 downto 0);
  --signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- --signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  signal probe_fd: STD_LOGIC_VECTOR(0 downto 0) := (others => '0');
  signal probe_fi: STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
@@ -154,10 +154,10 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_ip1, 
-    probe1 => probe_ip2, 
-    probe2 => probe_ip3,  
-    probe3 => probe_ip4, 
+    probe0 => probe_gn0avg, 
+    probe1 => probe_gn1avg, 
+    probe2 => probe_gn2avg,  
+    probe3 => probe_gn3avg, 
     probe4 => probe_ip5,
     probe5 => probe_ip6,
     probe6 => probe_ip7,
@@ -192,10 +192,10 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 --      probe_gn2 <= result_type(gamma(2));
 --      probe_gn3 <= result_type(gamma(3));
       
---      probe_gn0avg <= result_type(gavg_norm(0));
---      probe_gn1avg <= result_type(gavg_norm(1));
---      probe_gn2avg <= result_type(gavg_norm(2));
---      probe_gn3avg <= result_type(gavg_norm(3));
+      probe_gn0avg <= result_type(gavg_norm(0));
+      probe_gn1avg <= result_type(gavg_norm(1));
+      probe_gn2avg <= result_type(gavg_norm(2));
+      probe_gn3avg <= result_type(gavg_norm(3));
      
 --      probe_normfd <= result_type(max_gamma); 
 
