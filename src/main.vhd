@@ -355,7 +355,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => adc_out_1(0),  
+              dac_in => adc_out_3(0),  
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -467,85 +467,87 @@ case state is
 
 -------------------------------- SENSOR FAULTS ---------------------------------  
 
---         -- PWM outputs could be from any control scheme --  
---         pwm_out_t(0) <= a_pwm1_out;
---         pwm_n_out_t(0)  <= a_pwm2_out;
---         pwm_out_t(1) <= '1';    -- Top switch 
---         pwm_n_out_t(1)  <= '0'; -- Bottom switch
+         -- PWM outputs could be from any control scheme --  
+         pwm_out_t(0) <= a_pwm1_out;
+         pwm_n_out_t(0)  <= a_pwm2_out;
+         pwm_out_t(1) <= '1';    -- Top switch 
+         pwm_n_out_t(1)  <= '0'; -- Bottom switch
                     
---          if f1_h19 = '1' then  
+          if f1_h19 = '1' then  
                  
---                -- Plant inputs
---                plt_u(0) <= adc_out_2(1); -- PV voltage
---                plt_u(1) <= adc_out_2(0); -- load
---                -- Plant outputs
---                plt_y(1) <= resize(adc_out_1(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Capacitor voltage
---                state := S1;
+                -- Plant inputs
+                plt_u(0) <= adc_out_2(1); -- PV voltage
+                plt_u(1) <= adc_out_2(0); -- load
+                -- Plant outputs: fault in vc sensor
+                plt_y(1) <= resize(adc_out_1(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Capacitor voltage
+                state := S1;
                 
---          elsif f2_h18 = '1' then 
+          elsif f2_h18 = '1' then 
             
---               -- Plant inputs
---                plt_u(0) <= adc_out_2(1); -- PV voltage
---                plt_u(1) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
---               -- Plant outputs 
---                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
---                state := S1;
+               -- Plant inputs: fault in vpv sensor
+               plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV voltage
+               plt_u(1) <= adc_out_2(0); -- load
+               -- Plant outputs 
+                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+                state := S1;
                 
                  
---          elsif f3_h17 = '1' then    
---                -- Plant inputs
---                plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV voltage
---                plt_u(1) <= adc_out_2(0); -- load
---                -- Plant outputs 
---                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
---                state := S1;
+          elsif f3_h17 = '1' then    
+                -- Plant inputs: fault in iload sensor
+                plt_u(0) <= adc_out_2(1); -- PV voltage
+                plt_u(1) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
+             
+                -- Plant outputs 
+                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+                state := S1;
                           
---         else  
---         state := S0;
---         end if;
+         else  
+         state := S0;
+         end if;
               
 ------------------------------------------------------------------------------------      
 
 ------------------------------ SHORT SWITCH FAULTS ---------------------------------
-        -- Plant inputs
-        plt_u(0) <= adc_out_2(1); -- PV voltage
-        plt_u(1) <= adc_out_2(0); -- load
-        -- Plant outputs 
-        plt_y(1) <= adc_out_1(1); -- Capacitor voltage
-             if f1_h19 = '1' then  
+--        -- Plant inputs
+--        plt_u(0) <= adc_out_2(1); -- PV voltage
+--        plt_u(1) <= adc_out_2(0); -- load
+--        -- Plant outputs 
+--        plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+        
+--           if f1_h19 = '1' then  
      
-                 -- PWM signals
-                 pwm_out_t(0) <= a_pwm1_out;
-                 pwm_n_out_t(0)  <= a_pwm2_out;  
-                 -- short Fault in SW2
-                 pwm_out_t(1) <= '1';    -- Top switch 
-                 pwm_n_out_t(1)  <= '1'; -- Bottom switch
-                  state := S1;
+--                 -- PWM signals
+--                 pwm_out_t(0) <= a_pwm1_out;
+--                 pwm_n_out_t(0)  <= a_pwm2_out;  
+--                 -- short Fault in SW2
+--                 pwm_out_t(1) <= '1';    -- Top switch 
+--                 pwm_n_out_t(1)  <= '1'; -- Bottom switch
+--                  state := S1;
                   
-            elsif f2_h18 = '1' then 
+--            elsif f2_h18 = '1' then 
               
-                 -- PWM signals
-                  pwm_n_out_t(0)  <= a_pwm2_out;
-                  pwm_out_t(1) <= '1';    -- Top switch 
-                  pwm_n_out_t(1)  <= '0'; -- Bottom switch
-                  -- short Fault in SW3
-                  pwm_out_t(0) <= '1';
-                  state := S1;
+--                 -- PWM signals
+--                  pwm_n_out_t(0)  <= a_pwm2_out;
+--                  pwm_out_t(1) <= '1';    -- Top switch 
+--                  pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--                  -- short Fault in SW3
+--                  pwm_out_t(0) <= '1';
+--                  state := S1;
                   
                    
-            elsif f3_h17 = '1' then    
-                 -- PWM signals
-                 pwm_out_t(0) <= a_pwm1_out;  
-                 pwm_out_t(1) <= '1';    -- Top switch 
-                 pwm_n_out_t(1)  <= '0'; -- Bottom switch
-                -- short Fault in SW4
-                 pwm_n_out_t(0)  <= '1';
+--            elsif f3_h17 = '1' then    
+--                 -- PWM signals
+--                 pwm_out_t(0) <= a_pwm1_out;  
+--                 pwm_out_t(1) <= '1';    -- Top switch 
+--                 pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--                -- short Fault in SW4
+--                 pwm_n_out_t(0)  <= '1';
                  
-                  state := S1;
+--                  state := S1;
                   
-            else  
-            state := S0;
-            end if;
+--            else  
+--            state := S0;
+--            end if;
 ------------------------------------------------------------------------------------ 
 
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------

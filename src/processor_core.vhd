@@ -71,16 +71,16 @@ COMPONENT ila_0
  
  -- Fault identification
   component fault_identification
-  Port ( 
-           clk : in STD_LOGIC;
-           start : in STD_LOGIC;
-           FD_flag : in STD_LOGIC;
-           gamma_avg : in vect4;
-           done : out STD_LOGIC := '0';
-           gavg_norm_out : out vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
-           ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
-           FI_flag : out STD_LOGIC_Vector(3 downto 0):= (others => '0')
-         );
+    Port ( 
+         clk : in STD_LOGIC;
+         start : in STD_LOGIC;
+         FD_flag : in STD_LOGIC;
+         gamma_avg : in vect4;
+         done : out STD_LOGIC := '0';
+         gavg_norm_out : out vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
+         ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+         FI_flag : out STD_LOGIC_Vector(3 downto 0):= (others => '0')
+       );
  end component fault_identification;
  
  
@@ -90,8 +90,8 @@ COMPONENT ila_0
  signal trig_in_ack, trig_in: STD_LOGIC := '0';
  
  --signal probe_z1, probe_z2, probe_ipv, probe_vpv: STD_LOGIC_VECTOR(31 downto 0);
- --signal probe_normfd: STD_LOGIC_VECTOR(31 downto 0);
- --signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_normfd: STD_LOGIC_VECTOR(31 downto 0);
+ signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  signal probe_fd: STD_LOGIC_VECTOR(0 downto 0) := (others => '0');
@@ -99,6 +99,7 @@ COMPONENT ila_0
  signal probe_ip1, probe_ip2, probe_ip3 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  signal probe_ip4, probe_ip5, probe_ip6 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  signal probe_ip7, probe_ip8, probe_ip9 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_ip10, probe_ip11 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  -- General
  signal counter : integer range 0 to 50000 := 0;
@@ -118,7 +119,7 @@ COMPONENT ila_0
  -- Fault identification
  signal done_fi: STD_LOGIC := '0';
  signal gavg_norm : vect4 := (zer0, zer0, zer0, zer0);
- signal ip:  ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+ signal ip:  ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
  signal FI_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
  
 begin
@@ -158,10 +159,10 @@ PORT MAP (
     probe1 => probe_gn1avg, 
     probe2 => probe_gn2avg,  
     probe3 => probe_gn3avg, 
-    probe4 => probe_ip5,
-    probe5 => probe_ip6,
-    probe6 => probe_ip7,
-    probe7 => probe_ip8,
+    probe4 => probe_gn0,
+    probe5 => probe_gn1,
+    probe6 => probe_gn2,
+    probe7 => probe_gn3,
     probe8 => probe_ip9, 
     probe9 => probe_fd,  -- Fd
     probe10 => probe_fi  -- FI
@@ -187,29 +188,32 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 --      probe_ipv <= result_type(plt_u(2));
 --      probe_vpv <= result_type(plt_u(0));
       
---      probe_gn0 <= result_type(gamma(0));
---      probe_gn1 <= result_type(gamma(1));
---      probe_gn2 <= result_type(gamma(2));
---      probe_gn3 <= result_type(gamma(3));
+      probe_gn0 <= result_type(gamma_avg(0));
+      probe_gn1 <= result_type(gamma_avg(1));
+      probe_gn2 <= result_type(gamma_avg(2));
+      probe_gn3 <= result_type(gamma_avg(3));
       
       probe_gn0avg <= result_type(gavg_norm(0));
       probe_gn1avg <= result_type(gavg_norm(1));
       probe_gn2avg <= result_type(gavg_norm(2));
       probe_gn3avg <= result_type(gavg_norm(3));
      
---      probe_normfd <= result_type(max_gamma); 
+      probe_normfd <= result_type(max_gamma); 
 
       probe_fd(0) <= fd_flag;
       probe_fi  <= FI_flag;
-      probe_ip1 <= result_type(ip(0));
-      probe_ip2 <= result_type(ip(1));
-      probe_ip3 <= result_type(ip(2));
-      probe_ip4 <= result_type(ip(3));
-      probe_ip5 <= result_type(ip(4));
-      probe_ip6 <= result_type(ip(5));
-      probe_ip7 <= result_type(ip(6));
-      probe_ip8 <= result_type(ip(7));
-      probe_ip9 <= result_type(ip(8));
+      
+--      probe_ip1 <= result_type(ip(0));
+--      probe_ip2 <= result_type(ip(1));
+--      probe_ip3 <= result_type(ip(2));
+--      probe_ip4 <= result_type(ip(3));
+--      probe_ip5 <= result_type(ip(4));
+--      probe_ip6 <= result_type(ip(5));
+--      probe_ip7 <= result_type(ip(6));
+--      probe_ip8 <= result_type(ip(7));
+--      probe_ip9 <= result_type(ip(8));
+--      probe_ip10 <= result_type(ip(9));
+--      probe_ip11 <= result_type(ip(10));
  
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
