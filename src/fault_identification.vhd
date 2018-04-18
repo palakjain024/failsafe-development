@@ -37,31 +37,31 @@ signal  gavg_norm : vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
 -- PV faults
 -- signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right));
 signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right));
-signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.7,n_left,n_right), to_sfixed(0.7,n_left,n_right));
+signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.869,n_left,n_right), to_sfixed(0.4941,n_left,n_right));
 
 -- Open Switch
 -- SW1/SW2
-signal f4 : vect4 := (to_sfixed(0.78,n_left,n_right), to_sfixed(1.44,n_left,n_right), to_sfixed(0.91,n_left,n_right), to_sfixed(-0.2,n_left,n_right));
+signal f4 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0.8269,n_left,n_right), to_sfixed(0.5605,n_left,n_right), to_sfixed(-0.0459,n_left,n_right));
 -- SW3
-signal f8 : vect4 := (to_sfixed(0.80,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.9,n_left,n_right), to_sfixed(-0.2,n_left,n_right));
+signal f8 : vect4 := (to_sfixed(-0.0048,n_left,n_right), to_sfixed(0.8121,n_left,n_right), to_sfixed(0.5815,n_left,n_right), to_sfixed(-0.0481,n_left,n_right));
 -- SW4
-signal f10 : vect4 := (to_sfixed(0.28,n_left,n_right), to_sfixed(0.38,n_left,n_right), to_sfixed(0.27,n_left,n_right), to_sfixed(-0.1,n_left,n_right));
+signal f10 : vect4 := (to_sfixed(-0.0077,n_left,n_right), to_sfixed(0.6931,n_left,n_right), to_sfixed(0.6854,n_left,n_right), to_sfixed(0.2233,n_left,n_right));
 
 -- Short Switch
 --SW2
-signal f7 : vect4 := (to_sfixed(0.92,n_left,n_right), to_sfixed(-0.02,n_left,n_right), to_sfixed(-0.2,n_left,n_right), to_sfixed(0.82,n_left,n_right));
+signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0.0135,n_left,n_right), to_sfixed(-0.1352,n_left,n_right), to_sfixed(0.9907,n_left,n_right));
 -- SW3
-signal f9 : vect4 := (to_sfixed(-0.07,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(-0.2,n_left,n_right), to_sfixed(0.82,n_left,n_right));
+signal f9 : vect4 := (to_sfixed(-0.87871,n_left,n_right), to_sfixed(0.2451,n_left,n_right), to_sfixed(-0.0293,n_left,n_right), to_sfixed(0.4098,n_left,n_right));
 -- SW4
-signal f11 : vect4 := (to_sfixed(-0.07,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(-0.2,n_left,n_right), to_sfixed(0.82,n_left,n_right));
+signal f11 : vect4 := (to_sfixed(-0.8787,n_left,n_right), to_sfixed(0.2416,n_left,n_right), to_sfixed(-0.0366,n_left,n_right), to_sfixed(0.4101,n_left,n_right));
 
 -- Sensor fault
--- Vc
-signal f13 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+-- iL
+signal f12 : vect4 := (to_sfixed(0.9912,n_left,n_right), to_sfixed(0.016,n_left,n_right), to_sfixed(0.1256,n_left,n_right), to_sfixed(0.0380,n_left,n_right));
 -- Vpv
-signal f15 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(-0.707,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.707,n_left,n_right));
+signal f15 : vect4 := (to_sfixed(0.0140,n_left,n_right), to_sfixed(-0.8407,n_left,n_right), to_sfixed(0.0981,n_left,n_right), to_sfixed(0.5324,n_left,n_right));
 -- Iload
-signal f16 : vect4 := (to_sfixed(-0.707,n_left,n_right), to_sfixed(0.707,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal f16 : vect4 := (to_sfixed(-0.9322,n_left,n_right), to_sfixed(0.3356,n_left,n_right), to_sfixed(0.1305,n_left,n_right), to_sfixed(0.0373,n_left,n_right));
     
 begin
 main_loop: process(clk)
@@ -121,7 +121,7 @@ main_loop: process(clk)
             A(5) <= resize(f9(0) * gavg_norm(0), n_left, n_right);
             A(6) <= resize(f10(0) * gavg_norm(0), n_left, n_right);
             A(7) <= resize(f11(0) * gavg_norm(0), n_left, n_right); 
-            A(8) <= resize(f13(0) * gavg_norm(0), n_left, n_right); 
+            A(8) <= resize(f12(0) * gavg_norm(0), n_left, n_right); 
             A(9) <= resize(f15(0) * gavg_norm(0), n_left, n_right); 
             A(10) <= resize(f16(0) * gavg_norm(0), n_left, n_right); 
             State := S2;
@@ -136,7 +136,7 @@ main_loop: process(clk)
             B(5) <= resize(f9(1) * gavg_norm(1), n_left, n_right);
             B(6) <= resize(f10(1) * gavg_norm(1), n_left, n_right);
             B(7) <= resize(f11(1) * gavg_norm(1), n_left, n_right); 
-            B(8) <= resize(f13(1) * gavg_norm(1), n_left, n_right); 
+            B(8) <= resize(f12(1) * gavg_norm(1), n_left, n_right); 
             B(9) <= resize(f15(1) * gavg_norm(1), n_left, n_right); 
             B(10) <= resize(f16(1) * gavg_norm(1), n_left, n_right); 
             State := S3;
@@ -151,7 +151,7 @@ main_loop: process(clk)
             C(5) <= resize(f9(2) * gavg_norm(2), n_left, n_right);
             C(6) <= resize(f10(2) * gavg_norm(2), n_left, n_right);
             C(7) <= resize(f11(2) * gavg_norm(2), n_left, n_right); 
-            C(8) <= resize(f13(2) * gavg_norm(2), n_left, n_right); 
+            C(8) <= resize(f12(2) * gavg_norm(2), n_left, n_right); 
             C(9) <= resize(f15(2) * gavg_norm(2), n_left, n_right); 
             C(10) <= resize(f16(2) * gavg_norm(2), n_left, n_right); 
             State := S4;
@@ -166,7 +166,7 @@ main_loop: process(clk)
             D(5) <= resize(f9(3) * gavg_norm(3), n_left, n_right);
             D(6) <= resize(f10(3) * gavg_norm(3), n_left, n_right);
             D(7) <= resize(f11(3) * gavg_norm(3), n_left, n_right); 
-            D(8) <= resize(f13(3) * gavg_norm(3), n_left, n_right);  
+            D(8) <= resize(f12(3) * gavg_norm(3), n_left, n_right);  
             D(9) <= resize(f15(3) * gavg_norm(3), n_left, n_right);  
             D(10) <= resize(f16(3) * gavg_norm(3), n_left, n_right);       
             State := S5;
@@ -249,8 +249,8 @@ main_loop: process(clk)
                                         FI_flag <= "1010";
                                             elsif index = 8 then -- f11
                                                 FI_flag <= "1011";
-                                                     elsif index = 9 then -- f13
-                                                        FI_flag <= "1101";
+                                                     elsif index = 9 then -- f12
+                                                        FI_flag <= "1100";
                                                              elsif index = 10 then -- f15
                                                                 FI_flag <= "1110";
                                                                      elsif index = 11 then -- f16

@@ -16,7 +16,7 @@ Port ( -- General
        reset_fd : in STD_LOGIC;
        -- FDI outputs
        fd_flag_out : out STD_LOGIC := '0';
-       -- FI_flag : out STD_LOGIC_VECTOR(3 downto 0);
+       fi_flag_out : out STD_LOGIC_VECTOR(3 downto 0);
        -- Observer inputs
        pc_pwm_top : in STD_LOGIC;
        pc_pwm_bot : in STD_LOGIC;
@@ -120,7 +120,7 @@ COMPONENT ila_0
  signal done_fi: STD_LOGIC := '0';
  signal gavg_norm : vect4 := (zer0, zer0, zer0, zer0);
  signal ip:  ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
- signal FI_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
+ signal fi_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
  
 begin
 
@@ -133,7 +133,7 @@ gamma_avg => gamma_avg,
 done => done_fi,
 gavg_norm_out => gavg_norm,
 ip_out => ip,
-FI_flag => FI_flag
+FI_flag => fi_flag
 );
 
 Plant_inst: plant_x port map (
@@ -155,15 +155,15 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_gn0avg, 
-    probe1 => probe_gn1avg, 
-    probe2 => probe_gn2avg,  
-    probe3 => probe_gn3avg, 
-    probe4 => probe_gn0,
-    probe5 => probe_gn1,
-    probe6 => probe_gn2,
-    probe7 => probe_gn3,
-    probe8 => probe_ip9, 
+    probe0 => probe_ip1, 
+    probe1 => probe_ip2, 
+    probe2 => probe_ip4,  
+    probe3 => probe_ip5, 
+    probe4 => probe_ip6,
+    probe5 => probe_ip7,
+    probe6 => probe_ip9,
+    probe7 => probe_ip10,
+    probe8 => probe_ip11, 
     probe9 => probe_fd,  -- Fd
     probe10 => probe_fi  -- FI
     
@@ -188,36 +188,36 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 --      probe_ipv <= result_type(plt_u(2));
 --      probe_vpv <= result_type(plt_u(0));
       
-      probe_gn0 <= result_type(gamma_avg(0));
-      probe_gn1 <= result_type(gamma_avg(1));
-      probe_gn2 <= result_type(gamma_avg(2));
-      probe_gn3 <= result_type(gamma_avg(3));
+--      probe_gn0 <= result_type(gamma_avg(0));
+--      probe_gn1 <= result_type(gamma_avg(1));
+--      probe_gn2 <= result_type(gamma_avg(2));
+--      probe_gn3 <= result_type(gamma_avg(3));
       
-      probe_gn0avg <= result_type(gavg_norm(0));
-      probe_gn1avg <= result_type(gavg_norm(1));
-      probe_gn2avg <= result_type(gavg_norm(2));
-      probe_gn3avg <= result_type(gavg_norm(3));
+--      probe_gn0avg <= result_type(gavg_norm(0));
+--      probe_gn1avg <= result_type(gavg_norm(1));
+--      probe_gn2avg <= result_type(gavg_norm(2));
+--      probe_gn3avg <= result_type(gavg_norm(3));
      
-      probe_normfd <= result_type(max_gamma); 
+--      probe_normfd <= result_type(max_gamma); 
 
       probe_fd(0) <= fd_flag;
-      probe_fi  <= FI_flag;
+      probe_fi  <= fi_flag;
       
---      probe_ip1 <= result_type(ip(0));
---      probe_ip2 <= result_type(ip(1));
+      probe_ip1 <= result_type(ip(0));
+      probe_ip2 <= result_type(ip(1));
 --      probe_ip3 <= result_type(ip(2));
---      probe_ip4 <= result_type(ip(3));
---      probe_ip5 <= result_type(ip(4));
---      probe_ip6 <= result_type(ip(5));
---      probe_ip7 <= result_type(ip(6));
+      probe_ip4 <= result_type(ip(3));
+      probe_ip5 <= result_type(ip(4));
+      probe_ip6 <= result_type(ip(5));
+      probe_ip7 <= result_type(ip(6));
 --      probe_ip8 <= result_type(ip(7));
---      probe_ip9 <= result_type(ip(8));
---      probe_ip10 <= result_type(ip(9));
---      probe_ip11 <= result_type(ip(10));
+      probe_ip9 <= result_type(ip(8));
+      probe_ip10 <= result_type(ip(9));
+      probe_ip11 <= result_type(ip(10));
  
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
-            
+   fi_flag_out <= fi_flag;   -- F         
    ---- To determine Matrix for corresponding mode ----
    if buck = '1' then
            if (pc_pwm_top = '1' and pc_pwm_bot = '0' ) then

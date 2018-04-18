@@ -39,7 +39,7 @@ entity main is
            LD_f3 : out STD_LOGIC := '0';
            -- Flags
            FD_flag : out STD_LOGIC := '0';
-           -- FI_flag : out STD_LOGIC_VECTOR(3 DOWNTO 0);
+           FI_flag : out STD_LOGIC_VECTOR(3 DOWNTO 0);
            reset_fd : in STD_LOGIC;
            -- DAC ports 1
            DA_DATA1_1 : out STD_LOGIC;
@@ -162,7 +162,7 @@ Port ( -- General
        reset_fd : in STD_LOGIC;
        -- FDI outputs
        fd_flag_out : out STD_LOGIC := '0';
-       -- FI_flag : out STD_LOGIC_VECTOR(3 downto 0);
+       fi_flag_out : out STD_LOGIC_VECTOR(3 downto 0);
        -- Observer inputs
        pc_pwm_top : in STD_LOGIC;
        pc_pwm_bot : in STD_LOGIC;
@@ -355,7 +355,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => adc_out_3(0),  
+              dac_in => plt_y(0),  -- Inductor current
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -365,7 +365,7 @@ scaler_2: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => adc_out_1(1),  
+            dac_in => plt_u(0),  -- PV voltage
             dac_val => dac_2); 
 scaler_3: scaler generic map (
             dac_left => n_left,
@@ -375,7 +375,7 @@ scaler_3: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => adc_out_2(0),  
+            dac_in => plt_u(1),  -- Load current
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
@@ -385,7 +385,7 @@ scaler_4: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => adc_out_2(1),  
+            dac_in => plt_y(1),  -- capacitor voltage
             dac_val => dac_4); 
 
 
@@ -397,7 +397,7 @@ pc_en => enable_fdi,
 reset_fd => reset_fd,
 -- FDI outputs
 fd_flag_out => FD_flag,
--- FI_flag : out STD_LOGIC_VECTOR(3 downto 0);
+fi_flag_out => FI_flag,
 -- Observer inputs
 pc_pwm_top => a_pwm1_out,
 pc_pwm_bot => a_pwm2_out,
@@ -417,7 +417,8 @@ if (clk = '1' and clk'event) then
 -- Plant inputs
 plt_u(2) <= adc_out_3(0); -- PV current
 -- Plant outputs
-plt_y(0) <= adc_out_1(0); -- Inductor current
+plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+ 
  
 -- Fault Management --  
 case state is
@@ -433,7 +434,7 @@ case state is
          plt_u(0) <= adc_out_2(1); -- PV voltage
          plt_u(1) <= adc_out_2(0); -- load
          -- Plant outputs 
-         plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+         plt_y(0) <= adc_out_1(0); -- Inductor current
          
          -- Fault injection
            if f1_h19 = '1' then
@@ -478,8 +479,8 @@ case state is
                 -- Plant inputs
                 plt_u(0) <= adc_out_2(1); -- PV voltage
                 plt_u(1) <= adc_out_2(0); -- load
-                -- Plant outputs: fault in vc sensor
-                plt_y(1) <= resize(adc_out_1(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Capacitor voltage
+                -- Plant outputs: fault in iL sensor
+                plt_y(0) <= resize(adc_out_1(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Inductor current
                 state := S1;
                 
           elsif f2_h18 = '1' then 
@@ -488,7 +489,7 @@ case state is
                plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV voltage
                plt_u(1) <= adc_out_2(0); -- load
                -- Plant outputs 
-                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+               plt_y(0) <= adc_out_1(0); -- Inductor current
                 state := S1;
                 
                  
@@ -496,9 +497,8 @@ case state is
                 -- Plant inputs: fault in iload sensor
                 plt_u(0) <= adc_out_2(1); -- PV voltage
                 plt_u(1) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
-             
                 -- Plant outputs 
-                plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+                plt_y(0) <= adc_out_1(0); -- Inductor current
                 state := S1;
                           
          else  
@@ -512,7 +512,7 @@ case state is
 --        plt_u(0) <= adc_out_2(1); -- PV voltage
 --        plt_u(1) <= adc_out_2(0); -- load
 --        -- Plant outputs 
---        plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+--        plt_y(0) <= adc_out_1(0); -- Inductor current
         
 --           if f1_h19 = '1' then  
      
@@ -555,7 +555,7 @@ case state is
 --        plt_u(0) <= adc_out_2(1); -- PV voltage
 --        plt_u(1) <= adc_out_2(0); -- load
 --        -- Plant outputs 
---        plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+--        plt_y(0) <= adc_out_1(0); -- Inductor current
 -- Better to use mechanical switches
 --         if f1_h19 = '1' then  
               
