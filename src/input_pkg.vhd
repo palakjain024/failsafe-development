@@ -35,7 +35,7 @@ package input_pkg is
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-0.2,1,-30);      -- Inductor resistance
   constant fd_th : sfixed(1 downto -30) := to_sfixed(0.3, 1, -30); -- FD Threshold
-  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.5, 15, -16); -- FI Threshold for inner products
+  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.4, 15, -16); -- FI Threshold for inner products
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
@@ -45,8 +45,8 @@ package input_pkg is
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(60,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(5.54,15,-16);
-  constant vpv : sfixed(15 downto -16) := to_sfixed(29,15,-16);
+  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);

@@ -15,6 +15,7 @@ entity fault_identification is
            FD_flag : in STD_LOGIC;
            gamma_avg : in vect4;
            done : out STD_LOGIC := '0';
+           max_ip_out : out sfixed(n_left downto n_right) := zer0;
            gavg_norm_out : out vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
            ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
            FI_flag : out STD_LOGIC_Vector(3 downto 0):= (others => '0')
@@ -59,9 +60,9 @@ signal f11 : vect4 := (to_sfixed(-0.8787,n_left,n_right), to_sfixed(0.2416,n_lef
 -- iL
 signal f12 : vect4 := (to_sfixed(0.9912,n_left,n_right), to_sfixed(0.016,n_left,n_right), to_sfixed(0.1256,n_left,n_right), to_sfixed(0.0380,n_left,n_right));
 -- Vpv
-signal f15 : vect4 := (to_sfixed(0.0140,n_left,n_right), to_sfixed(-0.8407,n_left,n_right), to_sfixed(0.0981,n_left,n_right), to_sfixed(0.5324,n_left,n_right));
+signal f14 : vect4 := (to_sfixed(0.0140,n_left,n_right), to_sfixed(-0.8407,n_left,n_right), to_sfixed(0.0981,n_left,n_right), to_sfixed(0.5324,n_left,n_right));
 -- Iload
-signal f16 : vect4 := (to_sfixed(-0.9322,n_left,n_right), to_sfixed(0.3356,n_left,n_right), to_sfixed(0.1305,n_left,n_right), to_sfixed(0.0373,n_left,n_right));
+signal f15 : vect4 := (to_sfixed(-0.9322,n_left,n_right), to_sfixed(0.3356,n_left,n_right), to_sfixed(0.1305,n_left,n_right), to_sfixed(0.0373,n_left,n_right));
     
 begin
 main_loop: process(clk)
@@ -85,6 +86,7 @@ main_loop: process(clk)
               max_ip := zer0;
               index := 0; 
               done <= '0';
+              
                 
               -- Gamma normalization
               gavg_norm(0) <= resize(gamma_avg(0)*ibase, n_left, n_right);
@@ -122,8 +124,8 @@ main_loop: process(clk)
             A(6) <= resize(f10(0) * gavg_norm(0), n_left, n_right);
             A(7) <= resize(f11(0) * gavg_norm(0), n_left, n_right); 
             A(8) <= resize(f12(0) * gavg_norm(0), n_left, n_right); 
-            A(9) <= resize(f15(0) * gavg_norm(0), n_left, n_right); 
-            A(10) <= resize(f16(0) * gavg_norm(0), n_left, n_right);
+            A(9) <= resize(f14(0) * gavg_norm(0), n_left, n_right); 
+            A(10) <= resize(f15(0) * gavg_norm(0), n_left, n_right);
             A(11) <= resize(f1(0) * gavg_norm(0), n_left, n_right);
             State := S2;
             
@@ -138,8 +140,8 @@ main_loop: process(clk)
             B(6) <= resize(f10(1) * gavg_norm(1), n_left, n_right);
             B(7) <= resize(f11(1) * gavg_norm(1), n_left, n_right); 
             B(8) <= resize(f12(1) * gavg_norm(1), n_left, n_right); 
-            B(9) <= resize(f15(1) * gavg_norm(1), n_left, n_right); 
-            B(10) <= resize(f16(1) * gavg_norm(1), n_left, n_right); 
+            B(9) <= resize(f14(1) * gavg_norm(1), n_left, n_right); 
+            B(10) <= resize(f15(1) * gavg_norm(1), n_left, n_right); 
             B(11) <= resize(f1(1) * gavg_norm(1), n_left, n_right); 
             State := S3;
           
@@ -154,8 +156,8 @@ main_loop: process(clk)
             C(6) <= resize(f10(2) * gavg_norm(2), n_left, n_right);
             C(7) <= resize(f11(2) * gavg_norm(2), n_left, n_right); 
             C(8) <= resize(f12(2) * gavg_norm(2), n_left, n_right); 
-            C(9) <= resize(f15(2) * gavg_norm(2), n_left, n_right); 
-            C(10) <= resize(f16(2) * gavg_norm(2), n_left, n_right); 
+            C(9) <= resize(f14(2) * gavg_norm(2), n_left, n_right); 
+            C(10) <= resize(f15(2) * gavg_norm(2), n_left, n_right); 
             C(11) <= resize(f1(2) * gavg_norm(2), n_left, n_right);
             State := S4;
             
@@ -170,8 +172,8 @@ main_loop: process(clk)
             D(6) <= resize(f10(3) * gavg_norm(3), n_left, n_right);
             D(7) <= resize(f11(3) * gavg_norm(3), n_left, n_right); 
             D(8) <= resize(f12(3) * gavg_norm(3), n_left, n_right);  
-            D(9) <= resize(f15(3) * gavg_norm(3), n_left, n_right);  
-            D(10) <= resize(f16(3) * gavg_norm(3), n_left, n_right);   
+            D(9) <= resize(f14(3) * gavg_norm(3), n_left, n_right);  
+            D(10) <= resize(f15(3) * gavg_norm(3), n_left, n_right);   
             D(11) <= resize(f1(3) * gavg_norm(3), n_left, n_right);      
             State := S5;
           
@@ -230,13 +232,14 @@ main_loop: process(clk)
                     index := i + 1;
                  end if;
                  end loop;
+                 
                 State := S9;
                    
            When S9 => 
               
               done <= '1';    
            -- Fault identification flag
-            
+                max_ip_out <= max_ip;
              if max_ip > fi_th then
               
            -- FI_flag <= std_logic_vector(to_unsigned(index, FI_flag'length));   
@@ -258,9 +261,9 @@ main_loop: process(clk)
                                                 FI_flag <= "1011";
                                                      elsif index = 9 then -- f12
                                                         FI_flag <= "1100";
-                                                             elsif index = 10 then -- f15
+                                                             elsif index = 10 then -- f14
                                                                 FI_flag <= "1110";
-                                                                     elsif index = 11 then -- f16
+                                                                     elsif index = 11 then -- f15
                                                                         FI_flag <= "1111";
                                                                             elsif index = 12 then -- f1
                                                                              FI_flag <= "0001";
