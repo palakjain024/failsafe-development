@@ -16,7 +16,7 @@ entity fault_identification is
            gamma_avg : in vect4;
            done : out STD_LOGIC := '0';
            gavg_norm_out : out vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
-           ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+           ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
            FI_flag : out STD_LOGIC_Vector(3 downto 0):= (others => '0')
          );
 end fault_identification;
@@ -25,19 +25,19 @@ architecture Behavioral of fault_identification is
 
 --Signals   
 --  Inner product          
-signal	A       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
-signal  B       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
-signal  C       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
-signal  D       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
-signal  ip      : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+signal	A       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+signal  B       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+signal  C       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+signal  D       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+signal  ip      : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
 signal  gavg_norm : vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
 
 -- Fault signature lib (Normalized it)
 
 -- PV faults
--- signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right));
 signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right));
-signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.869,n_left,n_right), to_sfixed(0.4941,n_left,n_right));
+signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.707,n_left,n_right), to_sfixed(0.707,n_left,n_right));
 
 -- Open Switch
 -- SW1/SW2
@@ -101,7 +101,7 @@ main_loop: process(clk)
                     State := S0;
                     end if;
                else
-                   ip   <= (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+                   ip   <= (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
                    FI_flag <= "0000";
                    State := S0;
                end if; 
@@ -123,7 +123,8 @@ main_loop: process(clk)
             A(7) <= resize(f11(0) * gavg_norm(0), n_left, n_right); 
             A(8) <= resize(f12(0) * gavg_norm(0), n_left, n_right); 
             A(9) <= resize(f15(0) * gavg_norm(0), n_left, n_right); 
-            A(10) <= resize(f16(0) * gavg_norm(0), n_left, n_right); 
+            A(10) <= resize(f16(0) * gavg_norm(0), n_left, n_right);
+            A(11) <= resize(f1(0) * gavg_norm(0), n_left, n_right);
             State := S2;
             
             When S2 =>
@@ -139,6 +140,7 @@ main_loop: process(clk)
             B(8) <= resize(f12(1) * gavg_norm(1), n_left, n_right); 
             B(9) <= resize(f15(1) * gavg_norm(1), n_left, n_right); 
             B(10) <= resize(f16(1) * gavg_norm(1), n_left, n_right); 
+            B(11) <= resize(f1(1) * gavg_norm(1), n_left, n_right); 
             State := S3;
           
             When S3 =>
@@ -154,6 +156,7 @@ main_loop: process(clk)
             C(8) <= resize(f12(2) * gavg_norm(2), n_left, n_right); 
             C(9) <= resize(f15(2) * gavg_norm(2), n_left, n_right); 
             C(10) <= resize(f16(2) * gavg_norm(2), n_left, n_right); 
+            C(11) <= resize(f1(2) * gavg_norm(2), n_left, n_right);
             State := S4;
             
             When S4 =>
@@ -168,7 +171,8 @@ main_loop: process(clk)
             D(7) <= resize(f11(3) * gavg_norm(3), n_left, n_right); 
             D(8) <= resize(f12(3) * gavg_norm(3), n_left, n_right);  
             D(9) <= resize(f15(3) * gavg_norm(3), n_left, n_right);  
-            D(10) <= resize(f16(3) * gavg_norm(3), n_left, n_right);       
+            D(10) <= resize(f16(3) * gavg_norm(3), n_left, n_right);   
+            D(11) <= resize(f1(3) * gavg_norm(3), n_left, n_right);      
             State := S5;
           
            When S5 =>
@@ -184,6 +188,7 @@ main_loop: process(clk)
            ip(8) <= resize(A(8) + B(8), n_left, n_right);
            ip(9) <= resize(A(9) + B(9), n_left, n_right);
            ip(10) <= resize(A(10) + B(10), n_left, n_right);
+           ip(11) <= resize(A(11) + B(11), n_left, n_right);
            State := S6;
          
            When S6 =>            
@@ -198,6 +203,7 @@ main_loop: process(clk)
            ip(8) <= resize(ip(8) + C(8), n_left, n_right);
            ip(9) <= resize(ip(9) + C(9), n_left, n_right);
            ip(10) <= resize(ip(10) + C(10), n_left, n_right);
+           ip(11) <= resize(ip(11) + C(11), n_left, n_right);
            State := S7; 
             
            When S7 =>
@@ -212,12 +218,13 @@ main_loop: process(clk)
            ip(8) <= resize(ip(8) + D(8), n_left, n_right);
            ip(9) <= resize(ip(9) + D(9), n_left, n_right);
            ip(10) <= resize(ip(10) + D(10), n_left, n_right);
+           ip(11) <= resize(ip(11) + D(11), n_left, n_right);
            State := S8;
            
            When S8 =>
              ip_out <= ip;                  
           -- Finding max ip
-              for i in 0 to 10 loop
+              for i in 0 to 11 loop
                  if ip(i) > max_ip then
                     max_ip := ip(i);
                     index := i + 1;
@@ -255,8 +262,10 @@ main_loop: process(clk)
                                                                 FI_flag <= "1110";
                                                                      elsif index = 11 then -- f16
                                                                         FI_flag <= "1111";
-                                                                            else null;
-                                                                                 end if;
+                                                                            elsif index = 12 then -- f1
+                                                                             FI_flag <= "0001";
+                                                                                else null;
+                                                                                  end if;
                               
                         
              

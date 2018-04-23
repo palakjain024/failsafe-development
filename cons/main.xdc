@@ -66,14 +66,14 @@ set_property PACKAGE_PIN AA8 [get_ports {FI_flag[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[3]}]
 
 ##----------- CONTROLLER: PWM SIGNALS --------------- ##
-## Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6) [Output side for boost mode]
+## Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6) [Input side for boost mode]
 set_property PACKAGE_PIN AB7 [get_ports {pwm_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[0]}]
 
 set_property PACKAGE_PIN R6 [get_ports {pwm_n_out_t[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[0]}]
 
-## Mapping PWM module phase b to PMOD JC1_n (AB6) and JC3_n (T6) [Input side for boost mode]
+## Mapping PWM module phase b to PMOD JC1_n (AB6) and JC3_n (T6) [Output side for boost mode]
 set_property PACKAGE_PIN AB6 [get_ports {pwm_out_t[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {pwm_out_t[1]}]
 
@@ -88,7 +88,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[1]}]
 #set_property IOSTANDARD LVCMOS33 [get_ports {pwm_n_out_t[2]}]
 
 ## ------------------ ADCs --------------------- ##
-## Digilent PMOD AD1 _1 ADC to PMOD JA1 to JA4 (For adc_1 and adc_2)
+## Digilent PMOD AD1 _1 ADC to PMOD JA1 to JA4 (For adc_1 and adc_2) no use
 set_property PACKAGE_PIN Y11 [get_ports AD_CS_1]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_1]
 
@@ -101,7 +101,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_1]
 set_property PACKAGE_PIN AA9 [get_ports AD_SCK_1]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_1]
 
-## Digilent PMOD AD1_2 ADC to PMOD JB1 to JB4 (For adc_3 and adc_4)
+## Digilent PMOD AD1_2 ADC to PMOD JB1 to JB4 (For adc_3 and adc_4) (ipv/iL and vpv)
 set_property PACKAGE_PIN W12 [get_ports AD_CS_2]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_2]
 
@@ -114,7 +114,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports AD_D1_2]
 set_property PACKAGE_PIN W8 [get_ports AD_SCK_2]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_SCK_2]
 
-## Digilent PMOD AD1_3 ADC to PMOD JB7 to JB10 (For adc_5 and adc_6)
+## Digilent PMOD AD1_3 ADC to PMOD JB7 to JB10 (For adc_5 and adc_6) (iload and vC)
 set_property PACKAGE_PIN V12 [get_ports AD_CS_3]
 set_property IOSTANDARD LVCMOS33 [get_ports AD_CS_3]
 
