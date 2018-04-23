@@ -10,11 +10,11 @@ package input_pkg is
 
   -- PWM parameters
   constant sys_clk         : INTEGER := 100_000_000;  --system clock frequency in Hz
-  constant pwm_freq        : INTEGER := 10_000;       --PWM switching frequency in Hz
+  constant pwm_freq        : INTEGER := 50_000;       --PWM switching frequency in Hz
   constant bits_resolution : INTEGER := 8;            --bits of resolution setting the duty cycle
   constant phases          : INTEGER := 1;            --number of output pwms and phases
   -- Deadtime
-  constant c_Dead_t        : INTEGER :=  100;         -- Dead time
+  constant c_Dead_t        : INTEGER :=  50;         -- Dead time 500 ns
    
   -- Mode of operation
   constant buck : STD_LOGIC := '0';
@@ -22,18 +22,20 @@ package input_pkg is
   constant passthrough : STD_LOGIC := '0';
   
  -- Matrix discretization
- constant a00d : sfixed(1 downto -30) := to_sfixed(0.999900000000000, 1, -30); -- common mode
- constant a01d : sfixed(1 downto -30) := to_sfixed(-0.000100000000000, 1, -30); -- common mode
- constant a10d : sfixed(1 downto -30) := to_sfixed(0.000270270270270, 1, -30); -- common mode
+ constant a00d : sfixed(1 downto -30) := to_sfixed(0.999333333333333, 1, -30); -- common mode
+ -- change a00d to match with the system R = 1, a00d = 0.996666666666667
+ -- R = 0.8, a00d = 0.997333333333333
+ constant a01d : sfixed(1 downto -30) := to_sfixed(-0.003333333333333, 1, -30); -- common mode
+ constant a10d : sfixed(1 downto -30) := to_sfixed(0.001639344262295, 1, -30); -- common mode
  constant a11d : sfixed(1 downto -30) := to_sfixed(1.000000000000000, 1, -30); -- common mode 
- constant b00d : sfixed(1 downto -30) := to_sfixed(0.000100000000000, 1, -30); -- common mode 
- constant b11d : sfixed(1 downto -30) := to_sfixed(-0.000270270270270, 1, -30); -- common mode
+ constant b00d : sfixed(1 downto -30) := to_sfixed(0.003333333333333, 1, -30); -- common mode 
+ constant b11d : sfixed(1 downto -30) := to_sfixed(-0.001639344262295, 1, -30); -- common mode
     
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
-  constant rL : sfixed(1 downto -30) := to_sfixed(-1,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.4, 1, -30); -- FD Threshold
-  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.56, 15, -16); -- FI Threshold for inner products
+  constant rL : sfixed(1 downto -30) := to_sfixed(-0.2,1,-30);      -- Inductor resistance
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.3, 1, -30); -- FD Threshold
+  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.5, 15, -16); -- FI Threshold for inner products
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
@@ -43,7 +45,7 @@ package input_pkg is
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(60,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant ipv : sfixed(15 downto -16) := to_sfixed(5.54,15,-16);
   constant vpv : sfixed(15 downto -16) := to_sfixed(29,15,-16);
   
   -- Zero initial input
@@ -93,6 +95,6 @@ package input_pkg is
   constant address_depth: integer range 0 to 100 := 10;  -- For calculating total address depth
    
   -- Fault Identification
-  type ip_array is array (0 to 10) of sfixed(15 downto -16);
+  type ip_array is array (0 to 11) of sfixed(15 downto -16);
   
 end package input_pkg;

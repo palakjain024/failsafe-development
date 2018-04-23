@@ -309,21 +309,21 @@ de_inst_1: descaler generic map (adc_factor => i_factor )
             start => AD_sync_1,
             adc_in => adc_1,
             done => de_done_1,
-            adc_val => adc_out_1(0)); -- Inductor current
+            adc_val => adc_out_1(0));  -- Not in use
 de_inst_2: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
             start => AD_sync_1,
             adc_in => adc_2,
             done => de_done_2,
-            adc_val => adc_out_1(1));  --capacitor voltage
+            adc_val => adc_out_1(1));  -- Not in use
 de_inst_3: descaler generic map (adc_factor => i_factor)
             port map (
             clk => clk,
             start => AD_sync_2,
             adc_in => adc_3,
             done => de_done_3,
-            adc_val => adc_out_2(0)); -- load
+            adc_val => adc_out_2(0));  -- Inductor current/PV current For boost mode
 de_inst_4: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
@@ -337,14 +337,14 @@ de_inst_5: descaler generic map (adc_factor => i_factor)
             start => AD_sync_3,
             adc_in => adc_5,
             done => de_done_5,
-            adc_val => adc_out_3(0));-- PV current
+            adc_val => adc_out_3(0)); -- Iload/Inductor current for buck mode
 de_inst_6: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
             start => AD_sync_3,
             adc_in => adc_6,
             done => de_done_6,
-            adc_val => adc_out_3(1));      
+            adc_val => adc_out_3(1)); -- capacitor voltage   
      
 -- DAC Scaler       
 scaler_1: scaler generic map (
@@ -415,9 +415,9 @@ if (clk = '1' and clk'event) then
 
 -- No Fault Case --
 -- Plant inputs
-plt_u(2) <= adc_out_3(0); -- PV current
+plt_u(2) <= adc_out_2(0); -- PV current
 -- Plant outputs
-plt_y(1) <= adc_out_1(1); -- Capacitor voltage
+plt_y(1) <= adc_out_3(1); -- Capacitor voltage
  
  
 -- Fault Management --  
@@ -426,15 +426,32 @@ case state is
          when S0 =>
 
          -- PWM outputs could be from any control scheme --  
-         pwm_out_t(0) <= a_pwm1_out;
-         pwm_n_out_t(0)  <= a_pwm2_out;
-         pwm_out_t(1) <= '1';    -- Top switch 
-         pwm_n_out_t(1)  <= '0'; -- Bottom switch
+         if buck = '1'  then
+            
+            pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
+            pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
+            pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+            pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+         
+         elsif boost = '1' then
+            pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+            pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+            pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+            pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+ 
+         else --passthrough mode
+            pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+            pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+            pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+            pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+            
+         end if ;
+         
          -- Plant inputs
          plt_u(0) <= adc_out_2(1); -- PV voltage
-         plt_u(1) <= adc_out_2(0); -- load
+         plt_u(1) <= adc_out_3(0); -- Load
          -- Plant outputs 
-         plt_y(0) <= adc_out_1(0); -- Inductor current
+         plt_y(0) <= adc_out_2(0); -- PV current/Inductor current
          
          -- Fault injection
            if f1_h19 = '1' then
@@ -469,36 +486,53 @@ case state is
 -------------------------------- SENSOR FAULTS ---------------------------------  
 
          -- PWM outputs could be from any control scheme --  
-         pwm_out_t(0) <= a_pwm1_out;
-         pwm_n_out_t(0)  <= a_pwm2_out;
-         pwm_out_t(1) <= '1';    -- Top switch 
-         pwm_n_out_t(1)  <= '0'; -- Bottom switch
-                    
+                   if buck = '1'  then
+                     
+                     pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
+                     pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
+                     pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+                     pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+                  
+                  elsif boost = '1' then
+                     pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                     pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+                     pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+                     pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+          
+                  else --passthrough mode
+                     pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                     pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+                     pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+                     pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+                     
+                  end if ;
+          
+          -- Sensor inputs          
           if f1_h19 = '1' then  
                  
                 -- Plant inputs
                 plt_u(0) <= adc_out_2(1); -- PV voltage
-                plt_u(1) <= adc_out_2(0); -- load
+                plt_u(1) <= adc_out_3(0); -- load
                 -- Plant outputs: fault in iL sensor
-                plt_y(0) <= resize(adc_out_1(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Inductor current
+                plt_y(0) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- Inductor current
                 state := S1;
                 
           elsif f2_h18 = '1' then 
             
                -- Plant inputs: fault in vpv sensor
                plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV voltage
-               plt_u(1) <= adc_out_2(0); -- load
+               plt_u(1) <= adc_out_3(0); -- load
                -- Plant outputs 
-               plt_y(0) <= adc_out_1(0); -- Inductor current
+               plt_y(0) <= adc_out_2(0); -- Inductor current
                 state := S1;
                 
                  
           elsif f3_h17 = '1' then    
                 -- Plant inputs: fault in iload sensor
                 plt_u(0) <= adc_out_2(1); -- PV voltage
-                plt_u(1) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
+                plt_u(1) <= resize(adc_out_3(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- load
                 -- Plant outputs 
-                plt_y(0) <= adc_out_1(0); -- Inductor current
+                plt_y(0) <= adc_out_2(0); -- Inductor current
                 state := S1;
                           
          else  
@@ -507,91 +541,61 @@ case state is
               
 ------------------------------------------------------------------------------------      
 
------------------------------- SHORT SWITCH FAULTS ---------------------------------
+------------------------------ SHORT SWITCH FAULTS  ---------------------------------
 --        -- Plant inputs
 --        plt_u(0) <= adc_out_2(1); -- PV voltage
---        plt_u(1) <= adc_out_2(0); -- load
+--        plt_u(1) <= adc_out_3(0); -- load
 --        -- Plant outputs 
---        plt_y(0) <= adc_out_1(0); -- Inductor current
+--        plt_y(0) <= adc_out_2(0); -- Inductor current
         
 --           if f1_h19 = '1' then  
      
---                 -- PWM signals
---                 pwm_out_t(0) <= a_pwm1_out;
---                 pwm_n_out_t(0)  <= a_pwm2_out;  
+--                 -- PWM signals for boost
+--                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
 --                 -- short Fault in SW2
---                 pwm_out_t(1) <= '1';    -- Top switch 
---                 pwm_n_out_t(1)  <= '1'; -- Bottom switch
---                  state := S1;
+--                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                 pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+--                 pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+--                 state := S1;
                   
 --            elsif f2_h18 = '1' then 
               
---                 -- PWM signals
---                  pwm_n_out_t(0)  <= a_pwm2_out;
---                  pwm_out_t(1) <= '1';    -- Top switch 
---                  pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--                 -- PWM signals for boost
+--                  pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
 --                  -- short Fault in SW3
---                  pwm_out_t(0) <= '1';
+--                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+--                  pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side)SW4
+
 --                  state := S1;
                   
                    
 --            elsif f3_h17 = '1' then    
---                 -- PWM signals
---                 pwm_out_t(0) <= a_pwm1_out;  
---                 pwm_out_t(1) <= '1';    -- Top switch 
---                 pwm_n_out_t(1)  <= '0'; -- Bottom switch
+--                -- PWM signals for boost
+--                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+--                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
 --                -- short Fault in SW4
---                 pwm_n_out_t(0)  <= '1';
+--                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (output side)SW4
                  
 --                  state := S1;
                   
 --            else  
 --            state := S0;
 --            end if;
------------------------------------------------------------------------------------- 
+-----------------------------------------------------------------------------------
 
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------
---        -- Plant inputs
---        plt_u(0) <= adc_out_2(1); -- PV voltage
---        plt_u(1) <= adc_out_2(0); -- load
---        -- Plant outputs 
---        plt_y(0) <= adc_out_1(0); -- Inductor current
--- Better to use mechanical switches
---         if f1_h19 = '1' then  
-              
---              -- PWM signals
---              pwm_out_t(0) <= a_pwm1_out;
---              pwm_n_out_t(0)  <= a_pwm2_out;  
---              -- open Fault in SW1
---              pwm_out_t(1) <= '0';    -- Top switch 
---              pwm_n_out_t(1)  <= '0'; -- Bottom switch
---               state := S1;
-               
---         elsif f2_h18 = '1' then 
-           
---              -- PWM signals
---               pwm_n_out_t(0)  <= a_pwm2_out;
---               pwm_out_t(1) <= '1';    -- Top switch 
---               pwm_n_out_t(1)  <= '0'; -- Bottom switch
---               -- open Fault in SW3
---               pwm_out_t(0) <= '0';
---               state := S1;
-               
-                
---         elsif f3_h17 = '1' then    
---              -- PWM signals
---              pwm_out_t(0) <= a_pwm1_out;  
---              pwm_out_t(1) <= '1';    -- Top switch 
---              pwm_n_out_t(1)  <= '0'; -- Bottom switch
---             -- open Fault in SW4
---              pwm_n_out_t(0)  <= '0';
-              
---               state := S1;
-               
---         else  
---         state := S0;
---         end if;
-------------------------------------------------------------------------------------           
+-- They are injected by using mechanical switches. Not by manupulating PWM Signals
+-- Since different anti-parallel diodes are conducting
+-----------------------------------------------------------------------------------  
+
+------------------------------ PV FAULTS ------------------------------------------
+-- They are injected by using metal tape or thermocol sheet
+-- i = 1, 25% cell shading
+-- i = 2, 80% cell shading
+-- i = 3, Mechanical switch and resistor in paraller of PV panel
+-----------------------------------------------------------------------------------          
 
   end case;   
  end if; -- clk
