@@ -17,8 +17,8 @@ package input_pkg is
   constant c_Dead_t        : INTEGER :=  50;         -- Dead time 500 ns
    
   -- Mode of operation
-  constant buck : STD_LOGIC := '0';
-  constant boost : STD_LOGIC := '1';
+  constant buck : STD_LOGIC := '1';
+  constant boost : STD_LOGIC := '0';
   constant passthrough : STD_LOGIC := '0';
   
  -- Matrix discretization
@@ -34,8 +34,8 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-0.2,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.3, 1, -30); -- FD Threshold
-  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.4, 15, -16); -- FI Threshold for inner products
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.1, 1, -30); -- FD Threshold
+  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.3, 15, -16); -- FI Threshold for inner products
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
@@ -45,7 +45,7 @@ package input_pkg is
   -- Initial values of il, vc, ipv, vpv (Initial state input)
   constant il0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
   constant vc0 : sfixed(15 downto -16) := to_sfixed(60,15,-16);
-  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant ipv : sfixed(15 downto -16) := to_sfixed(3,15,-16);
   constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
   
   -- Zero initial input
@@ -60,7 +60,7 @@ package input_pkg is
     
   -- For normalization of gamma, put reciprocal to avoid division
   constant ibase: sfixed(15 downto -16) := to_sfixed(0.2, 15, -16); -- Ibase = 5
-  constant vbase: sfixed(15  downto -16) := to_sfixed(0.025, 15, -16); -- Vbase = 40
+  constant vbase: sfixed(15  downto -16) := to_sfixed(0.05, 15, -16); -- Vbase = 20
     
   -- Matrices
   type mat24 is array (0 to 1, 0 to 3) of sfixed(1 downto -30);  -- for augumented [A:B]
@@ -83,7 +83,7 @@ package input_pkg is
   constant adc_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
   constant offset : sfixed(15 downto -16) := to_sfixed(0, 15, -16);
   constant i_factor : sfixed(15 downto -16) := to_sfixed(10, 15, -16);
-  constant v_factor : sfixed(15 downto -16) := to_sfixed(100, 15, -16);
+  constant v_factor : sfixed(15 downto -16) := to_sfixed(10, 15, -16);
   
   -- DAC scaler constants
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);

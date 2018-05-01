@@ -41,14 +41,16 @@ signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), 
 signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.707,n_left,n_right), to_sfixed(0.707,n_left,n_right));
 
 -- Open Switch
--- SW1/SW2
+-- SW1(f4)
 signal f4 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0.8269,n_left,n_right), to_sfixed(0.5605,n_left,n_right), to_sfixed(-0.0459,n_left,n_right));
+-- SW2(f6)
 -- SW3
 signal f8 : vect4 := (to_sfixed(-0.0048,n_left,n_right), to_sfixed(0.8121,n_left,n_right), to_sfixed(0.5815,n_left,n_right), to_sfixed(-0.0481,n_left,n_right));
 -- SW4
-signal f10 : vect4 := (to_sfixed(-0.0077,n_left,n_right), to_sfixed(0.6931,n_left,n_right), to_sfixed(0.6854,n_left,n_right), to_sfixed(0.2233,n_left,n_right));
+signal f10 : vect4 := (to_sfixed(-0.0077,n_left,n_right), to_sfixed(0.6931,n_left,n_right), to_sfixed(0.5815,n_left,n_right), to_sfixed(-0.0481,n_left,n_right));
 
 -- Short Switch
+--SW1 f5
 --SW2
 signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0.0135,n_left,n_right), to_sfixed(-0.1352,n_left,n_right), to_sfixed(0.9907,n_left,n_right));
 -- SW3
@@ -58,11 +60,11 @@ signal f11 : vect4 := (to_sfixed(-0.8787,n_left,n_right), to_sfixed(0.2416,n_lef
 
 -- Sensor fault
 -- iL
-signal f12 : vect4 := (to_sfixed(0.9912,n_left,n_right), to_sfixed(0.016,n_left,n_right), to_sfixed(0.1256,n_left,n_right), to_sfixed(0.0380,n_left,n_right));
--- Vpv
-signal f14 : vect4 := (to_sfixed(0.0140,n_left,n_right), to_sfixed(-0.8407,n_left,n_right), to_sfixed(0.0981,n_left,n_right), to_sfixed(0.5324,n_left,n_right));
+signal f12 : vect4 := (to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- Iload
-signal f15 : vect4 := (to_sfixed(-0.9322,n_left,n_right), to_sfixed(0.3356,n_left,n_right), to_sfixed(0.1305,n_left,n_right), to_sfixed(0.0373,n_left,n_right));
+signal f14 : vect4 := (to_sfixed(-1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+-- Vpv
+signal f15 : vect4 := (to_sfixed(0.0140,n_left,n_right), to_sfixed(-0.8407,n_left,n_right), to_sfixed(0.0981,n_left,n_right), to_sfixed(0.5324,n_left,n_right));
     
 begin
 main_loop: process(clk)
@@ -94,26 +96,19 @@ main_loop: process(clk)
               gavg_norm(2) <= resize(gamma_avg(2)*ibase, n_left, n_right);
               gavg_norm(3) <= resize(gamma_avg(3)*vbase, n_left, n_right);     
               
-              -- If a fault event is detected, fault identification begins
-              if FD_flag = '1' then
-               
-                    if Start = '1' then
-                    State := S1;
-                    else
-                    State := S0;
-                    end if;
-               else
-                   ip   <= (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
-                   FI_flag <= "0000";
-                   State := S0;
-               end if; 
-                       
+             -- 500 ns wait
+                if Start = '1' then
+                State := S1;
+                else
+                State := S0;
+                end if;
+                                     
                
           --------------------------------------------------------
            -- state S1 (Calculate inner product)
           ---------------------------------------------------------
             When S1 =>
-            gavg_norm_out <= gavg_norm;
+          
             
             A(0) <= resize(f2(0) * gavg_norm(0), n_left, n_right);
             A(1) <= resize(f3(0) * gavg_norm(0), n_left, n_right); 
@@ -224,7 +219,7 @@ main_loop: process(clk)
            State := S8;
            
            When S8 =>
-             ip_out <= ip;                  
+                               
           -- Finding max ip
               for i in 0 to 11 loop
                  if ip(i) > max_ip then
@@ -236,12 +231,15 @@ main_loop: process(clk)
                 State := S9;
                    
            When S9 => 
-              
-              done <= '1';    
+            -- outputs of the component  
+            done <= '1';    
+            max_ip_out <= max_ip;
+            ip_out <= ip;
+            gavg_norm_out <= gavg_norm;
+                
            -- Fault identification flag
-                max_ip_out <= max_ip;
-             if max_ip > fi_th then
-              
+             if max_ip > fi_th and FD_flag = '1' then
+               
            -- FI_flag <= std_logic_vector(to_unsigned(index, FI_flag'length));   
                     if index = 1 then -- f2
                             FI_flag <= "0010";

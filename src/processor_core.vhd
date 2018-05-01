@@ -1,3 +1,4 @@
+-- Processor Core
 library IEEE;
 library IEEE_PROPOSED;
 library work;
@@ -46,8 +47,12 @@ COMPONENT ila_0
      probe6 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
      probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
      probe8 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-     probe9 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-     probe10 : IN STD_LOGIC_VECTOR(3 DOWNTO 0)
+     probe9 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+     probe10 : IN STD_LOGIC_VECTOR(3 DOWNTO 0); 
+     probe11 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe12 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+     probe13 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+     probe14 : IN STD_LOGIC_VECTOR(31 DOWNTO 0)
  );
  END COMPONENT  ;
  -- Digital twin estimator (Buck-boost converter)
@@ -90,7 +95,7 @@ COMPONENT ila_0
 -- ILA core
  signal trig_in_ack, trig_in: STD_LOGIC := '0';
  
- signal probe_z1, probe_z2, probe_ipv, probe_vpv, probe_vc: STD_LOGIC_VECTOR(31 downto 0);
+ signal probe_z1, probe_z2, probe_ipv, probe_vpv, probe_vc, probe_iload: STD_LOGIC_VECTOR(31 downto 0);
  signal probe_normfd, probe_maxip: STD_LOGIC_VECTOR(31 downto 0);
  signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
@@ -158,22 +163,39 @@ PORT MAP (
     
     trig_in => trig_in,
     trig_in_ack => trig_in_ack,
-    probe0 => probe_maxip, 
-    probe1 => probe_ip2, 
-    probe2 => probe_ip4,  
-    probe3 => probe_ip5, 
-    probe4 => probe_ip6,
-    probe5 => probe_ip7,
-    probe6 => probe_ip9,
-    probe7 => probe_ip10,
-    probe8 => probe_ip11, 
---    probe0 => probe_normfd, 
---    probe1 => probe_gn0avg, 
---    probe2 => probe_gn1avg,  
---    probe3 => probe_gn2avg, 
---    probe4 => probe_gn3avg,
+    -- Inner product debugging
+--    probe0 => probe_ip1, 
+--    probe1 => probe_ip2, 
+--    probe2 => probe_ip3,  
+--    probe3 => probe_ip4, 
+--    probe4 => probe_ip5,
+--    probe5 => probe_ip6,
+--    probe6 => probe_ip7,
+--    probe7 => probe_ip8,
+--    probe8 => probe_ip9, 
+--    probe11 => probe_ip10, 
+--    probe12 => probe_ip11, 
+--    probe13 => probe_ip12,
+--    probe14 => probe_maxip
+
+    probe0 => probe_normfd, 
+    probe1 => probe_gn0avg, 
+    probe2 => probe_gn1avg,  
+    probe3 => probe_gn2avg, 
+    probe4 => probe_gn3avg,
+    probe5 => probe_ipv,
+    probe6 => probe_vpv,
+    probe7 => probe_iload,
+    probe8 => probe_vc,
+    probe11 => probe_z1, 
+    probe12 => probe_z2, 
+    probe13 => probe_maxip,
+    probe14 => probe_ip12,
+    
     probe9 => probe_fd,  -- Fd
     probe10 => probe_fi  -- FI
+
+
     
 ); 
 ---- Processes ----
@@ -191,39 +213,40 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 
 
        ---- ILA ----
---      probe_z1  <= result_type(z_val(0));
---      probe_z2 <= result_type(z_val(1)) ; 
---      probe_ipv <= result_type(plt_y(0));
---      probe_vc <= result_type(plt_y(1));
---      probe_vpv <= result_type(plt_u(0));
-      
---      probe_gn0 <= result_type(gamma_avg(0));
---      probe_gn1 <= result_type(gamma_avg(1));
---      probe_gn2 <= result_type(gamma_avg(2));
---      probe_gn3 <= result_type(gamma_avg(3));
-      
---        probe_gn0avg <= result_type(gavg_norm(0));
---        probe_gn1avg <= result_type(gavg_norm(1));
---        probe_gn2avg <= result_type(gavg_norm(2));
---        probe_gn3avg <= result_type(gavg_norm(3));
-     
+       
+--        probe_gn0 <= result_type(gamma_avg(0));
+--        probe_gn1 <= result_type(gamma_avg(1));
+--        probe_gn2 <= result_type(gamma_avg(2));
+--        probe_gn3 <= result_type(gamma_avg(3));
+       
+        probe_z1  <= result_type(z_val(0));
+        probe_z2 <= result_type(z_val(1)) ; 
+        probe_ipv <= result_type(plt_y(0));
+        probe_vc <= result_type(plt_y(1));
+        probe_iload <= result_type(plt_u(1));
+        probe_vpv <= result_type(plt_u(0));
+        probe_gn0avg <= result_type(gavg_norm(0));
+        probe_gn1avg <= result_type(gavg_norm(1));
+        probe_gn2avg <= result_type(gavg_norm(2));
+        probe_gn3avg <= result_type(gavg_norm(3));
+        
         probe_normfd <= result_type(max_gamma); 
         probe_maxip <= result_type(max_ip);
         probe_fd(0) <= fd_flag;
         probe_fi  <= fi_flag;
         
 --        probe_ip1 <= result_type(ip(0));  -- f2
-        probe_ip2 <= result_type(ip(1));  -- f3
---      probe_ip3 <= result_type(ip(2));  -- f4
-        probe_ip4 <= result_type(ip(3));  -- f7
-        probe_ip5 <= result_type(ip(4));  -- f8
-        probe_ip6 <= result_type(ip(5));  -- f9
-        probe_ip7 <= result_type(ip(6));  -- f10, fA
+--        probe_ip2 <= result_type(ip(1));  -- f3
+--        probe_ip3 <= result_type(ip(2));  -- f4
+--        probe_ip4 <= result_type(ip(3));  -- f7
+--        probe_ip5 <= result_type(ip(4));  -- f8
+--        probe_ip6 <= result_type(ip(5));  -- f9
+--        probe_ip7 <= result_type(ip(6));  -- f10, fA
 --        probe_ip8 <= result_type(ip(7));  -- f11, fB
-        probe_ip9 <= result_type(ip(8));  -- f12, fC
-        probe_ip10 <= result_type(ip(9)); -- f14, fE
-        probe_ip11 <= result_type(ip(10)); -- f15, fF
---      probe_ip12 <= result_type(ip(11)); -- f1, 
+--        probe_ip9 <= result_type(ip(8));  -- f12, fC
+--        probe_ip10 <= result_type(ip(9)); -- f14, fE
+--        probe_ip11 <= result_type(ip(10)); -- f15, fF
+          probe_ip12 <= result_type(ip(11)); -- f1, 
 
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
