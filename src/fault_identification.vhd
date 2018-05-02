@@ -48,29 +48,30 @@ signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), 
 
 -- Open Switch
 -- SW1(f4)
-signal f4 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0.8269,n_left,n_right), to_sfixed(0.5605,n_left,n_right), to_sfixed(-0.0459,n_left,n_right));
--- SW2(f6)
--- SW3
-signal f8 : vect4 := (to_sfixed(-0.0048,n_left,n_right), to_sfixed(0.8121,n_left,n_right), to_sfixed(0.5815,n_left,n_right), to_sfixed(-0.0481,n_left,n_right));
--- SW4
-signal f10 : vect4 := (to_sfixed(-0.0077,n_left,n_right), to_sfixed(0.6931,n_left,n_right), to_sfixed(0.5815,n_left,n_right), to_sfixed(-0.0481,n_left,n_right));
+signal f4 : vect4 := (to_sfixed(0.0255,n_left,n_right), to_sfixed(0.8987,n_left,n_right), to_sfixed(0.3967,n_left,n_right), to_sfixed(-0.1851,n_left,n_right));
+-- SW2(f6) not possible to inject complete open switch, anti-parallel diode is coming into picture
+signal f6 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+-- SW3 (f8)
+-- The open fault in SW3 is same as open switch fault in SW1, otherwise its anti parallel diode is operating.
+-- SW4 (fa)
+signal f10 : vect4 := (to_sfixed(0.2643,n_left,n_right), to_sfixed(0.7552,n_left,n_right), to_sfixed(0.3619,n_left,n_right), to_sfixed(-0.4783,n_left,n_right));
 
 -- Short Switch
 --SW1 f5
---SW2
+--SW2 (f7)
 signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0.0135,n_left,n_right), to_sfixed(-0.1352,n_left,n_right), to_sfixed(0.9907,n_left,n_right));
--- SW3
+-- SW3 (f9)
 signal f9 : vect4 := (to_sfixed(-0.87871,n_left,n_right), to_sfixed(0.2451,n_left,n_right), to_sfixed(-0.0293,n_left,n_right), to_sfixed(0.4098,n_left,n_right));
--- SW4
+-- SW4 (fb)
 signal f11 : vect4 := (to_sfixed(-0.8787,n_left,n_right), to_sfixed(0.2416,n_left,n_right), to_sfixed(-0.0366,n_left,n_right), to_sfixed(0.4101,n_left,n_right));
 
 -- Sensor fault
 -- iL
 signal f12 : vect4 := (to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- Iload
-signal f14 : vect4 := (to_sfixed(-1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal f14 : vect4 := (to_sfixed(-1,n_left,n_right), to_sfixed(0.001,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- Vpv
-signal f15 : vect4 := (to_sfixed(0.0140,n_left,n_right), to_sfixed(-0.8407,n_left,n_right), to_sfixed(0.0981,n_left,n_right), to_sfixed(0.5324,n_left,n_right));
+signal f15 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(-0.7338,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.6794,n_left,n_right));
     
 begin
 main_loop: process(clk)
@@ -114,7 +115,7 @@ main_loop: process(clk)
             A(1) <= resize(f3(0) * gavg_norm(0), n_left, n_right); 
             A(2) <= resize(f4(0) * gavg_norm(0), n_left, n_right);
             A(3) <= resize(f7(0) * gavg_norm(0), n_left, n_right);
-            A(4) <= resize(f8(0) * gavg_norm(0), n_left, n_right); 
+            A(4) <= resize(f6(0) * gavg_norm(0), n_left, n_right); 
             A(5) <= resize(f9(0) * gavg_norm(0), n_left, n_right);
             A(6) <= resize(f10(0) * gavg_norm(0), n_left, n_right);
             A(7) <= resize(f11(0) * gavg_norm(0), n_left, n_right); 
@@ -130,7 +131,7 @@ main_loop: process(clk)
             B(1) <= resize(f3(1) * gavg_norm(1), n_left, n_right); 
             B(2) <= resize(f4(1) * gavg_norm(1), n_left, n_right);
             B(3) <= resize(f7(1) * gavg_norm(1), n_left, n_right);
-            B(4) <= resize(f8(1) * gavg_norm(1), n_left, n_right); 
+            B(4) <= resize(f6(1) * gavg_norm(1), n_left, n_right); 
             B(5) <= resize(f9(1) * gavg_norm(1), n_left, n_right);
             B(6) <= resize(f10(1) * gavg_norm(1), n_left, n_right);
             B(7) <= resize(f11(1) * gavg_norm(1), n_left, n_right); 
@@ -146,7 +147,7 @@ main_loop: process(clk)
             C(1) <= resize(f3(2) * gavg_norm(2), n_left, n_right);
             C(2) <= resize(f4(2) * gavg_norm(2), n_left, n_right);
             C(3) <= resize(f7(2) * gavg_norm(2), n_left, n_right);
-            C(4) <= resize(f8(2) * gavg_norm(2), n_left, n_right); 
+            C(4) <= resize(f6(2) * gavg_norm(2), n_left, n_right); 
             C(5) <= resize(f9(2) * gavg_norm(2), n_left, n_right);
             C(6) <= resize(f10(2) * gavg_norm(2), n_left, n_right);
             C(7) <= resize(f11(2) * gavg_norm(2), n_left, n_right); 
@@ -162,7 +163,7 @@ main_loop: process(clk)
             D(1) <= resize(f3(3) * gavg_norm(3), n_left, n_right); 
             D(2) <= resize(f4(3) * gavg_norm(3), n_left, n_right);
             D(3) <= resize(f7(3) * gavg_norm(3), n_left, n_right);
-            D(4) <= resize(f8(3) * gavg_norm(3), n_left, n_right); 
+            D(4) <= resize(f6(3) * gavg_norm(3), n_left, n_right); 
             D(5) <= resize(f9(3) * gavg_norm(3), n_left, n_right);
             D(6) <= resize(f10(3) * gavg_norm(3), n_left, n_right);
             D(7) <= resize(f11(3) * gavg_norm(3), n_left, n_right); 
@@ -259,8 +260,8 @@ main_loop: process(clk)
                                         FI_flag <= "0100";
                                              elsif index = 4 then -- f7
                                                 FI_flag <= "0111";
-                                                    elsif index = 5 then -- f8
-                                                        FI_flag <= "1000";
+                                                    elsif index = 5 then -- f6
+                                                        FI_flag <= "0110";
                              elsif index = 6 then -- f9
                                 FI_flag <= "1001";
                                      elsif index = 7 then -- f10

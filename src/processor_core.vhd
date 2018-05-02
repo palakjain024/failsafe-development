@@ -240,7 +240,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
 --        probe_ip2 <= result_type(ip(1));  -- f3
 --        probe_ip3 <= result_type(ip(2));  -- f4
 --        probe_ip4 <= result_type(ip(3));  -- f7
---        probe_ip5 <= result_type(ip(4));  -- f8
+--        probe_ip5 <= result_type(ip(4));  -- f6
 --        probe_ip6 <= result_type(ip(5));  -- f9
 --        probe_ip7 <= result_type(ip(6));  -- f10, fA
 --        probe_ip8 <= result_type(ip(7));  -- f11, fB
