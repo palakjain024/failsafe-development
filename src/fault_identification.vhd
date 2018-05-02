@@ -231,6 +231,7 @@ main_loop: process(clk)
                     index <= itr + 1;
                  end if;
                  
+                if itr > 11  or itr = 11 then
                 itr <= 0; 
                 State := S9;
                 else

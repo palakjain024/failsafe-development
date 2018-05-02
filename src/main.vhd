@@ -163,6 +163,7 @@ Port ( -- General
        -- FDI outputs
        fd_flag_out : out STD_LOGIC := '0';
        fi_flag_out : out STD_LOGIC_VECTOR(3 downto 0);
+       zval : out vect2;
        -- Observer inputs
        pc_pwm_top : in STD_LOGIC;
        pc_pwm_bot : in STD_LOGIC;
@@ -206,6 +207,7 @@ signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 -- Processor core
 signal plt_u : vect3 := (zer0,zer0,zer0);
 signal plt_y : vect2 := (zer0,zer0);
+signal plt_z : vect2 := (zer0,zer0);
 signal fi_flag_inst: STD_LOGIC_VECTOR(3 DOWNTO 0) := (others => '0');
 signal fd_flag_inst: std_logic := '0';
 
@@ -359,7 +361,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => plt_y(0),  -- Inductor current
+              dac_in => plt_z(0),  -- Inductor current
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -389,7 +391,7 @@ scaler_4: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => plt_y(1),  -- capacitor voltage
+            dac_in => plt_z(1),  -- capacitor voltage
             dac_val => dac_4); 
 
 
@@ -402,6 +404,7 @@ reset_fd => reset_fd,
 -- FDI outputs
 fd_flag_out => fd_flag_inst,
 fi_flag_out => fi_flag_inst,
+zval => plt_z,
 -- Observer inputs
 pc_pwm_top => a_pwm1_out,
 pc_pwm_bot => a_pwm2_out,
