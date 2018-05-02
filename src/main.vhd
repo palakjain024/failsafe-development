@@ -39,7 +39,7 @@ entity main is
            LD_f3 : out STD_LOGIC := '0';
            -- Flags
            FD_flag : out STD_LOGIC := '0';
-           FI_flag : out STD_LOGIC_VECTOR(3 DOWNTO 0);
+           FI_flag : out STD_LOGIC_VECTOR(3 DOWNTO 0) := "0000";
            reset_fd : in STD_LOGIC;
            -- DAC ports 1
            DA_DATA1_1 : out STD_LOGIC;
@@ -206,7 +206,11 @@ signal adc_5, adc_6: std_logic_vector(11 downto 0) := (others => '0');
 -- Processor core
 signal plt_u : vect3 := (zer0,zer0,zer0);
 signal plt_y : vect2 := (zer0,zer0);
+signal fi_flag_inst: STD_LOGIC_VECTOR(3 DOWNTO 0) := (others => '0');
+signal fd_flag_inst: std_logic := '0';
 
+-- delay process
+signal counter_fi: integer range 0 to 10000 := 0;
 
 begin
 -- Clk
@@ -396,8 +400,8 @@ clk_ila => clk_ila,
 pc_en => enable_fdi,
 reset_fd => reset_fd,
 -- FDI outputs
-fd_flag_out => FD_flag,
-fi_flag_out => FI_flag,
+fd_flag_out => fd_flag_inst,
+fi_flag_out => fi_flag_inst,
 -- Observer inputs
 pc_pwm_top => a_pwm1_out,
 pc_pwm_bot => a_pwm2_out,
@@ -413,6 +417,8 @@ variable state: state_variable := S0;
 begin
 if (clk = '1' and clk'event) then
 
+-- FD flag output to CRO
+FD_flag <= fd_flag_inst;
 -- No Fault Case --
 -- Plant inputs
 plt_u(2) <= adc_out_2(0); -- PV current
@@ -646,6 +652,29 @@ case state is
  end if; -- clk
 end process; 
 
+-- Delay for FI flag
+delay_fi_uut: process(clk_ila)
+ begin
+ 
+  if (clk_ila = '1' and clk_ila'event) then
+  
+  if fd_flag_inst = '1' then
+    if (counter_fi = 10000) then
+          counter_fi <= 0;
+          FI_flag <= fi_flag_inst; -- output to CRO
+          else
+          counter_fi <= counter_fi + 1;
+    end if;
+  else
+          FI_flag <= fi_flag_inst; -- output to CRO
+          counter_fi <= 0;
+  end if;
+  
+  end if;
+ end process;
+ 
+ 
+ 
 -- duty cycle cal
 duty_cycle_uut: process (clk)
 

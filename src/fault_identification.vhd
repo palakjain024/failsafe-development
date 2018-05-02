@@ -17,6 +17,7 @@ entity fault_identification is
            done : out STD_LOGIC := '0';
            max_ip_out : out sfixed(n_left downto n_right) := zer0;
            gavg_norm_out : out vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
+           -- Inner products
            ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
            FI_flag : out STD_LOGIC_Vector(3 downto 0):= (others => '0')
          );
@@ -32,6 +33,11 @@ signal  C       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, z
 signal  D       : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
 signal  ip      : ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
 signal  gavg_norm : vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
+
+-- Max inner product
+signal max_ip : sfixed(n_left downto n_right) := zer0;
+signal index, itr : integer range 0 to 16 := 0;
+
 
 -- Fault signature lib (Normalized it)
 
@@ -71,8 +77,7 @@ main_loop: process(clk)
 
         type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9);
         variable State : STATE_VALUE := S0;
-        variable max_ip : sfixed(n_left downto n_right) := zer0;
-        variable index : integer range 0 to 11 := 0;
+
         
         begin
        if clk ='1' and clk'event then  
@@ -85,18 +90,13 @@ main_loop: process(clk)
               When S0 => 
               
               -- initilization            
-              max_ip := zer0;
-              index := 0; 
               done <= '0';
-              
-                
               -- Gamma normalization
               gavg_norm(0) <= resize(gamma_avg(0)*ibase, n_left, n_right);
               gavg_norm(1) <= resize(gamma_avg(1)*vbase, n_left, n_right);
               gavg_norm(2) <= resize(gamma_avg(2)*ibase, n_left, n_right);
               gavg_norm(3) <= resize(gamma_avg(3)*vbase, n_left, n_right);     
-              
-             -- 500 ns wait
+              -- 500 ns wait
                 if Start = '1' then
                 State := S1;
                 else
@@ -216,19 +216,28 @@ main_loop: process(clk)
            ip(9) <= resize(ip(9) + D(9), n_left, n_right);
            ip(10) <= resize(ip(10) + D(10), n_left, n_right);
            ip(11) <= resize(ip(11) + D(11), n_left, n_right);
+           -- Initial values for max inner product
+           max_ip <= zer0;
+           index  <= 0;
+           itr <= 0;
+           -- Next state
            State := S8;
            
            When S8 =>
-                               
-          -- Finding max ip
-              for i in 0 to 11 loop
-                 if ip(i) > max_ip then
-                    max_ip := ip(i);
-                    index := i + 1;
+           
+                       
+                if ip(itr) > max_ip then
+                    max_ip <= ip(itr);
+                    index <= itr + 1;
                  end if;
-                 end loop;
                  
+                itr <= 0; 
                 State := S9;
+                else
+                itr <= itr + 1;
+                State := S8;
+                end if;
+                
                    
            When S9 => 
             -- outputs of the component  
@@ -240,7 +249,7 @@ main_loop: process(clk)
            -- Fault identification flag
              if max_ip > fi_th and FD_flag = '1' then
                
-           -- FI_flag <= std_logic_vector(to_unsigned(index, FI_flag'length));   
+          
                     if index = 1 then -- f2
                             FI_flag <= "0010";
                             elsif index = 2 then -- f3
