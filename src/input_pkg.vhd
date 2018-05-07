@@ -18,8 +18,8 @@ package input_pkg is
    
   -- Mode of operation
   constant buck : STD_LOGIC := '0';
-  constant boost : STD_LOGIC := '1';
-  constant passthrough : STD_LOGIC := '0';
+  constant boost : STD_LOGIC := '0';
+  constant passthrough : STD_LOGIC := '1';
   
  -- Matrix discretization
  constant a00d : sfixed(1 downto -30) := to_sfixed(0.999333333333333, 1, -30); -- common mode
@@ -48,8 +48,8 @@ package input_pkg is
   
  -- -- For pass through and boost mode set points in PV emulator 
  -- -- (Sensor faults and open switch faults)
-  constant ipv : sfixed(15 downto -16) := to_sfixed(3.4,15,-16);
-  constant vpv : sfixed(15 downto -16) := to_sfixed(25.8,15,-16);
+ --  constant ipv : sfixed(15 downto -16) := to_sfixed(3.4,15,-16);
+ --  constant vpv : sfixed(15 downto -16) := to_sfixed(25.8,15,-16);
  -- -- For pass through mode set points in PV emulator
  -- -- Only for switch short faults
  -- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
@@ -57,6 +57,9 @@ package input_pkg is
  -- -- For HIL
  -- constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
  --  constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
+ -- -- (PV faults)
+   constant ipv : sfixed(15 downto -16) := to_sfixed(3.4,15,-16);
+   constant vpv : sfixed(15 downto -16) := to_sfixed(25.8,15,-16);
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
