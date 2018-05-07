@@ -315,7 +315,7 @@ de_inst_1: descaler generic map (adc_factor => i_factor )
             start => AD_sync_1,
             adc_in => adc_1,
             done => de_done_1,
-            adc_val => adc_out_1(0));  -- Inductor current
+            adc_val => adc_out_1(0));  -- Inductor current (not needed)
 de_inst_2: descaler generic map (adc_factor => v_factor)
             port map (
             clk => clk,
@@ -350,9 +350,9 @@ de_inst_6: descaler generic map (adc_factor => v_factor)
             start => AD_sync_3,
             adc_in => adc_6,
             done => de_done_6,
-            adc_val => adc_out_3(1)); -- capacitor voltage   
+            adc_val => adc_out_3(1)); -- capacitor voltage (not needed)   
      
--- DAC Scaler       
+-- DAC Scaler  (No need)   
 scaler_1: scaler generic map (
               dac_left => n_left,
               dac_right => n_right,
@@ -551,116 +551,116 @@ case state is
 ------------------------------------------------------------------------------------      
 
 ------------------------------ SHORT SWITCH FAULTS ---------------------------------
-        -- Plant inputs
-        plt_u(0) <= adc_out_2(1); -- PV voltage
-        plt_u(1) <= adc_out_3(0); -- load
-        -- Plant outputs 
-        plt_y(0) <= adc_out_1(0); -- Inductor current
+--        -- Plant inputs
+--        plt_u(0) <= adc_out_2(1); -- PV voltage
+--        plt_u(1) <= adc_out_3(0); -- load
+--        -- Plant outputs 
+--        plt_y(0) <= adc_out_1(0); -- Inductor current
 
-if boost = '1' then
+--if boost = '1' then
 
         
-           if f1_h19 = '1' then  
+--           if f1_h19 = '1' then  
      
-                 -- PWM signals for boost
-                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                 -- short Fault in SW2
-                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
-                 pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
-                 pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
-                 state := S1;
+--                 -- PWM signals for boost
+--                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                 -- short Fault in SW2
+--                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                 pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+--                 pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+--                 state := S1;
                   
-            elsif f2_h18 = '1' then 
+--            elsif f2_h18 = '1' then 
               
-                 -- PWM signals for boost
-                  pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                  -- short Fault in SW3
-                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                  pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side)SW4
+--                 -- PWM signals for boost
+--                  pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+--                  -- short Fault in SW3
+--                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+--                  pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side)SW4
 
-                  state := S1;
+--                  state := S1;
                   
                    
-            elsif f3_h17 = '1' then    
-                -- PWM signals for boost
-                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
-                -- short Fault in SW4
-                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
+--            elsif f3_h17 = '1' then    
+--                -- PWM signals for boost
+--                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+--                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+--                -- short Fault in SW4
+--                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
                  
-                  state := S1;
+--                  state := S1;
                   
-            else  
-            state := S0;
-            end if;
+--            else  
+--            state := S0;
+--            end if;
             
-elsif buck = '1'  then
+--elsif buck = '1'  then
 
-            if f1_h19 = '1' then  
+--            if f1_h19 = '1' then  
      
-                 -- PWM signals for buck
-                 -- short Fault in SW1
-                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                 pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
-                 pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
-                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
-                 state := S1;
+--                 -- PWM signals for buck
+--                 -- short Fault in SW1
+--                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                 pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
+--                 pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+--                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+--                 state := S1;
                   
-            elsif f2_h18 = '1' then 
+--            elsif f2_h18 = '1' then 
               
-                 -- PWM signals for buck
-                  pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
-                  -- short Fault in SW2
-                  pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
-                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
+--                 -- PWM signals for buck
+--                  pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
+--                  -- short Fault in SW2
+--                  pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+--                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
 
-                  state := S1;
+--                  state := S1;
                   
                    
-            elsif f3_h17 = '1' then    
-                -- PWM signals for buck
-                pwm_out_t(0) <=  a_pwm1_out;    -- Top switch (input side) SW1
-                pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
-                pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
-                -- short Fault in SW4
-                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
+--            elsif f3_h17 = '1' then    
+--                -- PWM signals for buck
+--                pwm_out_t(0) <=  a_pwm1_out;    -- Top switch (input side) SW1
+--                pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
+--                pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+--                -- short Fault in SW4
+--                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
                  
-                  state := S1;
+--                  state := S1;
                   
-            else  
-            state := S0;
-            end if;
+--            else  
+--            state := S0;
+--            end if;
             
-elsif passthrough = '1' then
-            if f1_h19 = '1' then  
+--elsif passthrough = '1' then
+--            if f1_h19 = '1' then  
     
-                  -- PWM signals for passthrough
-                   pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                  -- short Fault in SW2
-                  pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
-                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4--                 
-                  state := S1;
+--                  -- PWM signals for passthrough
+--                   pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                  -- short Fault in SW2
+--                  pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+--                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4--                 
+--                  state := S1;
                  
-            elsif f2_h18 = '1' then 
+--            elsif f2_h18 = '1' then 
              
-                -- PWM signals for passthrough
-                pwm_out_t(0) <=  '1';    -- Top switch (input side) SW1
-                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                pwm_out_t(1) <= '0'; -- Top switch (output side) SW3
-                -- short Fault in SW4
-                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
-                state := S1;
-            else  
-            state := S0;
-            end if;
+--                -- PWM signals for passthrough
+--                pwm_out_t(0) <=  '1';    -- Top switch (input side) SW1
+--                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+--                pwm_out_t(1) <= '0'; -- Top switch (output side) SW3
+--                -- short Fault in SW4
+--                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
+--                state := S1;
+--            else  
+--            state := S0;
+--            end if;
 
- else 
-state := S0;
-end if;
+-- else 
+--state := S0;
+--end if;
       
 -----------------------------------------------------------------------------------
 
@@ -783,7 +783,7 @@ end if;
 -- i = 2, 80% cell shading
 -- i = 3, Mechanical switch and resistor in paraller of PV panel
 -----------------------------------------------------------------------------------          
-
+ state := S0;
   end case;   
  end if; -- clk
 end process; 

@@ -348,8 +348,8 @@ mult: process(clk, plt_u, plt_y, gamma)
        
       when S9 =>
       -- Gamma Calculation
-      gamma(0) <= resize(z_est(0) - plt_y(0), n_left, n_right);
-      gamma(1) <= resize(z_est(1) - plt_y(1), n_left, n_right);
+      gamma(0) <= resize(z_est(0) - z_est(0), n_left, n_right);
+      gamma(1) <= resize(z_est(1) - z_est(1), n_left, n_right);
       gamma(2) <= resize(ipv - plt_u(2), n_left, n_right);
       gamma(3) <= resize(vpv - plt_u(0), n_left, n_right); 
       -- this difference should not be equal to 0 otherwise problem is in division
