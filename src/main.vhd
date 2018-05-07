@@ -551,7 +551,7 @@ case state is
 ------------------------------------------------------------------------------------      
 
 ------------------------------ SHORT SWITCH FAULTS ---------------------------------
-<<<<<<< HEAD
+
 --        -- Plant inputs
 --        plt_u(0) <= adc_out_2(1); -- PV voltage
 --        plt_u(1) <= adc_out_3(0); -- load
@@ -668,8 +668,7 @@ case state is
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------
 ---- They are injected by using mechanical switches. Not by manupulating PWM Signals
 ---- Since different anti-parallel diodes are conducting
-=======
->>>>>>> refs/heads/exp-jestpev5
+
 --        -- Plant inputs
 --        plt_u(0) <= adc_out_2(1); -- PV voltage
 --        plt_u(1) <= adc_out_3(0); -- load
