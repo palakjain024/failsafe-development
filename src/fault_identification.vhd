@@ -59,11 +59,11 @@ signal f10 : vect4 := (to_sfixed(0.2100,n_left,n_right), to_sfixed(0.8794,n_left
 -- Short Switch
 --SW1 f5
 --SW2 (f7)
-signal f7 : vect4 := (to_sfixed(0.1185,n_left,n_right), to_sfixed(-0.0321,n_left,n_right), to_sfixed(-0.05,n_left,n_right), to_sfixed(0.9921,n_left,n_right));
+signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(-0.3120,n_left,n_right), to_sfixed(0.9501,n_left,n_right));
 -- SW3 (f9)
 signal f9 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- SW4 (fb)
-signal f11 : vect4 := (to_sfixed(-0.4084,n_left,n_right), to_sfixed(-0.0272,n_left,n_right), to_sfixed(-0.05,n_left,n_right), to_sfixed(0.9120,n_left,n_right));
+signal f11 : vect4 := (to_sfixed(-0.8762,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(-0.1377,n_left,n_right), to_sfixed(0.4619,n_left,n_right));
 
 -- Sensor fault
 -- iL
