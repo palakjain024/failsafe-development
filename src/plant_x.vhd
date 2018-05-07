@@ -65,9 +65,16 @@ end component moving_avg_v1;
     
  -- Gamma cal
     signal gamma : vect4 := (zer0, zer0, zer0, zer0);
-    signal gamma_avg: vect4 := (zer0, zer0, zer0, zer0);
+    signal gamma_norm_register: vectreg4;
     signal gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
-    signal ab_gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);
+    signal ab_gamma_norm : vectd4 := (zer0h, zer0h, zer0h, zer0h);    
+
+    signal gamma_avg: vect4 := (zer0, zer0, zer0, zer0);
+
+ -- Maximum gamma
+    signal itr_max_gamma: integer range 0 to 3 := 0;
+    signal max_gamma: sfixed(d_left downto d_right):= zer0h;
+     
  -- Averaging moving
     signal done_ma0, done_ma1, done_ma2, done_ma3 : STD_LOGIC := '0';
     
@@ -111,13 +118,13 @@ gamma3_avg_inst: moving_avg_v1 port map (
                                                                 datain => gamma(3), 
                                                                 done => done_ma3,
                                                                 avg => gamma_avg(3)
-                                                                );                                             
+                                                                );                                            
                                                 
 
 mult: process(clk, plt_u, plt_y, gamma)
 
    -- General Variables for multiplication and addition
-   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13);
+   type STATE_VALUE is (S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15);
    variable     State         : STATE_VALUE := S0;
     
    -- digital twin cal
@@ -129,8 +136,7 @@ mult: process(clk, plt_u, plt_y, gamma)
    -- Augmented estimation and input vector
    variable State_inp_vect     : vect4 := (il0, vc0, plt_u(0), plt_u(1));
   
-   -- Maximum gamma
-   variable max_gamma: sfixed(d_left downto d_right):= zer0h;
+   
    
    begin
               
@@ -167,8 +173,6 @@ mult: process(clk, plt_u, plt_y, gamma)
            j0 <= 0; k0 <= 0; k2 <= 0; k3 <= 0;
            Count0 <= "000";
            done <= '0';
-           -- Max gamma reset
-           max_gamma := zer0h;
            
            if( start = '1' ) then   
                State := S1;
@@ -357,32 +361,55 @@ mult: process(clk, plt_u, plt_y, gamma)
       State := S10;
     
      when S10 =>
-     -- Gamma normalization
-     gamma_norm(0) <= resize(gamma(0)*ibase, d_left, d_right);
-     gamma_norm(1) <= resize(gamma(1)*vbase, d_left, d_right);
-     gamma_norm(2) <= resize(gamma(2)*ibase, d_left, d_right);
-     gamma_norm(3) <= resize(gamma(3)*vbase, d_left, d_right);
- 
+     -- waiting for 10 ns
      State := S11;
      
      when S11 =>
+     -- Gamma normalization
+     gamma_norm_register(0) <= gamma(0)*ibase;
+     gamma_norm_register(1) <= gamma(1)*vbase;
+     gamma_norm_register(2) <= gamma(2)*ibase;
+     gamma_norm_register(3) <= gamma(3)*vbase;
+ 
+     State := S12;
+     
+     when S12 =>
+      -- Gamma normalization
+     gamma_norm(0) <= resize( gamma_norm_register(0), d_left, d_right);
+     gamma_norm(1) <= resize( gamma_norm_register(1), d_left, d_right);
+     gamma_norm(2) <= resize( gamma_norm_register(2), d_left, d_right);
+     gamma_norm(3) <= resize( gamma_norm_register(3), d_left, d_right);
+     
+     State := S13;
+     
+     when S13 =>
      -- Absolute normalizaed gamma
      ab_gamma_norm(0) <= resize(abs(gamma_norm(0)), d_left, d_right); 
      ab_gamma_norm(1) <= resize(abs(gamma_norm(1)), d_left, d_right); 
      ab_gamma_norm(2) <= resize(abs(gamma_norm(2)), d_left, d_right); 
-     ab_gamma_norm(3) <= resize(abs(gamma_norm(3)), d_left, d_right);      
-     State := S12; 
+     ab_gamma_norm(3) <= resize(abs(gamma_norm(3)), d_left, d_right);  
+     -- Inital values for max gamma
+     max_gamma <= zer0h;
+     itr_max_gamma <= 0;    
+     State := S14; 
      
-     when S12 =>
+     when S14 =>
      -- Calculation of infinity norm
-         for i in 0 to 3 loop
-             if (max_gamma < ab_gamma_norm(i)) then
-             max_gamma := ab_gamma_norm(i);
+         
+             if (ab_gamma_norm(itr_max_gamma) > max_gamma) then
+             max_gamma <= ab_gamma_norm(itr_max_gamma);
              end if;
-         end loop;
-      State := S13; 
+         
+         if itr_max_gamma > 3 or itr_max_gamma = 3 then
+         itr_max_gamma <= 0;
+         State := S15;
+         else
+         itr_max_gamma <= itr_max_gamma +1;
+         State := S14;
+         end if;
+          
                 
-     when S13 =>
+     when S15 =>
      -- Output to mains 
      max_gamma_out <= max_gamma;
      gamma_out <= gamma;

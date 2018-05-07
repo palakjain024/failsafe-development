@@ -18,8 +18,8 @@ package input_pkg is
    
   -- Mode of operation
   constant buck : STD_LOGIC := '0';
-  constant boost : STD_LOGIC := '0';
-  constant passthrough : STD_LOGIC := '1';
+  constant boost : STD_LOGIC := '1';
+  constant passthrough : STD_LOGIC := '0';
   
  -- Matrix discretization
  constant a00d : sfixed(1 downto -30) := to_sfixed(0.999333333333333, 1, -30); -- common mode
@@ -34,8 +34,8 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-0.2,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.2, 1, -30); -- FD Threshold
-  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.2, 15, -16); -- FI Threshold for inner products
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.25, 1, -30); -- FD Threshold
+  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.25, 15, -16); -- FI Threshold for inner products
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
@@ -48,12 +48,15 @@ package input_pkg is
   
  -- -- For pass through and boost mode set points in PV emulator 
  -- -- (Sensor faults and open switch faults)
- -- constant ipv : sfixed(15 downto -16) := to_sfixed(3.4,15,-16);
- -- constant vpv : sfixed(15 downto -16) := to_sfixed(25.8,15,-16);
+  constant ipv : sfixed(15 downto -16) := to_sfixed(3.4,15,-16);
+  constant vpv : sfixed(15 downto -16) := to_sfixed(25.8,15,-16);
  -- -- For pass through mode set points in PV emulator
  -- -- Only for switch short faults
-  constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
-  constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
+ -- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
+ -- constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
+ -- -- For HIL
+ -- constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+ --  constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
@@ -63,6 +66,7 @@ package input_pkg is
   type vect2 is array (0 to 1) of sfixed(15 downto -16); -- for z,y
   type vect3 is array (0 to 2) of sfixed(15 downto -16); -- for u
   type vect4 is array (0 to 3) of sfixed(15 downto -16); -- for gamma
+  type vectreg4 is array (0 to 3) of sfixed(31 downto -32); -- for gamma
   type vectd4 is array (0 to 3) of sfixed(1 downto -30); -- for gamma normalized
     
   -- For normalization of gamma, put reciprocal to avoid division
@@ -91,15 +95,16 @@ package input_pkg is
   constant offset : sfixed(15 downto -16) := to_sfixed(0, 15, -16);
   constant i_factor : sfixed(15 downto -16) := to_sfixed(10, 15, -16);
   constant v_factor : sfixed(15 downto -16) := to_sfixed(10, 15, -16);
+  constant v_factor_output : sfixed(15 downto -16) := to_sfixed(100, 15, -16);
   
   -- DAC scaler constants
   constant dac_width : sfixed(15 downto -16) := to_sfixed(4095, 15, -16);
   
   -- Moving avg depth 
   -- Address
-  constant total_address : sfixed(1 downto -30) := to_sfixed(0.001, 1, -30); -- Reciprocal of 1024
-  constant address_size: integer range 0 to 100 := 9;
-  constant address_depth: integer range 0 to 100 := 10;  -- For calculating total address depth
+  constant total_address : sfixed(1 downto -30) := to_sfixed(0.0002441, 1, -30); -- Reciprocal of 4096
+  constant address_size: integer range 0 to 100 := 11;
+  constant address_depth: integer range 0 to 100 := 12;  -- For calculating total address depth
    
   -- Fault Identification
   type ip_array is array (0 to 11) of sfixed(15 downto -16);
