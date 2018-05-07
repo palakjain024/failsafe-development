@@ -666,9 +666,8 @@ case state is
 -----------------------------------------------------------------------------------
 
 ------------------------------ OPEN SWITCH FAULTS ---------------------------------
----- They are injected by using mechanical switches. Not by manupulating PWM Signals
----- Since different anti-parallel diodes are conducting
-
+------ They are injected by using mechanical switches. Not by manupulating PWM Signals
+------ Since different anti-parallel diodes are conducting
 --        -- Plant inputs
 --        plt_u(0) <= adc_out_2(1); -- PV voltage
 --        plt_u(1) <= adc_out_3(0); -- load
@@ -681,9 +680,9 @@ case state is
 --           if f1_h19 = '1' then  
      
 --                 -- PWM signals for boost
---                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
---                 -- short Fault in SW2
---                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                 -- Open Fault in SW1
+--                 pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
+--                 pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
 --                 pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
 --                 pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
 --                 state := S1;
@@ -693,8 +692,8 @@ case state is
 --                 -- PWM signals for boost
 --                  pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
 --                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
---                  -- short Fault in SW3
---                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+--                  -- Open Fault in SW3
+--                  pwm_out_t(1) <= '0';    -- Top switch (output side) SW3
 --                  pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side)SW4
 
 --                  state := S1;
@@ -705,8 +704,8 @@ case state is
 --                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
 --                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
 --                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
---                -- short Fault in SW4
---                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
+--                -- Open Fault in SW4
+--                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
                  
 --                  state := S1;
                   
@@ -719,8 +718,8 @@ case state is
 --            if f1_h19 = '1' then  
      
 --                 -- PWM signals for buck
---                 -- short Fault in SW1
---                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+--                 -- Open Fault in SW1
+--                 pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
 --                 pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
 --                 pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
 --                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
@@ -730,8 +729,8 @@ case state is
               
 --                 -- PWM signals for buck
 --                  pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
---                  -- short Fault in SW2
---                  pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                  -- Open Fault in SW2
+--                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
 --                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
 --                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
 
@@ -742,12 +741,10 @@ case state is
 --                -- PWM signals for buck
 --                pwm_out_t(0) <=  a_pwm1_out;    -- Top switch (input side) SW1
 --                pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
---                pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
---                -- short Fault in SW4
---                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
-                 
---                  state := S1;
-                  
+--                -- Open Fault in SW3
+--                pwm_out_t(0) <= '0'; -- Top switch (output side) SW3
+--                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4                
+--                  state := S1;                 
 --            else  
 --            state := S0;
 --            end if;
@@ -756,9 +753,9 @@ case state is
 --            if f1_h19 = '1' then  
     
 --                  -- PWM signals for passthrough
---                   pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
---                  -- short Fault in SW2
---                  pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+--                  -- Open Fault in SW1
+--                  pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
+--                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
 --                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
 --                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4--                 
 --                  state := S1;
@@ -768,131 +765,17 @@ case state is
 --                -- PWM signals for passthrough
 --                pwm_out_t(0) <=  '1';    -- Top switch (input side) SW1
 --                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+--                -- Open Fault in SW3
 --                pwm_out_t(1) <= '0'; -- Top switch (output side) SW3
---                -- short Fault in SW4
---                pwm_n_out_t(1)  <= '1'; -- Bottom switch (output side)SW4
+--                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
 --                state := S1;
 --            else  
 --            state := S0;
 --            end if;
 
--- else 
+--else 
 --state := S0;
---end if;
-      
------------------------------------------------------------------------------------
-
------------------------------- OPEN SWITCH FAULTS ---------------------------------
----- They are injected by using mechanical switches. Not by manupulating PWM Signals
----- Since different anti-parallel diodes are conducting
-        -- Plant inputs
-        plt_u(0) <= adc_out_2(1); -- PV voltage
-        plt_u(1) <= adc_out_3(0); -- load
-        -- Plant outputs 
-        plt_y(0) <= adc_out_1(0); -- Inductor current
-
-if boost = '1' then
-
-        
-           if f1_h19 = '1' then  
-     
-                 -- PWM signals for boost
-                 -- Open Fault in SW1
-                 pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
-                 pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                 pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
-                 pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
-                 state := S1;
-                  
-            elsif f2_h18 = '1' then 
-              
-                 -- PWM signals for boost
-                  pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                  -- Open Fault in SW3
-                  pwm_out_t(1) <= '0';    -- Top switch (output side) SW3
-                  pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side)SW4
-
-                  state := S1;
-                  
-                   
-            elsif f3_h17 = '1' then    
-                -- PWM signals for boost
-                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
-                -- Open Fault in SW4
-                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
-                 
-                  state := S1;
-                  
-            else  
-            state := S0;
-            end if;
-            
-elsif buck = '1'  then
-
-            if f1_h19 = '1' then  
-     
-                 -- PWM signals for buck
-                 -- Open Fault in SW1
-                 pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
-                 pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
-                 pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
-                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
-                 state := S1;
-                  
-            elsif f2_h18 = '1' then 
-              
-                 -- PWM signals for buck
-                  pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
-                  -- Open Fault in SW2
-                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
-
-                  state := S1;
-                  
-                   
-            elsif f3_h17 = '1' then    
-                -- PWM signals for buck
-                pwm_out_t(0) <=  a_pwm1_out;    -- Top switch (input side) SW1
-                pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
-                -- Open Fault in SW3
-                pwm_out_t(0) <= '0'; -- Top switch (output side) SW3
-                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4                
-                  state := S1;                 
-            else  
-            state := S0;
-            end if;
-            
-elsif passthrough = '1' then
-            if f1_h19 = '1' then  
-    
-                  -- PWM signals for passthrough
-                  -- Open Fault in SW1
-                  pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
-                  pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                  pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                  pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4--                 
-                  state := S1;
-                 
-            elsif f2_h18 = '1' then 
-             
-                -- PWM signals for passthrough
-                pwm_out_t(0) <=  '1';    -- Top switch (input side) SW1
-                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-                -- Open Fault in SW3
-                pwm_out_t(1) <= '0'; -- Top switch (output side) SW3
-                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
-                state := S1;
-            else  
-            state := S0;
-            end if;
-
-else 
-state := S0;
-end if; -- for type of mode: buck, boost, passthrough 
+--end if; -- for type of mode: buck, boost, passthrough 
 -----------------------------------------------------------------------------------  
 
 ------------------------------ PV FAULTS ------------------------------------------
