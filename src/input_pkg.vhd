@@ -17,8 +17,8 @@ package input_pkg is
   constant c_Dead_t        : INTEGER :=  50;         -- Dead time 500 ns
    
   -- Mode of operation
-  constant buck : STD_LOGIC := '0';
-  constant boost : STD_LOGIC := '1';
+  constant buck : STD_LOGIC := '1';
+  constant boost : STD_LOGIC := '0';
   constant passthrough : STD_LOGIC := '0';
   
  -- Matrix discretization
@@ -34,8 +34,8 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-0.2,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.25, 1, -30); -- FD Threshold
-  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.25, 15, -16); -- FI Threshold for inner products
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.3, 1, -30); -- FD Threshold
+  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.3, 15, -16); -- FI Threshold for inner products
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);

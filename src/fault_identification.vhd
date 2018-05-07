@@ -48,13 +48,13 @@ signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), 
 
 -- Open Switch
 -- SW1(f4)
-signal f4 : vect4 := (to_sfixed(0.0255,n_left,n_right), to_sfixed(0.8987,n_left,n_right), to_sfixed(0.3967,n_left,n_right), to_sfixed(-0.1851,n_left,n_right));
+signal f4 : vect4 := (to_sfixed(0.0275,n_left,n_right), to_sfixed(0.9467,n_left,n_right), to_sfixed(0.2840,n_left,n_right), to_sfixed(-0.1497,n_left,n_right));
 -- SW2(f6) not possible to inject complete open switch, anti-parallel diode is coming into picture
 signal f6 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- SW3 (f8)
 -- The open fault in SW3 is same as open switch fault in SW1, otherwise its anti parallel diode is operating.
 -- SW4 (fa)
-signal f10 : vect4 := (to_sfixed(0.2643,n_left,n_right), to_sfixed(0.7552,n_left,n_right), to_sfixed(0.3619,n_left,n_right), to_sfixed(-0.4783,n_left,n_right));
+signal f10 : vect4 := (to_sfixed(0.2100,n_left,n_right), to_sfixed(0.8794,n_left,n_right), to_sfixed(0.3150,n_left,n_right), to_sfixed(-0.2887,n_left,n_right));
 
 -- Short Switch
 --SW1 f5

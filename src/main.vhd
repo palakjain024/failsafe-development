@@ -793,7 +793,7 @@ delay_fi_uut: process(clk_ila)
  begin
  
   if (clk_ila = '1' and clk_ila'event) then
-  
+-- for open switch fault in SW1, fault delay should be 4 ms (Buck mode) 
   if fd_flag_inst = '1' then
     if (counter_fi = 10000) then
           counter_fi <= 0;
@@ -820,10 +820,11 @@ variable state: state_variable := S0;
 begin
    if (clk = '1' and clk'event) then
       case state is
-
+-- for boost mode, use 0.70 as duty cycle
+-- for buck mode, use 0.85 as duty cycle
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.7, n_left, n_right);
+       duty_ratio <= to_sfixed(0.85, n_left, n_right);
        state := S1;
        
        when S1 =>
