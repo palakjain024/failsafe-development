@@ -824,7 +824,7 @@ begin
 -- for buck mode, use 0.85 as duty cycle
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.85, n_left, n_right);
+       duty_ratio <= to_sfixed(0.70, n_left, n_right);
        state := S1;
        
        when S1 =>

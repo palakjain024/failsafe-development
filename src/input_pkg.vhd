@@ -17,8 +17,8 @@ package input_pkg is
   constant c_Dead_t        : INTEGER :=  50;         -- Dead time 500 ns
    
   -- Mode of operation
-  constant buck : STD_LOGIC := '1';
-  constant boost : STD_LOGIC := '0';
+  constant buck : STD_LOGIC := '0';
+  constant boost : STD_LOGIC := '1';
   constant passthrough : STD_LOGIC := '0';
   
  -- Matrix discretization
