@@ -26,6 +26,7 @@ entity main is
            sysclk : in STD_LOGIC;
            pwm_reset : in STD_LOGIC;
            enable_fdi: in STD_LOGIC;
+           control_ena: in STD_LOGIC;
            -- PWM ports
            pwm_out_t : out STD_LOGIC_VECTOR(1 downto 0);
            pwm_n_out_t : out STD_LOGIC_VECTOR(1 downto 0);
@@ -160,6 +161,7 @@ component processor_core
 Port ( -- General
        Clk : in STD_LOGIC;
        clk_ila : in STD_LOGIC;
+       ena : in STD_LOGIC;
        pc_en : in STD_LOGIC;
        reset_fd : in STD_LOGIC;
        FI_flag_delay : in STD_LOGIC_VECTOR(3 downto 0);
@@ -169,7 +171,9 @@ Port ( -- General
        fr_flag_out : out STD_LOGIC := '0';
        -- FR
        SW_active_out : out STD_LOGIC := '0';
-       zval : out vect2;
+       zval: out vect2;
+       -- Control
+       duty : OUT  sfixed(n_left downto n_right);
        -- Observer inputs
        pc_pwm_top : in STD_LOGIC;
        pc_pwm_bot : in STD_LOGIC;
@@ -216,6 +220,7 @@ signal plt_y : vect2 := (zer0,zer0);
 signal plt_z : vect2 := (zer0,zer0);
 signal fi_flag_inst, FI_flag_delay: STD_LOGIC_VECTOR(3 DOWNTO 0) := (others => '0');
 signal fd_flag_inst, fr_flag_inst: std_logic := '0';
+signal duty_control : sfixed(n_left downto n_right);
 
 -- delay process
 signal counter_fi: integer range 0 to 40000 := 0;
@@ -405,6 +410,7 @@ scaler_4: scaler generic map (
 processor_core_inst: processor_core port map (
 clk => clk,
 clk_ila => clk_ila,
+ena => control_ena,
 pc_en => enable_fdi,
 reset_fd => reset_fd,
 FI_flag_delay => FI_flag_delay,
@@ -414,6 +420,7 @@ fi_flag_out => fi_flag_inst,
 fr_flag_out => fr_flag_inst,
 SW_active_out => SW_active,
 zval => plt_z,
+duty => duty_control,
 -- Observer inputs
 pc_pwm_top => a_pwm1_out,
 pc_pwm_bot => a_pwm2_out,
@@ -713,8 +720,7 @@ delay_fi_uut: process(clk_ila)
   end if;
  end process;
  
- 
- 
+
 -- duty cycle cal
 duty_cycle_uut: process (clk)
 
@@ -727,7 +733,7 @@ begin
 -- for boost mode, use 0.80 as duty cycle for R = 7 
        when S0 =>
        ena <= '0';
-       duty_ratio <= to_sfixed(0.80, n_left, n_right);
+       duty_ratio <= duty_control;
        state := S1;
        
        when S1 =>

@@ -15,7 +15,14 @@ package input_pkg is
   constant phases          : INTEGER := 1;            --number of output pwms and phases
   -- Deadtime
   constant c_Dead_t        : INTEGER :=  50;         -- Dead time 500 ns
-   
+  
+  -- Control
+  constant duty_min : sfixed(15 downto -16)   := to_sfixed(0.1,15,-16);
+  constant duty_max : sfixed(15 downto -16)  := to_sfixed(0.9, 15, -16);
+  constant iref : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant ki : sfixed(15 downto -16) := to_sfixed(0.001176,15,-16);
+  constant kp : sfixed(15 downto -16) := to_sfixed(0.5,15,-16);
+     
   -- Mode of operation
   constant buck : STD_LOGIC := '0';
   constant boost : STD_LOGIC := '1';

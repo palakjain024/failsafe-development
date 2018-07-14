@@ -17,6 +17,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports pwm_reset]
 set_property PACKAGE_PIN H22 [get_ports enable_fdi]
 set_property IOSTANDARD LVCMOS33 [get_ports enable_fdi]
 
+## For control
+set_property PACKAGE_PIN M15 [get_ports control_ena]
+set_property IOSTANDARD LVCMOS33 [get_ports control_ena]
+
 ## For reseting faults
 set_property PACKAGE_PIN F21 [get_ports reset_fd]
 set_property IOSTANDARD LVCMOS33 [get_ports reset_fd]

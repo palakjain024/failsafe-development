@@ -74,7 +74,7 @@ main_loop: process(clk)
               
               When S2 =>
               
-              done <= '0';
+              done <= '1';
               State := S0;
                  
         end case;  

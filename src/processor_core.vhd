@@ -13,6 +13,7 @@ entity processor_core is
 Port ( -- General
        Clk : in STD_LOGIC;
        clk_ila : in STD_LOGIC;
+       ena : in STD_LOGIC;
        pc_en : in STD_LOGIC;
        reset_fd : in STD_LOGIC;
        FI_flag_delay : in STD_LOGIC_VECTOR(3 downto 0);
@@ -23,6 +24,8 @@ Port ( -- General
        -- FR
        SW_active_out : out STD_LOGIC := '0';
        zval: out vect2;
+       -- Control
+       duty : OUT  sfixed(n_left downto n_right);
        -- Observer inputs
        pc_pwm_top : in STD_LOGIC;
        pc_pwm_bot : in STD_LOGIC;
@@ -107,7 +110,21 @@ COMPONENT ila_0
             FR_flag : out STD_LOGIC := '0'          
           );
  end component fault_remediation;
-          
+ 
+ -- Control
+ component control
+  Port ( 
+            clk : in STD_LOGIC;
+            start : in STD_LOGIC;
+            ena : in STD_LOGIC;
+            iL : in sfixed(n_left downto n_right);
+            done : out STD_LOGIC := '0';
+            up1_out : OUT  sfixed(n_left downto n_right);
+            up2_out : OUT  sfixed(n_left downto n_right);
+            ui_out : OUT  sfixed(n_left downto n_right);
+            duty : OUT  sfixed(n_left downto n_right) --duty cycle (range given by bit resolution)         
+          );
+  end component control;        
 ---- Signal definition for components ----
 
 -- ILA core
@@ -115,6 +132,9 @@ COMPONENT ila_0
  
  signal probe_z1, probe_z2, probe_ipv, probe_vpv, probe_vc, probe_iload, probe_il: STD_LOGIC_VECTOR(31 downto 0);
  signal probe_normfd, probe_maxip: STD_LOGIC_VECTOR(31 downto 0);
+ -- control
+ signal probe_duty, probe_up1, probe_up2, probe_ui: STD_LOGIC_VECTOR(31 downto 0);
+ -- Gamma avg
  signal probe_gn0, probe_gn1, probe_gn2, probe_gn3: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  signal probe_gn0avg, probe_gn1avg, probe_gn2avg, probe_gn3avg: STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
@@ -127,6 +147,7 @@ COMPONENT ila_0
  
  -- General
  signal counter : integer range 0 to 50000 := 0;
+ signal counter_control : integer range 0 to 50000 := 0;
  
  -- Common Inputs 
  signal start : STD_LOGIC := '0';
@@ -148,18 +169,34 @@ COMPONENT ila_0
  signal fi_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
  
  -- Fault remediation
- signal FR_flag : STD_LOGIC := '0';
+ signal FR_flag, done_fr : STD_LOGIC := '0';
  signal SW_active : STD_LOGIC := '0';
+ 
+ -- Control
+ signal done_control, start_control : STD_LOGIC := '0';
+ signal duty_control, up1, up2, ui : sfixed(n_left downto n_right) := zer0;
  
 begin
 
 ---- Instances ----
+control_inst: control port map (
+clk => clk,
+start => start_control,
+ena => ena,
+iL => plt_y(0),
+done => done_control,
+up1_out => up1,
+up2_out => up2,
+ui_out => ui,
+duty => duty_control
+);
+
 fault_rem_inst: fault_remediation port map (
 clk => clk,
 start => start,
 FD_flag => FD_flag,
 FI_flag => FI_flag_delay,
-done => done,
+done => done_fr,
 SW_active => SW_active,
 FR_flag => FR_flag
 );
@@ -212,9 +249,12 @@ PORT MAP (
 --    probe13 => probe_ip12,
 --    probe14 => probe_maxip,
 
-    probe0 => probe_normfd, 
-    probe1 => probe_gn0avg, 
-    probe2 => probe_gn1avg,  
+    -- probe0 => probe_normfd, 
+    -- probe1 => probe_gn0avg, 
+    -- probe2 => probe_gn1avg, 
+    probe0 => probe_up1,
+    probe1 => probe_up2, 
+    probe2 => probe_ui,  
     probe3 => probe_gn2avg, 
     probe4 => probe_gn3avg,
     probe5 => probe_ipv,
@@ -223,7 +263,8 @@ PORT MAP (
     probe8 => probe_vc,
     probe11 => probe_z1, 
     probe12 => probe_z2, 
-    probe13 => probe_maxip,
+    -- probe13 => probe_maxip,
+    probe13 => probe_duty,
     probe14 => probe_il,
     
     probe9 => probe_fd,  -- Fd
@@ -260,13 +301,18 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         probe_iload <= result_type(plt_u(1));
         probe_vpv <= result_type(plt_u(0));
         probe_ipv <= result_type(plt_u(2));
-        probe_gn0avg <= result_type(gavg_norm(0));
+        -- probe_gn0avg <= result_type(gavg_norm(0));
         -- probe_gn0avg <= result_type(gamma_avg(0));
-        probe_gn1avg <= result_type(gavg_norm(1));
+        -- probe_gn1avg <= result_type(gavg_norm(1));
         probe_gn2avg <= result_type(gavg_norm(2));
         probe_gn3avg <= result_type(gavg_norm(3));
-        probe_normfd <= result_type(max_gamma); 
-        probe_maxip <= result_type(max_ip);
+        -- control
+        probe_duty <= result_type(duty_control);
+        probe_up1 <= result_type(up1);
+        probe_up2 <= result_type(up2);
+        probe_ui <= result_type(ui);        
+        -- probe_normfd <= result_type(max_gamma); 
+        -- probe_maxip <= result_type(max_ip);
         probe_fd(0) <= fd_flag;
         probe_fi  <= fi_flag;
         
@@ -289,6 +335,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
    fr_flag_out <= FR_flag;    -- FR
    zval <= z_val;      
    SW_active_out <= SW_active;   
+   duty <= duty_control;
    ---- To determine Matrix for corresponding mode ----
    if buck = '1' then
            if (pc_pwm_top = '1' and pc_pwm_bot = '0' ) then
@@ -323,6 +370,20 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         else
         counter <= counter + 1;
      end if;
+     
+     ---- For constant time step 200 us CONTROL since Ts is 20 us ----
+         if (counter_control = 1) then
+           start_control <= '1';
+           elsif (counter_control = 2) then
+           start_control <= '0';
+           else null;
+         end if; 
+          
+          if (counter_control = 20000) then
+             counter_control <= 0;
+             else
+             counter_control <= counter_control + 1;
+          end if;
                            
     end if; -- pc_en
    end if; -- Clk
