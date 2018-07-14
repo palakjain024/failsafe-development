@@ -15,9 +15,13 @@ Port ( -- General
        clk_ila : in STD_LOGIC;
        pc_en : in STD_LOGIC;
        reset_fd : in STD_LOGIC;
+       FI_flag_delay : in STD_LOGIC_VECTOR(3 downto 0);
        -- FDI outputs
        fd_flag_out : out STD_LOGIC := '0';
        fi_flag_out : out STD_LOGIC_VECTOR(3 downto 0);
+       fr_flag_out : out STD_LOGIC := '0';
+       -- FR
+       SW_active_out : out STD_LOGIC := '0';
        zval: out vect2;
        -- Observer inputs
        pc_pwm_top : in STD_LOGIC;
@@ -81,6 +85,7 @@ COMPONENT ila_0
          clk : in STD_LOGIC;
          start : in STD_LOGIC;
          FD_flag : in STD_LOGIC;
+         FR_flag : in STD_LOGIC;
          gamma_avg : in vect4;
          done : out STD_LOGIC := '0';
          max_ip_out : out sfixed(n_left downto n_right) := zer0;
@@ -90,7 +95,19 @@ COMPONENT ila_0
        );
  end component fault_identification;
  
- 
+ -- Fault remediation
+ component fault_remediation
+ Port ( 
+            clk : in STD_LOGIC;
+            start : in STD_LOGIC;
+            FD_flag : in STD_LOGIC;
+            FI_flag : in STD_LOGIC_Vector(3 downto 0):= (others => '0');
+            done : out STD_LOGIC := '0';
+            SW_active : out STD_LOGIC := '0';
+            FR_flag : out STD_LOGIC := '0'          
+          );
+ end component fault_remediation;
+          
 ---- Signal definition for components ----
 
 -- ILA core
@@ -130,13 +147,29 @@ COMPONENT ila_0
  signal ip:  ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
  signal fi_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
  
+ -- Fault remediation
+ signal FR_flag : STD_LOGIC := '0';
+ signal SW_active : STD_LOGIC := '0';
+ 
 begin
 
 ---- Instances ----
+fault_rem_inst: fault_remediation port map (
+clk => clk,
+start => start,
+FD_flag => FD_flag,
+FI_flag => FI_flag_delay,
+done => done,
+SW_active => SW_active,
+FR_flag => FR_flag
+);
+
+
 fault_identity_inst: fault_identification port map(
 clk => clk,
 start => start,
 FD_flag => fd_flag,
+FR_flag => FR_flag,
 gamma_avg => gamma_avg,
 done => done_fi,
 max_ip_out => max_ip,
@@ -228,6 +261,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         probe_vpv <= result_type(plt_u(0));
         probe_ipv <= result_type(plt_u(2));
         probe_gn0avg <= result_type(gavg_norm(0));
+        -- probe_gn0avg <= result_type(gamma_avg(0));
         probe_gn1avg <= result_type(gavg_norm(1));
         probe_gn2avg <= result_type(gavg_norm(2));
         probe_gn3avg <= result_type(gavg_norm(3));
@@ -252,7 +286,9 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
    fi_flag_out <= fi_flag;   -- FI observer
-   zval <= z_val;         
+   fr_flag_out <= FR_flag;    -- FR
+   zval <= z_val;      
+   SW_active_out <= SW_active;   
    ---- To determine Matrix for corresponding mode ----
    if buck = '1' then
            if (pc_pwm_top = '1' and pc_pwm_bot = '0' ) then

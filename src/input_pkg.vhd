@@ -52,11 +52,11 @@ package input_pkg is
   -- constant vpv : sfixed(15 downto -16) := to_sfixed(25.8,15,-16);
  -- -- For pass through mode set points in PV emulator
  -- -- Only for switch short faults
- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
- constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
+ -- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
+ -- constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
  -- -- For HIL
- -- constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
- --  constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
+ constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+ constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);

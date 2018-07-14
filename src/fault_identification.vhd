@@ -13,6 +13,7 @@ entity fault_identification is
            clk : in STD_LOGIC;
            start : in STD_LOGIC;
            FD_flag : in STD_LOGIC;
+           FR_flag : in STD_LOGIC;
            gamma_avg : in vect4;
            done : out STD_LOGIC := '0';
            max_ip_out : out sfixed(n_left downto n_right) := zer0;
@@ -99,7 +100,13 @@ main_loop: process(clk)
               gavg_norm(3) <= resize(gamma_avg(3)*vbase, n_left, n_right);     
               -- 500 ns wait
                 if Start = '1' then
+                
+                if FR_flag = '1' then
+                State := S0;
+                else
                 State := S1;
+                end if;
+                
                 else
                 State := S0;
                 end if;
@@ -254,10 +261,12 @@ main_loop: process(clk)
           
                     if index = 1 then -- f2
                             FI_flag <= "0010";
-                            elsif index = 2 then -- f3
-                                FI_flag <= "0011";
-                                     elsif index = 3 then  -- f4
-                                        FI_flag <= "0100";
+                            elsif index = 2 then -- f3 for PV fault in APEC
+                                -- FI_flag <= "0011";
+                                FI_flag <= "0100";
+                                     elsif index = 3 then  -- f4 for converter fault in APEC
+                                        -- FI_flag <= "0100";
+                                        FI_flag <= "0001";
                                              elsif index = 4 then -- f7
                                                 FI_flag <= "0111";
                                                     elsif index = 5 then -- f6
@@ -268,8 +277,9 @@ main_loop: process(clk)
                                         FI_flag <= "1010";
                                             elsif index = 8 then -- f11
                                                 FI_flag <= "1011";
-                                                     elsif index = 9 then -- f12
-                                                        FI_flag <= "1100";
+                                                     elsif index = 9 then -- f12 for sensor fault in APEC
+                                                       -- FI_flag <= "1100";
+                                                        FI_flag <= "0010";
                                                              elsif index = 10 then -- f14
                                                                 FI_flag <= "1110";
                                                                      elsif index = 11 then -- f15

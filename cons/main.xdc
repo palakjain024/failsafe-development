@@ -51,19 +51,23 @@ set_property IOSTANDARD LVCMOS33 [get_ports LD_f3]
 ##JC2_P (Y4) for fault detection
 set_property PACKAGE_PIN Y4 [get_ports FD_flag]
 set_property IOSTANDARD LVCMOS33 [get_ports FD_flag]
+##JC4_P (T4) fault remediation
+set_property PACKAGE_PIN T4 [get_ports SW_active]
+set_property IOSTANDARD LVCMOS33 [get_ports SW_active]
 
 ##JA7 (AB11), JA8 (AB10), JA9(AB9), JA10(AA8) for fault identification
-set_property PACKAGE_PIN AB11 [get_ports {FI_flag[0]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[0]}]
-
-set_property PACKAGE_PIN AB10 [get_ports {FI_flag[1]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[1]}]
-
-set_property PACKAGE_PIN AB9 [get_ports {FI_flag[2]}]
+##FR
+set_property PACKAGE_PIN AB11 [get_ports {FR_flag}]
+set_property IOSTANDARD LVCMOS33 [get_ports {FR_flag}]
+## PV fault
+set_property PACKAGE_PIN AB10 [get_ports {FI_flag[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[2]}]
-
-set_property PACKAGE_PIN AA8 [get_ports {FI_flag[3]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[3]}]
+## Sensor fault
+set_property PACKAGE_PIN AB9 [get_ports {FI_flag[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[1]}]
+## Converter fault
+set_property PACKAGE_PIN AA8 [get_ports {FI_flag[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {FI_flag[0]}]
 
 ##----------- CONTROLLER: PWM SIGNALS --------------- ##
 ## Mapping PWM module phase a to PMOD JC1_p (AB7) and JC3_p (R6) [Input side for boost mode]
