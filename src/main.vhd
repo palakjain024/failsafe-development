@@ -171,6 +171,7 @@ Port ( -- General
        fr_flag_out : out STD_LOGIC := '0';
        -- FR
        SW_active_out : out STD_LOGIC := '0';
+       iL_out: out sfixed(n_left downto n_right):= zer0;
        zval: out vect2;
        -- Control
        duty : OUT  sfixed(n_left downto n_right);
@@ -220,7 +221,7 @@ signal plt_y : vect2 := (zer0,zer0);
 signal plt_z : vect2 := (zer0,zer0);
 signal fi_flag_inst, FI_flag_delay: STD_LOGIC_VECTOR(3 DOWNTO 0) := (others => '0');
 signal fd_flag_inst, fr_flag_inst: std_logic := '0';
-signal duty_control : sfixed(n_left downto n_right);
+signal duty_control, iL : sfixed(n_left downto n_right);
 
 -- delay process
 signal counter_fi: integer range 0 to 40000 := 0;
@@ -372,7 +373,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => plt_y(0),  -- Inductor current
+              dac_in => iL,  -- Inductor current
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -419,6 +420,7 @@ fd_flag_out => fd_flag_inst,
 fi_flag_out => fi_flag_inst,
 fr_flag_out => fr_flag_inst,
 SW_active_out => SW_active,
+iL_out => iL,
 zval => plt_z,
 duty => duty_control,
 -- Observer inputs
