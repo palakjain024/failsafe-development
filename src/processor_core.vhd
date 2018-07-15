@@ -181,7 +181,7 @@ begin
 ---- Instances ----
 control_inst: control port map (
 clk => clk,
-start => start_control,
+start => start,
 ena => ena,
 iL => plt_y(0),
 done => done_control,
@@ -371,7 +371,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         counter <= counter + 1;
      end if;
      
-     ---- For constant time step 200 us CONTROL since Ts is 20 us ----
+     ---- For constant time step 20 us CONTROL since Ts is 20 us ----
          if (counter_control = 1) then
            start_control <= '1';
            elsif (counter_control = 2) then
@@ -379,7 +379,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
            else null;
          end if; 
           
-          if (counter_control = 20000) then
+          if (counter_control = 2000) then
              counter_control <= 0;
              else
              counter_control <= counter_control + 1;

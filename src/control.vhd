@@ -60,21 +60,18 @@ main_loop: process(clk)
                                      
       
               When S1 =>
-              -- P control
-              up1 <= resize(err * kp, n_left, n_right); 
+              -- I control
+              up1 <= resize(err * ki, n_left, n_right); 
               -- Error cal
               err <= resize(iref - iL, n_left, n_right);
               State := S2;
               
               When S2 =>
               -- P control
-              up1 <= resize((err * kp) - up1, n_left, n_right); 
-              -- For PI control
-              up2 <= resize(err * ki, n_left, n_right);   
+              up2 <= resize(err * kp, n_left, n_right);    
               State := S3;
               
               When S3 =>
-              -- PI control
               ui <= resize(up1 + up2, n_left, n_right);           
               State := S4;
               

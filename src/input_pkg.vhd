@@ -20,8 +20,8 @@ package input_pkg is
   constant duty_min : sfixed(15 downto -16)   := to_sfixed(0.1,15,-16);
   constant duty_max : sfixed(15 downto -16)  := to_sfixed(0.9, 15, -16);
   constant iref : sfixed(15 downto -16) := to_sfixed(6,15,-16);
-  constant ki : sfixed(15 downto -16) := to_sfixed(0.001176,15,-16);
-  constant kp : sfixed(15 downto -16) := to_sfixed(0.5,15,-16);
+  constant ki : sfixed(15 downto -16) := to_sfixed(-0.02829,15,-16);
+  constant kp : sfixed(15 downto -16) := to_sfixed(0.02874,15,-16);
      
   -- Mode of operation
   constant buck : STD_LOGIC := '0';

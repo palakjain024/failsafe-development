@@ -250,7 +250,7 @@ pwm_inst: pwm_activehigh
 --(For imperix module, change to 'deadtime_activehigh' to 'deadtime')
 deadtime_inst: deadtime_activehigh  
 port map(
-    p_pwm_in => pwm_out(0), 
+    p_pwm_in => pwm_n_out(0), 
     clk => clk, 
     p_pwm1_out => a_pwm1_out, 
     p_pwm2_out => a_pwm2_out);
