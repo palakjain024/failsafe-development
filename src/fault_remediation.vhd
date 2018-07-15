@@ -16,6 +16,7 @@ entity fault_remediation is
            FI_flag : in STD_LOGIC_Vector(3 downto 0):= (others => '0');
            done : out STD_LOGIC := '0';
            SW_active : out STD_LOGIC := '0';
+           FR_flag_iL : out STD_LOGIC := '0';
            FR_flag : out STD_LOGIC := '0'          
          );
 end fault_remediation;
@@ -42,7 +43,7 @@ main_loop: process(clk)
               
               -- initilization            
                 done <= '0';
-           
+                
               -- 500 ns wait
                 if Start = '1' then
                 
@@ -53,6 +54,7 @@ main_loop: process(clk)
                 State := S0;
                 SW_active <= '0';
                 FR_flag <= '0';
+                FR_flag_iL <= '0';
                 end if;
                 
                 else
@@ -65,10 +67,15 @@ main_loop: process(clk)
               if FI_flag = "0001" then
               SW_active <= '1';
               FR_flag <= '1';
+              elsif FI_flag = "0010" then
+              SW_active <= '0';
+              FR_flag_iL <= '1';
+              FR_flag <= '1';
               else
               SW_active <= '0';
+              FR_flag_iL <= '0';
               FR_flag <= '0';
-              end if; 
+              end if;
               
               State := S2;
               

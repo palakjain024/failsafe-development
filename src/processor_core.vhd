@@ -23,6 +23,7 @@ Port ( -- General
        fr_flag_out : out STD_LOGIC := '0';
        -- FR
        SW_active_out : out STD_LOGIC := '0';
+       iL_out: out sfixed(n_left downto n_right):= zer0;
        zval: out vect2;
        -- Control
        duty : OUT  sfixed(n_left downto n_right);
@@ -107,6 +108,7 @@ COMPONENT ila_0
             FI_flag : in STD_LOGIC_Vector(3 downto 0):= (others => '0');
             done : out STD_LOGIC := '0';
             SW_active : out STD_LOGIC := '0';
+            FR_flag_iL : out STD_LOGIC := '0';
             FR_flag : out STD_LOGIC := '0'          
           );
  end component fault_remediation;
@@ -130,7 +132,7 @@ COMPONENT ila_0
 -- ILA core
  signal trig_in_ack, trig_in: STD_LOGIC := '0';
  
- signal probe_z1, probe_z2, probe_ipv, probe_vpv, probe_vc, probe_iload, probe_il: STD_LOGIC_VECTOR(31 downto 0);
+ signal probe_z1, probe_z2, probe_ipv, probe_vpv, probe_vc, probe_iload, probe_il, probe_il_actual: STD_LOGIC_VECTOR(31 downto 0);
  signal probe_normfd, probe_maxip: STD_LOGIC_VECTOR(31 downto 0);
  -- control
  signal probe_duty, probe_up1, probe_up2, probe_ui: STD_LOGIC_VECTOR(31 downto 0);
@@ -169,10 +171,11 @@ COMPONENT ila_0
  signal fi_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
  
  -- Fault remediation
- signal FR_flag, done_fr : STD_LOGIC := '0';
+ signal FR_flag, FR_flag_iL, done_fr : STD_LOGIC := '0';
  signal SW_active : STD_LOGIC := '0';
  
  -- Control
+ signal iL : sfixed(n_left downto n_right) := zer0;
  signal done_control, start_control : STD_LOGIC := '0';
  signal duty_control, up1, up2, ui : sfixed(n_left downto n_right) := zer0;
  
@@ -183,7 +186,7 @@ control_inst: control port map (
 clk => clk,
 start => start,
 ena => ena,
-iL => plt_y(0),
+iL => iL,
 done => done_control,
 up1_out => up1,
 up2_out => up2,
@@ -198,6 +201,7 @@ FD_flag => FD_flag,
 FI_flag => FI_flag_delay,
 done => done_fr,
 SW_active => SW_active,
+FR_flag_iL => FR_flag_iL,
 FR_flag => FR_flag
 );
 
@@ -252,7 +256,7 @@ PORT MAP (
     -- probe0 => probe_normfd, 
     -- probe1 => probe_gn0avg, 
     -- probe2 => probe_gn1avg, 
-    probe0 => probe_up1,
+    probe0 => probe_il_actual,
     probe1 => probe_up2, 
     probe2 => probe_ui,  
     probe3 => probe_gn2avg, 
@@ -296,7 +300,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
        
         probe_z1  <= result_type(z_val(0));
         probe_z2 <= result_type(z_val(1)) ; 
-        probe_il <= result_type(plt_y(0));
+        probe_il_actual <= result_type(plt_y(0));
         probe_vc <= result_type(plt_y(1));
         probe_iload <= result_type(plt_u(1));
         probe_vpv <= result_type(plt_u(0));
@@ -308,9 +312,11 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         probe_gn3avg <= result_type(gavg_norm(3));
         -- control
         probe_duty <= result_type(duty_control);
-        probe_up1 <= result_type(up1);
+        -- probe_up1 <= result_type(up1);
         probe_up2 <= result_type(up2);
-        probe_ui <= result_type(ui);        
+        probe_ui <= result_type(ui); 
+        -- FR
+        probe_il <= result_type(iL);       
         -- probe_normfd <= result_type(max_gamma); 
         -- probe_maxip <= result_type(max_ip);
         probe_fd(0) <= fd_flag;
@@ -336,6 +342,15 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
    zval <= z_val;      
    SW_active_out <= SW_active;   
    duty <= duty_control;
+   iL_out <= iL;
+   
+   ---- For sensor fault remediation
+   if FR_flag_iL = '1' then
+   iL <= z_val(0);
+   else
+   iL <= plt_y(0);
+   end if;
+   
    ---- To determine Matrix for corresponding mode ----
    if buck = '1' then
            if (pc_pwm_top = '1' and pc_pwm_bot = '0' ) then
