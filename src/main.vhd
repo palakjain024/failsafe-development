@@ -373,7 +373,7 @@ scaler_1: scaler generic map (
               )
               port map (
               clk => clk,
-              dac_in => iL,  -- Inductor current
+              dac_in => iL,  -- PV current
               dac_val => dac_1);                  
 scaler_2: scaler generic map (
             dac_left => n_left,
@@ -443,7 +443,7 @@ FD_flag <= fd_flag_inst;
 FR_flag <= fr_flag_inst;
 -- No Fault Case --
 -- Plant inputs
-plt_u(2) <= adc_out_2(0); -- PV current
+--plt_u(2) <= adc_out_2(0); -- PV current
 -- Plant outputs
 plt_y(1) <= adc_out_3(1); -- Capacitor voltage
  
@@ -478,6 +478,7 @@ case state is
          -- Plant inputs
          plt_u(0) <= adc_out_2(1); -- PV voltage
          plt_u(1) <= adc_out_3(0); -- Load
+         plt_u(2) <= adc_out_2(0); -- PV current
          -- Plant outputs 
          plt_y(0) <= adc_out_1(0); -- PV current/Inductor current
          
@@ -538,11 +539,12 @@ case state is
           -- Sensor inputs          
           if f1_h19 = '1' then  
                  
-                -- Plant inputs
+                -- Plant inputs: fault in ipv sensor
+                plt_u(2) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV current
                 plt_u(0) <= adc_out_2(1); -- PV voltage
                 plt_u(1) <= adc_out_3(0); -- load
-                -- Plant outputs: fault in iL sensor
-                plt_y(0) <= resize(adc_out_1(0)*to_sfixed(0.3,n_left,n_right), n_left, n_right); -- Inductor current
+                -- Plant outputs: 
+                plt_y(0) <= adc_out_1(0); -- Inductor current
                 state := S1;
                 
           elsif f2_h18 = '1' then 
@@ -550,6 +552,7 @@ case state is
                -- Plant inputs: fault in vpv sensor
                plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.8,n_left,n_right), n_left, n_right); -- PV voltage
                plt_u(1) <= adc_out_3(0); -- load
+               plt_u(2) <= adc_out_2(0); -- PV current
                -- Plant outputs 
                plt_y(0) <= adc_out_1(0); -- Inductor current
                 state := S1;
@@ -558,6 +561,7 @@ case state is
           elsif f3_h17 = '1' then    
                 -- Plant inputs: fault in iload sensor
                 plt_u(0) <= adc_out_2(1); -- PV voltage
+                plt_u(2) <= adc_out_2(0); -- PV current
                 plt_u(1) <= resize(adc_out_3(0)*to_sfixed(0.8,n_left,n_right), n_left, n_right); -- load
                 -- Plant outputs 
                 plt_y(0) <= adc_out_1(0); -- Inductor current

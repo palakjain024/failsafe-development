@@ -43,36 +43,43 @@ signal index, itr : integer range 0 to 16 := 0;
 -- Fault signature lib (Normalized it)
 
 -- PV faults
-signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right));
-signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right));
-signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.707,n_left,n_right), to_sfixed(0.707,n_left,n_right));
+signal f1 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal f2 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal f3 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 
--- Open Switch
+------------------------------------- Open Switch -------------------------------------------
 -- SW1(f4)
 signal f4 : vect4 := (to_sfixed(0.0275,n_left,n_right), to_sfixed(0.9467,n_left,n_right), to_sfixed(0.2840,n_left,n_right), to_sfixed(-0.1497,n_left,n_right));
+---------------------------------------------------------------------------------------------
+
 -- SW2(f6) not possible to inject complete open switch, anti-parallel diode is coming into picture
 signal f6 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- SW3 (f8)
 -- The open fault in SW3 is same as open switch fault in SW1, otherwise its anti parallel diode is operating.
+
+------------------------------------- Open Switch -------------------------------------------
 -- SW4 (fa)
 signal f10 : vect4 := (to_sfixed(0.2100,n_left,n_right), to_sfixed(0.8794,n_left,n_right), to_sfixed(0.3150,n_left,n_right), to_sfixed(-0.2887,n_left,n_right));
+---------------------------------------------------------------------------------------------
 
 -- Short Switch
 --SW1 f5
 --SW2 (f7)
-signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(-0.3120,n_left,n_right), to_sfixed(0.9501,n_left,n_right));
+signal f7 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- SW3 (f9)
 signal f9 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- SW4 (fb)
-signal f11 : vect4 := (to_sfixed(-0.8762,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(-0.1377,n_left,n_right), to_sfixed(0.4619,n_left,n_right));
+signal f11 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 
--- Sensor fault
--- iL
-signal f12 : vect4 := (to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+----------------------------------- Sensor fault --------------------------------------------
+-- ipv
+signal f12 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(1,n_left,n_right), to_sfixed(0,n_left,n_right));
+---------------------------------------------------------------------------------------------
+
 -- Iload
-signal f14 : vect4 := (to_sfixed(-1,n_left,n_right), to_sfixed(0.001,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
+signal f14 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
 -- Vpv
-signal f15 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(-0.7338,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0.6794,n_left,n_right));
+signal f15 : vect4 := (to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right), to_sfixed(0,n_left,n_right));
     
 begin
 main_loop: process(clk)
@@ -168,13 +175,25 @@ main_loop: process(clk)
             
             D(0) <= resize(f2(3) * gavg_norm(3), n_left, n_right);
             D(1) <= resize(f3(3) * gavg_norm(3), n_left, n_right); 
+            
+            --
             D(2) <= resize(f4(3) * gavg_norm(3), n_left, n_right);
+            --
+            
             D(3) <= resize(f7(3) * gavg_norm(3), n_left, n_right);
             D(4) <= resize(f6(3) * gavg_norm(3), n_left, n_right); 
             D(5) <= resize(f9(3) * gavg_norm(3), n_left, n_right);
+            
+            --
             D(6) <= resize(f10(3) * gavg_norm(3), n_left, n_right);
+            --
+            
             D(7) <= resize(f11(3) * gavg_norm(3), n_left, n_right); 
+            
+            --
             D(8) <= resize(f12(3) * gavg_norm(3), n_left, n_right);  
+            --
+            
             D(9) <= resize(f14(3) * gavg_norm(3), n_left, n_right);  
             D(10) <= resize(f15(3) * gavg_norm(3), n_left, n_right);   
             D(11) <= resize(f1(3) * gavg_norm(3), n_left, n_right);      
@@ -264,22 +283,32 @@ main_loop: process(clk)
                             elsif index = 2 then -- f3 for PV fault in APEC
                                 -- FI_flag <= "0011";
                                 FI_flag <= "0100";
+                                     ------------------------------------------------------
                                      elsif index = 3 then  -- f4 for converter fault in APEC
                                         -- FI_flag <= "0100";
                                         FI_flag <= "0001";
+                                      -------------------------------------------------------       
                                              elsif index = 4 then -- f7
                                                 FI_flag <= "0111";
                                                     elsif index = 5 then -- f6
                                                         FI_flag <= "0110";
                              elsif index = 6 then -- f9
                                 FI_flag <= "1001";
-                                     elsif index = 7 then -- f10
+                                
+                                     -----------------------------------
+                                     elsif index = 7 then -- f10 for converter fault in APEC
                                         FI_flag <= "1010";
+                                     -----------------------------------     
+                                      
                                             elsif index = 8 then -- f11
                                                 FI_flag <= "1011";
+                                                
+                                                     ----------------------------------------------------
                                                      elsif index = 9 then -- f12 for sensor fault in APEC
                                                        -- FI_flag <= "1100";
                                                         FI_flag <= "0010";
+                                                     ---------------------------------------------------
+                                                     
                                                              elsif index = 10 then -- f14
                                                                 FI_flag <= "1110";
                                                                      elsif index = 11 then -- f15

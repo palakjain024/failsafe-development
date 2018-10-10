@@ -254,11 +254,12 @@ PORT MAP (
 --    probe14 => probe_maxip,
 
     -- probe0 => probe_normfd, 
-    -- probe1 => probe_gn0avg, 
-    -- probe2 => probe_gn1avg, 
+   
     probe0 => probe_il_actual,
-    probe1 => probe_up2, 
-    probe2 => probe_ui,  
+    --probe1 => probe_up2, 
+    --probe2 => probe_ui,
+    probe1 => probe_gn0avg, 
+    probe2 => probe_gn1avg, 
     probe3 => probe_gn2avg, 
     probe4 => probe_gn3avg,
     probe5 => probe_ipv,
@@ -348,7 +349,7 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
    if FR_flag_iL = '1' then
    iL <= z_val(0);
    else
-   iL <= plt_y(0);
+   iL <= plt_u(2);
    end if;
    
    ---- To determine Matrix for corresponding mode ----
