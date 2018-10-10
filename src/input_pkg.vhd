@@ -19,7 +19,7 @@ package input_pkg is
   -- Control
   constant duty_min : sfixed(15 downto -16)   := to_sfixed(0.1,15,-16);
   constant duty_max : sfixed(15 downto -16)  := to_sfixed(0.9, 15, -16);
-  constant iref : sfixed(15 downto -16) := to_sfixed(6,15,-16);
+  constant iref : sfixed(15 downto -16) := to_sfixed(7.58,15,-16);
   constant ki : sfixed(15 downto -16) := to_sfixed(-0.02829,15,-16);
   constant kp : sfixed(15 downto -16) := to_sfixed(0.02874,15,-16);
      
@@ -62,8 +62,8 @@ package input_pkg is
  -- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
  -- constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
  -- -- For HIL
- constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
- constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16);
+ constant ipv : sfixed(15 downto -16) := to_sfixed(7.6,15,-16);
+ constant vpv : sfixed(15 downto -16) := to_sfixed(30,15,-16);
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
