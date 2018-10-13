@@ -19,7 +19,7 @@ package input_pkg is
   -- Control
   constant duty_min : sfixed(15 downto -16)   := to_sfixed(0.1,15,-16);
   constant duty_max : sfixed(15 downto -16)  := to_sfixed(0.9, 15, -16);
-  constant iref : sfixed(15 downto -16) := to_sfixed(7.58,15,-16);
+  constant iref : sfixed(15 downto -16) := to_sfixed(6.1,15,-16);
   constant ki : sfixed(15 downto -16) := to_sfixed(-0.02829,15,-16);
   constant kp : sfixed(15 downto -16) := to_sfixed(0.02874,15,-16);
      
@@ -41,8 +41,8 @@ package input_pkg is
   -- constant inputs
   constant h : sfixed(1 downto -30) := to_sfixed(0.0000005, 1, -30); -- Fixed time step
   constant rL : sfixed(1 downto -30) := to_sfixed(-0.2,1,-30);      -- Inductor resistance
-  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.3, 1, -30); -- FD Threshold
-  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.3, 15, -16); -- FI Threshold for inner products
+  constant fd_th : sfixed(1 downto -30) := to_sfixed(0.5, 1, -30); -- FD Threshold
+  constant fi_th : sfixed(15 downto -16) := to_sfixed(0.5, 15, -16); -- FI Threshold for inner products
   
   -- inputs that could change (keep precison same for all)
   constant v_in : sfixed(15 downto -16)   := to_sfixed(30,15,-16);
@@ -62,7 +62,7 @@ package input_pkg is
  -- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
  -- constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
  -- -- For HIL
- constant ipv : sfixed(15 downto -16) := to_sfixed(7.6,15,-16);
+ constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
  constant vpv : sfixed(15 downto -16) := to_sfixed(30,15,-16);
   
   -- Zero initial input

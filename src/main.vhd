@@ -393,7 +393,7 @@ scaler_3: scaler generic map (
             )
             port map (
             clk => clk,
-            dac_in => plt_u(1),  -- Load current
+            dac_in => plt_y(0),  -- Inductor current
             dac_val => dac_3); 
 scaler_4: scaler generic map (
             dac_left => n_left,
@@ -441,10 +441,13 @@ if (clk = '1' and clk'event) then
 -- FD flag output to CRO
 FD_flag <= fd_flag_inst;
 FR_flag <= fr_flag_inst;
+
 -- No Fault Case --
 -- Plant inputs
---plt_u(2) <= adc_out_2(0); -- PV current
--- Plant outputs
+plt_u(0) <= adc_out_2(1); -- PV voltage
+plt_u(1) <= adc_out_3(0); -- Load
+-- Plant outputs 
+plt_y(0) <= adc_out_1(0); -- Inductor current
 plt_y(1) <= adc_out_3(1); -- Capacitor voltage
  
  
@@ -475,12 +478,8 @@ case state is
             
          end if ;
          
-         -- Plant inputs
-         plt_u(0) <= adc_out_2(1); -- PV voltage
-         plt_u(1) <= adc_out_3(0); -- Load
+         -- sens0r inputs
          plt_u(2) <= adc_out_2(0); -- PV current
-         -- Plant outputs 
-         plt_y(0) <= adc_out_1(0); -- PV current/Inductor current
          
          -- Fault injection
            if f1_h19 = '1' then
@@ -512,9 +511,15 @@ case state is
             
            when S1 =>
 
--------------------------------- SENSOR FAULTS ---------------------------------  
 
-         -- PWM outputs could be from any control scheme --  
+               if f1_h19 = '1' then  
+          
+                -------------------------------- SENSOR FAULTS ---------------------------------   
+                -- Plant inputs: fault in ipv sensor
+                plt_u(2) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV current
+               
+                
+                -- PWM outputs could be from any control scheme --  
                    if buck = '1'  then
                      
                      pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
@@ -535,37 +540,46 @@ case state is
                      pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
                      
                   end if ;
-          
-          -- Sensor inputs          
-          if f1_h19 = '1' then  
-                 
-                -- Plant inputs: fault in ipv sensor
-                plt_u(2) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV current
-                plt_u(0) <= adc_out_2(1); -- PV voltage
-                plt_u(1) <= adc_out_3(0); -- load
-                -- Plant outputs: 
-                plt_y(0) <= adc_out_1(0); -- Inductor current
+                  
                 state := S1;
                 
           elsif f2_h18 = '1' then 
             
-               -- Plant inputs: fault in vpv sensor
-               plt_u(0) <=  resize(adc_out_2(1)*to_sfixed(0.8,n_left,n_right), n_left, n_right); -- PV voltage
-               plt_u(1) <= adc_out_3(0); -- load
+               -- Plant  sensor inputs
                plt_u(2) <= adc_out_2(0); -- PV current
-               -- Plant outputs 
-               plt_y(0) <= adc_out_1(0); -- Inductor current
-                state := S1;
+               
+               -- For short switch faults
+               if boost = '1' then
+               
+                -- PWM signals for boost
+                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                -- short Fault in SW2
+                pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+                pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+               
+               elsif buck = '1'  then
                 
-                 
-          elsif f3_h17 = '1' then    
-                -- Plant inputs: fault in iload sensor
-                plt_u(0) <= adc_out_2(1); -- PV voltage
-                plt_u(2) <= adc_out_2(0); -- PV current
-                plt_u(1) <= resize(adc_out_3(0)*to_sfixed(0.8,n_left,n_right), n_left, n_right); -- load
-                -- Plant outputs 
-                plt_y(0) <= adc_out_1(0); -- Inductor current
+               --PWM signals for buck
+                 pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
+                 -- short Fault in SW2
+                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+                 pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
+               
+               else -- passthrough mode
+                 -- PWM signals for passthrough
+                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                 -- short Fault in SW2
+                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+                 pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4                
+                  
+               
+                end if ;
                 state := S1;
+  
+                
                           
          else  
          state := S0;

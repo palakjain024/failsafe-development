@@ -253,9 +253,9 @@ PORT MAP (
 --    probe13 => probe_ip12,
 --    probe14 => probe_maxip,
 
-    -- probe0 => probe_normfd, 
+    probe0 => probe_normfd, 
    
-    probe0 => probe_il_actual,
+    --probe0 => probe_il_actual,
     --probe1 => probe_up2, 
     --probe2 => probe_ui,
     probe1 => probe_gn0avg, 
@@ -268,8 +268,8 @@ PORT MAP (
     probe8 => probe_vc,
     probe11 => probe_z1, 
     probe12 => probe_z2, 
-    -- probe13 => probe_maxip,
-    probe13 => probe_duty,
+    probe13 => probe_maxip,
+    -- probe13 => probe_duty,
     probe14 => probe_il,
     
     probe9 => probe_fd,  -- Fd
@@ -306,20 +306,23 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         probe_iload <= result_type(plt_u(1));
         probe_vpv <= result_type(plt_u(0));
         probe_ipv <= result_type(plt_u(2));
-        -- probe_gn0avg <= result_type(gavg_norm(0));
-        -- probe_gn0avg <= result_type(gamma_avg(0));
-        -- probe_gn1avg <= result_type(gavg_norm(1));
+        
+        -- Normalized Gammas
+        probe_gn0avg <= result_type(gavg_norm(0));
+        probe_gn1avg <= result_type(gavg_norm(1));
         probe_gn2avg <= result_type(gavg_norm(2));
         probe_gn3avg <= result_type(gavg_norm(3));
+        
         -- control
-        probe_duty <= result_type(duty_control);
+        -- probe_duty <= result_type(duty_control);
         -- probe_up1 <= result_type(up1);
-        probe_up2 <= result_type(up2);
-        probe_ui <= result_type(ui); 
+        -- probe_up2 <= result_type(up2);
+        -- probe_ui <= result_type(ui); 
+        
         -- FR
         probe_il <= result_type(iL);       
-        -- probe_normfd <= result_type(max_gamma); 
-        -- probe_maxip <= result_type(max_ip);
+        probe_normfd <= result_type(max_gamma); 
+        probe_maxip <= result_type(max_ip);
         probe_fd(0) <= fd_flag;
         probe_fi  <= fi_flag;
         
