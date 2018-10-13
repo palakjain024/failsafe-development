@@ -548,35 +548,51 @@ case state is
                -- Plant  sensor inputs
                plt_u(2) <= adc_out_2(0); -- PV current
                
-               -- For short switch faults
-               if boost = '1' then
+               if FI_flag_delay = "001" then
                
-                -- PWM signals for boost
-                pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+               -- PWM signals for converter faults
+                pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
                 -- short Fault in SW2
                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
-                pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
-                pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+                pwm_out_t(1) <= '0';    -- Top switch (output side) SW3
+                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4  
                
-               elsif buck = '1'  then
-                
-               --PWM signals for buck
-                 pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
-                 -- short Fault in SW2
-                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
-                 pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
                
-               else -- passthrough mode
-                 -- PWM signals for passthrough
-                 pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-                 -- short Fault in SW2
-                 pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
-                 pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
-                 pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4                
-                  
                
-                end if ;
+               else
+               
+                           -- For short switch faults
+                           if boost = '1' then
+                           
+                            -- PWM signals for boost
+                            pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                            -- short Fault in SW2
+                            pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+                            pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+                            pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+                           
+                           elsif buck = '1'  then
+                            
+                           --PWM signals for buck
+                             pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
+                             -- short Fault in SW2
+                             pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+                             pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+                             pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
+                           
+                           else -- passthrough mode
+                             -- PWM signals for passthrough
+                             pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                             -- short Fault in SW2
+                             pwm_n_out_t(0)  <= '1'; -- Bottom switch (input side) SW2
+                             pwm_out_t(1) <= '1';    -- Top switch (output side) SW3
+                             pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4                
+                              
+                           end if ;
+                   
+                   end if;
+               
+               
                 state := S1;
   
                 

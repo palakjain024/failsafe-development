@@ -94,7 +94,7 @@ COMPONENT ila_0
          done : out STD_LOGIC := '0';
          max_ip_out : out sfixed(n_left downto n_right) := zer0;
          gavg_norm_out : out vect4 := (zer0, zer0, zer0, zer0); -- norm of gamma average
-         ip_out : out ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+         ip_out : out ip_array := (zer0, zer0, zer0, zer0);
          FI_flag : out STD_LOGIC_Vector(3 downto 0):= (others => '0')
        );
  end component fault_identification;
@@ -142,10 +142,7 @@ COMPONENT ila_0
  
  signal probe_fd: STD_LOGIC_VECTOR(0 downto 0) := (others => '0');
  signal probe_fi: STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
- signal probe_ip1, probe_ip2, probe_ip3 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_ip4, probe_ip5, probe_ip6 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_ip7, probe_ip8, probe_ip9 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
- signal probe_ip10, probe_ip11, probe_ip12 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+ signal probe_ip1, probe_ip2, probe_ip3, probe_ip4 : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
  
  -- General
  signal counter : integer range 0 to 50000 := 0;
@@ -167,7 +164,7 @@ COMPONENT ila_0
  signal done_fi: STD_LOGIC := '0';
  signal gavg_norm : vect4 := (zer0, zer0, zer0, zer0);
  signal max_ip : sfixed(n_left downto n_right) := zer0;
- signal ip:  ip_array := (zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0, zer0);
+ signal ip:  ip_array := (zer0, zer0, zer0, zer0);
  signal fi_flag : STD_LOGIC_VECTOR(3 downto 0):= (others => '0');
  
  -- Fault remediation
@@ -243,14 +240,6 @@ PORT MAP (
 --    probe1 => probe_ip2, 
 --    probe2 => probe_ip3,  
 --    probe3 => probe_ip4, 
---    probe4 => probe_ip5,
---    probe5 => probe_ip6,
---    probe6 => probe_ip7,
---    probe7 => probe_ip8,
---    probe8 => probe_ip9, 
---    probe11 => probe_ip10, 
---    probe12 => probe_ip11, 
---    probe13 => probe_ip12,
 --    probe14 => probe_maxip,
 
     probe0 => probe_normfd, 
@@ -326,18 +315,11 @@ CoreLOOP: process(clk, pc_pwm_top, pc_pwm_bot, pc_en)
         probe_fd(0) <= fd_flag;
         probe_fi  <= fi_flag;
         
---        probe_ip1 <= result_type(ip(0));  -- f2
---        probe_ip2 <= result_type(ip(1));  -- f3
---        probe_ip3 <= result_type(ip(2));  -- f4
---        probe_ip4 <= result_type(ip(3));  -- f7
---        probe_ip5 <= result_type(ip(4));  -- f6
---        probe_ip6 <= result_type(ip(5));  -- f9
---        probe_ip7 <= result_type(ip(6));  -- f10, fA
---        probe_ip8 <= result_type(ip(7));  -- f11, fB
---        probe_ip9 <= result_type(ip(8));  -- f12, fC
---        probe_ip10 <= result_type(ip(9)); -- f14, fE
---        probe_ip11 <= result_type(ip(10)); -- f15, fF
---        probe_ip12 <= result_type(ip(11)); -- f1, 
+--        probe_ip1 <= result_type(ip(0));  -- f1
+--        probe_ip2 <= result_type(ip(1));  -- f2
+--        probe_ip3 <= result_type(ip(2));  -- f3
+--        probe_ip4 <= result_type(ip(3));  -- f4
+
 
    ---- Output to main ----
    fd_flag_out <= fd_flag;   -- FD observer
