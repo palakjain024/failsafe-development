@@ -61,9 +61,9 @@ package input_pkg is
  -- -- Only for switch short faults
  -- constant ipv : sfixed(15 downto -16) := to_sfixed(2.5,15,-16);
  -- constant vpv : sfixed(15 downto -16) := to_sfixed(7.8,15,-16);
- -- -- For HIL
+ -- -- For HIL, use hil G = 800, T = 50
  constant ipv : sfixed(15 downto -16) := to_sfixed(6,15,-16);
- constant vpv : sfixed(15 downto -16) := to_sfixed(30,15,-16);
+ constant vpv : sfixed(15 downto -16) := to_sfixed(26,15,-16); 
   
   -- Zero initial input
   constant zer0 : sfixed(15 downto -16) := to_sfixed(0, 15,-16);
@@ -114,6 +114,6 @@ package input_pkg is
   constant address_depth: integer range 0 to 100 := 12;  -- For calculating total address depth
    
   -- Fault Identification
-  type ip_array is array (0 to 11) of sfixed(15 downto -16);
+  type ip_array is array (0 to 3) of sfixed(15 downto -16);
   
 end package input_pkg;
