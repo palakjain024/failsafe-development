@@ -224,7 +224,7 @@ signal fd_flag_inst, fr_flag_inst: std_logic := '0';
 signal duty_control, iL : sfixed(n_left downto n_right);
 
 -- delay process
-signal counter_fi: integer range 0 to 40000 := 0;
+signal counter_fi: integer range 0 to 80000 := 0;
 
 begin
 -- Clk
@@ -455,30 +455,42 @@ plt_y(1) <= adc_out_3(1); -- Capacitor voltage
 case state is
        
          when S0 =>
-
-         -- PWM outputs could be from any control scheme --  
-         if buck = '1'  then
-            
-            pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
-            pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
-            pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
-            pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+        
+         if FI_flag_delay = "100" then
          
-         elsif boost = '1' then
-            pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-            pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-            pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
-            pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
- 
-         else --passthrough mode
-            pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
-            pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
-            pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
-            pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
-            
-         end if ;
+            -- PWM signals for converter faults
+                pwm_out_t(0) <= '0';    -- Top switch (input side) SW1
+                -- short Fault in SW2
+                pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+                pwm_out_t(1) <= '0';    -- Top switch (output side) SW3
+                pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side)SW4
+                
+         else
          
-         -- sens0r inputs
+                 -- PWM outputs could be from any control scheme --  
+                 if buck = '1'  then
+                    
+                    pwm_out_t(0) <= a_pwm1_out;    -- Top switch (input side) SW1
+                    pwm_n_out_t(0)  <= a_pwm2_out; -- Bottom switch (input side) SW2
+                    pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+                    pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+                 
+                 elsif boost = '1' then
+                    pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                    pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+                    pwm_out_t(1) <= a_pwm1_out; -- Top switch (output side) SW3
+                    pwm_n_out_t(1)  <= a_pwm2_out; -- Bottom switch (output side) SW4
+         
+                 else --passthrough mode
+                    pwm_out_t(0) <= '1';    -- Top switch (input side) SW1
+                    pwm_n_out_t(0)  <= '0'; -- Bottom switch (input side) SW2
+                    pwm_out_t(1) <= '1'; -- Top switch (output side) SW3
+                    pwm_n_out_t(1)  <= '0'; -- Bottom switch (output side) SW4
+                    
+                 end if ;
+                 
+         end if;
+         -- Sensor inputs
          plt_u(2) <= adc_out_2(0); -- PV current
          
          -- Fault injection
@@ -518,7 +530,6 @@ case state is
                 -- Plant inputs: fault in ipv sensor
                 plt_u(2) <= resize(adc_out_2(0)*to_sfixed(0.5,n_left,n_right), n_left, n_right); -- PV current
                
-                
                 -- PWM outputs could be from any control scheme --  
                    if buck = '1'  then
                      
@@ -740,7 +751,7 @@ delay_fi_uut: process(clk_ila)
   if (clk_ila = '1' and clk_ila'event) then
 -- for open switch fault in SW1, fault delay should be 4 ms (Buck mode) 
   if fd_flag_inst = '1' then
-    if (counter_fi = 40000) then
+    if (counter_fi = 80000) then -- 16 ms
           counter_fi <= 0;
           FI_flag <= fi_flag_inst(2 downto 0); -- output to CRO
           FI_flag_delay <= fi_flag_inst; -- output to fault remediation stage

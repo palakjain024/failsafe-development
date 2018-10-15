@@ -71,6 +71,10 @@ main_loop: process(clk)
               SW_active <= '0';
               FR_flag_iL <= '1';
               FR_flag <= '1';
+              elsif FI_flag = "0100" then
+              FR_flag_iL <= '0';
+              SW_active <= '0';
+              FR_flag <= '1';
               else
               SW_active <= '0';
               FR_flag_iL <= '0';
